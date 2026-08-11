@@ -167,7 +167,7 @@ export const Home: React.FC = () => {
       <HeroSlider />
 
       {/* About RLBSA Section */}
-      <section className="py-24 bg-white w-full border-b border-border-gray/50 overflow-hidden">
+      <section className="py-10 md:py-24 bg-white w-full border-b border-border-gray/50 overflow-hidden">
         <div className="max-w-[1240px] mx-auto px-5">
           <div
             ref={aboutRef}

@@ -77,7 +77,7 @@ export const HeroSlider: React.FC = () => {
   };
 
   return (
-    <section className="relative h-[calc(100vh-80px)] min-h-[500px] bg-primary overflow-hidden">
+    <section className="relative h-[430px] sm:h-[460px] md:h-[calc(100vh-80px)] md:min-h-[500px] bg-primary overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -105,20 +105,20 @@ export const HeroSlider: React.FC = () => {
 
           <div className="max-w-[1240px] mx-auto px-5 w-full relative z-20">
             <div className="max-w-[650px] text-white">
-              <span className="text-accent text-[13px] font-bold tracking-[0.15em] uppercase mb-3 inline-block">
+              <span className="text-accent text-[12px] md:text-[13px] font-bold tracking-[0.15em] uppercase mb-2 md:mb-3 inline-block">
                 {slide.tagline}
               </span>
-              <h1 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight leading-tight mb-5">
+              <h1 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight leading-tight mb-4 md:mb-5">
                 {slide.title}
               </h1>
-              <p className="text-[15px] md:text-[17px] leading-relaxed mb-8 text-white/90 font-light">
+              <p className="text-[14px] md:text-[17px] leading-relaxed mb-6 md:mb-8 text-white/90 font-light max-w-[580px]">
                 {slide.description}
               </p>
-              <div className="flex gap-4 flex-wrap">
-                <a href={slide.btn1Href} className="bg-accent text-primary text-[14px] font-bold py-3.5 px-7 hover:bg-primary hover:text-white hover:shadow-lg transition-all duration-300">
+              <div className="flex gap-3 md:gap-4 flex-wrap">
+                <a href={slide.btn1Href} className="bg-accent text-primary text-[13px] md:text-[14px] font-bold py-3 md:py-3.5 px-6 md:px-7 hover:bg-primary hover:text-white hover:shadow-lg transition-all duration-300">
                   {slide.btn1Text}
                 </a>
-                <a href={slide.btn2Href} className="border-2 border-white/60 text-white text-[14px] font-bold py-3.5 px-7 hover:bg-white hover:text-primary transition-all duration-300">
+                <a href={slide.btn2Href} className="border-2 border-white/60 text-white text-[13px] md:text-[14px] font-bold py-3 md:py-3.5 px-6 md:px-7 hover:bg-white hover:text-primary transition-all duration-300">
                   {slide.btn2Text}
                 </a>
               </div>
