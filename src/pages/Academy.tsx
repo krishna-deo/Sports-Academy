@@ -1,0 +1,433 @@
+import React, { useState, useEffect } from 'react';
+import { CaretDown } from '@phosphor-icons/react';
+import { coachesList as initialCoaches, successStories, certificationsList, faqsList } from '../data/sportsData';
+
+
+interface RevealRowProps {
+  id: string;
+  className?: string;
+  children: (visible: boolean) => React.ReactNode;
+}
+
+const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div ref={ref} className={className} data-id={id}>
+      {children(isVisible)}
+    </div>
+  );
+};
+
+interface AcademyProps {
+  sub: string;
+}
+
+export const Academy: React.FC<AcademyProps> = ({ sub }) => {
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [coaches, setCoaches] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (sub === 'coaches') {
+      fetch('http://localhost:5000/api/public/coaches')
+        .then(res => res.json())
+        .then(data => setCoaches(data))
+        .catch(err => {
+          console.error(err);
+          setCoaches(initialCoaches);
+        });
+    } else if (sub === 'students') {
+      fetch('http://localhost:5000/api/public/students')
+        .then(res => res.json())
+        .then(data => setStudents(data))
+        .catch(err => {
+          console.error(err);
+          setStudents([
+            { id: "ST-101", name: "Aarti Kumari", age: 16, sport: "Handball", joined: "2023-05-12", medalNumber: 5, avatar: "👩‍🎓" },
+            { id: "ST-102", name: "Pooja Patel", age: 15, sport: "Football", joined: "2024-02-18", medalNumber: 3, avatar: "👩‍🎓" },
+            { id: "ST-103", name: "Rahul Kumar", age: 14, sport: "Athletics", joined: "2024-09-05", medalNumber: 8, avatar: "👨‍🎓" },
+            { id: "ST-104", name: "Soniya Sinha", age: 17, sport: "Handball", joined: "2022-11-20", medalNumber: 2, avatar: "👩‍🎓" },
+            { id: "ST-105", name: "Karan Mehra", age: 15, sport: "Rugby", joined: "2025-01-10", medalNumber: 4, avatar: "👨‍🎓" }
+          ]);
+        });
+    }
+  }, [sub]);
+
+  const toggleFaq = (idx: number) => {
+    setActiveFaq(activeFaq === idx ? null : idx);
+  };
+
+  return (
+    <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in">
+      {sub === 'coaches' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Our Coaching Roster
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              Learn from international certified coaches, former athletes, and physical instructors.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {coaches.map((coach, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+              >
+                <div className="h-[220px] bg-soft-light flex items-center justify-center text-7xl border-b border-border-gray relative">
+                  <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded">
+                    {coach.experience}
+                  </span>
+                  {coach.avatar}
+                </div>
+                <div className="p-6">
+                  <h3 className="text-base font-bold text-primary mb-1">{coach.name}</h3>
+                  <p className="text-xs font-bold text-accent uppercase tracking-wider mb-2">
+                    {coach.role}
+                  </p>
+                  <p className="text-xs text-text-light font-semibold italic mb-3">
+                    {coach.specialization}
+                  </p>
+                  <p className="text-xs text-text-body leading-relaxed">
+                    {coach.bio}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {sub === 'students' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Our Student Directory
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              Meet our dedicated academy players, active tournament competitors, and medal winners.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {students.map((student, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300 flex flex-col items-center p-6 text-center"
+              >
+                <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-accent/40 flex items-center justify-center text-4xl mb-4 relative shadow-sm">
+                  {student.avatar || '🎓'}
+                  <span className="absolute bottom-0 right-0 bg-accent text-primary text-[10px] font-extrabold py-0.5 px-2 rounded-full border border-white">
+                    Age {student.age}
+                  </span>
+                </div>
+                
+                <h3 className="text-base font-bold text-primary mb-1">{student.name}</h3>
+                <p className="text-xs font-bold text-accent uppercase tracking-wider mb-3">
+                  {student.sport || 'Athlete'}
+                </p>
+                
+                <div className="w-full pt-3 border-t border-dashed border-border-gray flex justify-between items-center text-xs text-text-light">
+                  <span className="font-semibold">Joined:</span>
+                  <span>{student.joined || 'N/A'}</span>
+                </div>
+                
+                <div className="w-full mt-2 flex justify-between items-center text-xs text-text-body bg-soft-light py-1.5 px-3 rounded-lg border border-border-gray">
+                  <span className="font-bold flex items-center gap-1"><span className="text-sm">🏅</span> Medals Won:</span>
+                  <span className="font-extrabold text-primary">{student.medalNumber || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {sub === 'success-stories' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Success Stories & Alumni
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              See how our sports coaching methodology transformed young prospects into professional athletes.
+            </p>
+          </div>
+
+          <div className="max-w-[900px] mx-auto flex flex-col gap-8">
+            {successStories.map((story, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white p-8 rounded-xl border border-border-gray border-l-5 border-l-accent flex flex-col md:flex-row gap-6 items-center text-center md:text-left hover:shadow-md transition-all duration-300"
+              >
+                <div className="w-[72px] h-[72px] rounded-full bg-primary text-accent text-2xl font-bold flex items-center justify-center shrink-0">
+                  {story.name.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-primary mb-1">{story.name}</h3>
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                    {story.sport} &bull; {story.achievement}
+                  </p>
+                  <p className="text-[15px] italic text-text-body leading-relaxed">
+                    "{story.quote}"
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {sub === 'certifications' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Affiliations & Certifications
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              We align our methods and safety guidelines with top athletic regulatory authorities.
+            </p>
+          </div>
+
+          <div className="max-w-[900px] mx-auto flex flex-col gap-6">
+            {certificationsList.map((cert, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white p-7 rounded-xl border border-border-gray flex flex-col md:flex-row gap-6 items-center text-center md:text-left hover:shadow-md hover:scale-[1.01] transition-all duration-200"
+              >
+                <div className="w-[80px] h-[80px] bg-accent/15 text-accent rounded-full flex items-center justify-center text-3.5xl shrink-0">
+                  {cert.badge}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-primary mb-1">{cert.title}</h3>
+                  <p className="text-xs font-bold text-accent uppercase tracking-wider mb-3">
+                    {cert.authority}
+                  </p>
+                  <p className="text-text-light text-sm leading-relaxed">
+                    {cert.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {sub === 'faqs' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Academy FAQs
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              Find fast answers regarding program timings, certifications, batches, and safety methods.
+            </p>
+          </div>
+
+          <div className="max-w-[800px] mx-auto flex flex-col gap-4">
+            {faqsList.map((faq, idx) => {
+              const isOpen = activeFaq === idx;
+              return (
+                <div key={idx} className="bg-white rounded-lg border border-border-gray overflow-hidden">
+                  <button
+                    onClick={() => toggleFaq(idx)}
+                    className="w-full text-left bg-none border-none py-5 px-6 font-bold text-[15px] md:text-base text-primary flex justify-between items-center cursor-pointer hover:bg-soft-light transition-all"
+                  >
+                    <span>{faq.question}</span>
+                    <CaretDown 
+                      size={18} 
+                      className={`transition-transform duration-300 text-primary ${
+                        isOpen ? 'rotate-180' : 'rotate-0'
+                      }`}
+                    />
+                  </button>
+                  <div 
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isOpen ? 'max-h-[300px] border-t border-border-gray' : 'max-h-0'
+                    }`}
+                  >
+                    <div className="p-6 text-sm md:text-[15px] leading-relaxed text-text-light">
+                      {faq.answer}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {sub === 'featured-players' && (
+        <>
+          <div className="text-center max-w-[700px] mx-auto mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Featured Academy Players
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              Meet our elite young champions who have excelled at state and national levels, representing the academy with outstanding sportsmanship.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-24 md:gap-32 max-w-[1000px] mx-auto">
+            {/* 1. Aarti Kumari (Image Left, Details Right) */}
+            <RevealRow id="aarti" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Image */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
+                      <img src="/images/player_aarti.png" alt="Aarti Kumari" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  {/* Right Column: Details */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
+                    <div className="flex flex-col text-left">
+                      <span className="text-accent text-[11px] font-extrabold tracking-[0.15em] uppercase mb-2 inline-block">
+                        Handball &bull; 5x State Gold Medalist
+                      </span>
+                      <h3 className="text-3xl font-extrabold text-primary mb-4">
+                        Aarti Kumari
+                      </h3>
+                      <p className="text-text-light text-base leading-relaxed mb-6">
+                        A key playmaker and captain of our Handball team, Aarti has represented Bihar in multiple national-level school championships.
+                      </p>
+                      <div className="flex flex-wrap gap-4 pt-4 border-t border-dashed border-border-gray/40">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Joined Academy</span>
+                          <span className="text-primary font-bold text-sm">May 2023</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Age</span>
+                          <span className="text-primary font-bold text-sm">16 Years</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Medals Won</span>
+                          <span className="text-accent font-extrabold text-sm">🏅 5 Medals</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* 2. Pooja Patel (Image Right, Details Left) */}
+            <RevealRow id="pooja" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Details (on desktop renders first) */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 md:order-1`}>
+                    <div className="flex flex-col text-left">
+                      <span className="text-accent text-[11px] font-extrabold tracking-[0.15em] uppercase mb-2 inline-block">
+                        Football &bull; Best Striker Award (U17)
+                      </span>
+                      <h3 className="text-3xl font-extrabold text-primary mb-4">
+                        Pooja Patel
+                      </h3>
+                      <p className="text-text-light text-base leading-relaxed mb-6">
+                        An outstanding forward striker who scored 12 goals in the Regional Youth League. She has been shortlisted for state team trials.
+                      </p>
+                      <div className="flex flex-wrap gap-4 pt-4 border-t border-dashed border-border-gray/40">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Joined Academy</span>
+                          <span className="text-primary font-bold text-sm">Feb 2024</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Age</span>
+                          <span className="text-primary font-bold text-sm">15 Years</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Medals Won</span>
+                          <span className="text-accent font-extrabold text-sm">🏅 3 Medals</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Right Column: Image */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
+                      <img src="/images/player_pooja.png" alt="Pooja Patel" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* 3. Rahul Kumar (Image Left, Details Right) */}
+            <RevealRow id="rahul" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Image */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
+                      <img src="/images/player_rahul.png" alt="Rahul Kumar" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  {/* Right Column: Details */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
+                    <div className="flex flex-col text-left">
+                      <span className="text-accent text-[11px] font-extrabold tracking-[0.15em] uppercase mb-2 inline-block">
+                        Athletics &bull; National U16 800m Gold
+                      </span>
+                      <h3 className="text-3xl font-extrabold text-primary mb-4">
+                        Rahul Kumar
+                      </h3>
+                      <p className="text-text-light text-base leading-relaxed mb-6">
+                        Rahul is a phenomenal middle-distance runner who clocked a personal best of 1m 58s in the National Athletics Championships.
+                      </p>
+                      <div className="flex flex-wrap gap-4 pt-4 border-t border-dashed border-border-gray/40">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Joined Academy</span>
+                          <span className="text-primary font-bold text-sm">Feb 2024</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Age</span>
+                          <span className="text-primary font-bold text-sm">14 Years</span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-slate-300"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-text-light uppercase tracking-wider font-extrabold">Medals Won</span>
+                          <span className="text-accent font-extrabold text-sm">🏅 8 Medals</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
