@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { SportSVG } from './SportSVG';
 
 interface SlideData {
@@ -64,17 +63,7 @@ export const HeroSlider: React.FC = () => {
     return () => stopTimer();
   }, []);
 
-  const handlePrev = () => {
-    stopTimer();
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    startTimer();
-  };
 
-  const handleNext = () => {
-    stopTimer();
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-    startTimer();
-  };
 
   return (
     <section className="relative h-[430px] sm:h-[460px] md:h-[calc(100vh-80px)] md:min-h-[500px] bg-primary overflow-hidden">
@@ -126,22 +115,6 @@ export const HeroSlider: React.FC = () => {
           </div>
         </div>
       ))}
-
-      {/* Slider Manual Controls */}
-      <button
-        className="absolute top-1/2 -translate-y-1/2 left-5 md:left-8 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/15 hover:bg-accent hover:text-primary flex items-center justify-center text-white text-xl z-20 cursor-pointer backdrop-blur-sm transition-all duration-200"
-        onClick={handlePrev}
-        aria-label="Previous Slide"
-      >
-        <CaretLeft size={20} weight="bold" />
-      </button>
-      <button
-        className="absolute top-1/2 -translate-y-1/2 right-5 md:right-8 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/15 hover:bg-accent hover:text-primary flex items-center justify-center text-white text-xl z-20 cursor-pointer backdrop-blur-sm transition-all duration-200"
-        onClick={handleNext}
-        aria-label="Next Slide"
-      >
-        <CaretRight size={20} weight="bold" />
-      </button>
     </section>
   );
 };
