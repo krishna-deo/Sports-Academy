@@ -20,24 +20,24 @@ export const HeroSlider: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides: SlideData[] = [
     {
-      tagline: "Nurturing Grassroots Talent",
+      tagline: "RLBSA Foundation",
       title: "Shaping Rural Champions of Tomorrow",
-      description: "RLBSA Laxmipur, Siwan, Bihar identifies and elevates talented youth, offering free professional sports training, boarding, nutritious meals, and high-quality education.",
-      btn1Text: "Explore Sports",
-      btn1Href: "#/programs/all",
-      btn2Text: "Our Story",
-      btn2Href: "#/about/story",
+      description: "",
+      btn1Text: "",
+      btn1Href: "",
+      btn2Text: "",
+      btn2Href: "",
       bgType: "image",
       bgUrl: "/images/hero1.jpeg"
     },
     {
-      tagline: "Rani Laxmibai Sports Academy",
+      tagline: "RLBSA Foundation",
       title: "Empowering Rural Youth Through Sports",
-      description: "Experience dedicated development in Football, Handball, Rugby, and Athletics, backed by life skills training, English speaking, and personality development workshops.",
-      btn1Text: "Meet Our Coaches",
-      btn1Href: "#/academy/coaches",
-      btn2Text: "Register Interest",
-      btn2Href: "#/events/registration",
+      description: "",
+      btn1Text: "",
+      btn1Href: "",
+      btn2Text: "",
+      btn2Href: "",
       bgType: "image",
       bgUrl: "/images/hero2.jpg"
     }
@@ -92,25 +92,14 @@ export const HeroSlider: React.FC = () => {
           {/* Dark Overlay gradient */}
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-black/80 via-black/45 to-black/75 z-10"></div>
 
-          <div className="max-w-[1240px] mx-auto px-5 w-full relative z-20">
-            <div className="max-w-[650px] text-white">
-              <span className="text-accent text-[12px] md:text-[13px] font-bold tracking-[0.15em] uppercase mb-2 md:mb-3 inline-block">
+          <div className="max-w-[1240px] mx-auto px-5 w-full relative z-20 flex justify-center">
+            <div className="max-w-[850px] text-center text-white flex flex-col items-center">
+              <span className="text-accent text-[13px] md:text-[14px] font-black tracking-[0.2em] uppercase mb-3 inline-block">
                 {slide.tagline}
               </span>
-              <h1 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight leading-tight mb-4 md:mb-5">
+              <h1 className="text-white text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight max-w-[900px] mx-auto">
                 {slide.title}
               </h1>
-              <p className="text-[14px] md:text-[17px] leading-relaxed mb-6 md:mb-8 text-white/90 font-light max-w-[580px]">
-                {slide.description}
-              </p>
-              <div className="flex gap-3 md:gap-4 flex-wrap">
-                <a href={slide.btn1Href} className="bg-accent text-primary text-[13px] md:text-[14px] font-bold py-3 md:py-3.5 px-6 md:px-7 hover:bg-primary hover:text-white hover:shadow-lg transition-all duration-300">
-                  {slide.btn1Text}
-                </a>
-                <a href={slide.btn2Href} className="border-2 border-white/60 text-white text-[13px] md:text-[14px] font-bold py-3 md:py-3.5 px-6 md:px-7 hover:bg-white hover:text-primary transition-all duration-300">
-                  {slide.btn2Text}
-                </a>
-              </div>
             </div>
           </div>
         </div>
