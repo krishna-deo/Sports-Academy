@@ -347,7 +347,7 @@ export const Home: React.FC = () => {
 
           {/* Mobile Layout: Swipeable Horizontal Carousel with Center Snapping */}
           <div className="md:hidden w-full relative py-4">
-            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5">
+            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar">
               {cards.map((card, idx) => {
                 const CardIcon = card.icon;
                 return (
@@ -665,7 +665,7 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth scroll-pl-5">
+          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth scroll-pl-5 hide-scrollbar">
             {successPlayers.map((player, idx) => {
               const delays = ['delay-0', 'delay-200', 'delay-400'];
               const delayClass = delays[idx] || 'delay-0';
