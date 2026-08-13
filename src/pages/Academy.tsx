@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CaretDown } from '@phosphor-icons/react';
-import { coachesList as initialCoaches, successStories, certificationsList, faqsList } from '../data/sportsData';
+import { coachesList as initialCoaches, certificationsList, faqsList } from '../data/sportsData';
 
 
 interface RevealRowProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Medal, Barbell, Heartbeat, Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 
 export const Home: React.FC = () => {
