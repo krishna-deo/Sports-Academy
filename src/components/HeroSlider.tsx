@@ -22,7 +22,7 @@ export const HeroSlider: React.FC = () => {
     {
       tagline: "RLBSA Foundation",
       title: "Shaping Rural Champions of Tomorrow",
-      description: "",
+      description: "RLBSA Laxmipur, Siwan, Bihar identifies and elevates talented youth, offering free professional sports training, boarding, nutritious meals, and high-quality education.",
       btn1Text: "",
       btn1Href: "",
       btn2Text: "",
@@ -33,7 +33,7 @@ export const HeroSlider: React.FC = () => {
     {
       tagline: "RLBSA Foundation",
       title: "Empowering Rural Youth Through Sports",
-      description: "",
+      description: "Experience dedicated development in Football, Handball, Rugby, and Athletics, backed by life skills training, English speaking, and personality development workshops.",
       btn1Text: "",
       btn1Href: "",
       btn2Text: "",
@@ -97,9 +97,12 @@ export const HeroSlider: React.FC = () => {
               <span className="text-accent text-[13px] md:text-[14px] font-black tracking-[0.2em] uppercase mb-2 md:mb-3 inline-block">
                 {slide.tagline}
               </span>
-              <h1 className="text-white text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+              <h1 className="text-white text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-4 md:mb-5">
                 {slide.title}
               </h1>
+              <p className="text-[14px] md:text-[16px] leading-relaxed text-white/90 font-light max-w-[620px]">
+                {slide.description}
+              </p>
             </div>
           </div>
         </div>
