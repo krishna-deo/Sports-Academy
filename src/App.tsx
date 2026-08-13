@@ -82,7 +82,7 @@ function App() {
       <Header />
 
       {/* Main Single Page View Container */}
-      <main id="app" className="flex-1 bg-white">
+      <main id="app" className="flex-1 bg-white pt-20">
         {renderRoute()}
       </main>
 
