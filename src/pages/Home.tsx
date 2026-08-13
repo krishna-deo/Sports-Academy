@@ -665,7 +665,7 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth scroll-pl-5 hide-scrollbar">
+          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar">
             {successPlayers.map((player, idx) => {
               const delays = ['delay-0', 'delay-200', 'delay-400'];
               const delayClass = delays[idx] || 'delay-0';
@@ -673,7 +673,7 @@ export const Home: React.FC = () => {
                 <a
                   href="#/academy/featured-players"
                   key={idx}
-                  className={`flex-shrink-0 w-[280px] sm:w-[320px] md:w-auto snap-start group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
+                  className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-[7.5vw] md:first:ml-0 last:mr-[7.5vw] md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
                   }`}
                 >
