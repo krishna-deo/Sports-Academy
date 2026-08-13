@@ -62,6 +62,8 @@ export const Home: React.FC = () => {
   const [currentMember, setCurrentMember] = React.useState(0);
   const storiesRef = React.useRef<HTMLDivElement>(null);
   const [isStoriesVisible, setIsStoriesVisible] = React.useState(false);
+  const edgeRef = React.useRef<HTMLDivElement>(null);
+  const [isEdgeVisible, setIsEdgeVisible] = React.useState(false);
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -131,6 +133,30 @@ export const Home: React.FC = () => {
     return () => {
       if (storiesRef.current) {
         observer.unobserve(storiesRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsEdgeVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (edgeRef.current) {
+      observer.observe(edgeRef.current);
+    }
+
+    return () => {
+      if (edgeRef.current) {
+        observer.unobserve(edgeRef.current);
       }
     };
   }, []);
@@ -461,7 +487,7 @@ export const Home: React.FC = () => {
 
 
       {/* The RLBSA Edge Section */}
-      <section className="py-24 bg-soft-light/40 w-full border-b border-border-gray/50">
+      <section ref={edgeRef} className="py-24 bg-soft-light/40 w-full border-b border-border-gray/50 overflow-hidden">
         <div className="max-w-[1240px] mx-auto px-5">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
@@ -479,7 +505,9 @@ export const Home: React.FC = () => {
             <div className="lg:col-span-1 flex">
               <a
                 href="#/about/what-we-do"
-                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 w-full group cursor-pointer"
+                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
+                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                }`}
               >
                 <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
                   <img
@@ -513,7 +541,9 @@ export const Home: React.FC = () => {
               {/* Card 2: Certified Curriculum */}
               <a
                 href="#/about/what-we-do"
-                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-150 group cursor-pointer ${
+                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                }`}
               >
                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
                   <img
@@ -540,7 +570,9 @@ export const Home: React.FC = () => {
               {/* Card 3: Modern Infrastructure */}
               <a
                 href="#/about/facilities"
-                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-300 group cursor-pointer ${
+                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                }`}
               >
                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
                   <img
@@ -567,7 +599,9 @@ export const Home: React.FC = () => {
               {/* Card 4: Sports Science & Diet */}
               <a
                 href="#/about/what-we-do"
-                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-450 group cursor-pointer ${
+                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                }`}
               >
                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
                   <img
@@ -594,9 +628,11 @@ export const Home: React.FC = () => {
               {/* Card 5: Solid Announcement Card */}
               <a
                 href="#/events/registration"
-                className="flex flex-col bg-primary rounded-xl p-8 justify-between text-left border border-primary hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-lg h-full group cursor-pointer"
+                className={`flex flex-col bg-primary rounded-xl p-8 justify-between text-left border border-primary hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-600 shadow-sm hover:shadow-lg h-full group cursor-pointer ${
+                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                }`}
               >
-                <div className="w-12 h-12 rounded-lg bg-accent text-primary flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-lg bg-accent text-primary flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                   <Trophy size={24} weight="bold" />
                 </div>
                 <div>
@@ -610,7 +646,7 @@ export const Home: React.FC = () => {
                     Annual selection trials are open for resident academy scholarships. Open to under-17 girls and boys in multiple athletic fields.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-accent group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                <span className="text-xs font-bold text-accent group-hover:translate-x-1 transition-transform flex items-center gap-1 mt-auto">
                   REGISTER NOW &rarr;
                 </span>
               </a>
