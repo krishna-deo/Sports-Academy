@@ -54,7 +54,6 @@ export const Header: React.FC = () => {
         { label: 'Sports Programs', href: '#/programs/all' },
         { label: 'Coaches', href: '#/academy/coaches' },
         { label: 'Students', href: '#/academy/students' },
-        { label: 'Featured Players', href: '#/academy/featured-players' },
         { label: 'Success Stories', href: '#/academy/success-stories' },
         { label: 'Certifications', href: '#/academy/certifications' },
         { label: 'FAQs', href: '#/academy/faqs' },
@@ -93,23 +92,21 @@ export const Header: React.FC = () => {
             />
 
             {/* Elegant Vertical Divider */}
-            <div className="h-10 w-[1px] bg-slate-300 hidden sm:block"></div>
+            <div className="h-10 w-[1px] bg-slate-300 block"></div>
 
             {/* Typography Lockup matching the shared image exactly */}
-            <div className="flex flex-col justify-center text-left hidden sm:flex">
+            <div className="flex flex-col justify-center text-left">
               <span
-                className="text-2xl md:text-[25px] font-black text-[#082142] leading-none transition-colors duration-300"
-                style={{ letterSpacing: '0.70em', marginRight: '-0.12em' }}
+                className="logo-title text-2xl md:text-[25px] font-black text-[#082142] leading-none transition-colors duration-300"
               >
                 RLBSA
               </span>
               <span
-                className="text-[9.5px] md:text-[10px] font-black text-[#00a896] leading-none mt-1"
-                style={{ letterSpacing: '0.90em', marginRight: '-0.34em' }}
+                className="logo-subtitle text-[9.5px] md:text-[10px] font-black text-[#00a896] leading-none mt-1"
               >
                 FOUNDATION
               </span>
-              <div className="text-[6.5px] md:text-[7.5px] font-extrabold text-[#082142]/80 tracking-[0.05em] leading-none mt-1.5 whitespace-nowrap text-left">
+              <div className="text-[6.5px] md:text-[7.5px] font-extrabold text-[#082142]/80 tracking-[0.05em] leading-none mt-1.5 whitespace-nowrap text-left hidden sm:block">
                 — EMPOWER • ENCOURAGE • EXCEL —
               </div>
             </div>

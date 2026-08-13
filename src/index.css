@@ -68,3 +68,26 @@
 .animate-progress-loop {
   animation: progressLoop 3s infinite linear;
 }
+
+/* Responsive Brand Logo Typography */
+.logo-title {
+  letter-spacing: 0.05em;
+  margin-right: 0;
+}
+@media (min-width: 640px) {
+  .logo-title {
+    letter-spacing: 0.70em;
+    margin-right: -0.12em;
+  }
+}
+
+.logo-subtitle {
+  letter-spacing: 0.05em;
+  margin-right: 0;
+}
+@media (min-width: 640px) {
+  .logo-subtitle {
+    letter-spacing: 0.90em;
+    margin-right: -0.34em;
+  }
+}

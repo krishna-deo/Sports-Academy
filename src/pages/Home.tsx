@@ -1,9 +1,38 @@
 import React from 'react';
 import { Medal, Barbell, Heartbeat, Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
-import { TestimonialsCarousel } from '../components/TestimonialsCarousel';
 
 export const Home: React.FC = () => {
+  const successPlayers = [
+    {
+      name: 'Aarti Kumari',
+      sport: 'Handball',
+      achievement: '5x State Gold Medalist',
+      description: 'A key playmaker and captain of our Handball team, Aarti has represented Bihar in multiple national-level school championships.',
+      quote: 'Rani Laxmibai Academy gave me free boarding, kit, and coaching that changed my life. Now, I hope to represent India.',
+      image: '/images/player_aarti.png',
+      joined: 'May 2023',
+    },
+    {
+      name: 'Pooja Patel',
+      sport: 'Football',
+      achievement: 'Best Striker Award (U17)',
+      description: 'An outstanding forward striker who scored 12 goals in the Regional Youth League. She has been shortlisted for state team trials.',
+      quote: 'The intensive practice matches and constant support of coaches prepared me for national-level trials.',
+      image: '/images/player_pooja.png',
+      joined: 'Feb 2024',
+    },
+    {
+      name: 'Rahul Kumar',
+      sport: 'Athletics',
+      achievement: 'National U16 800m Gold',
+      description: 'Rahul is a phenomenal middle-distance runner who clocked a personal best of 1m 58s in the National Athletics Championships.',
+      quote: 'Refining my sprinting form with Coach Vikram helped me shave off half a second from my running times.',
+      image: '/images/player_rahul.png',
+      joined: 'Sep 2024',
+    },
+  ];
+
   const team = [
     {
       name: 'Sanjay Kumar',
@@ -25,39 +54,14 @@ export const Home: React.FC = () => {
     },
   ];
 
-  const players = [
-    {
-      name: 'Aarti Kumari',
-      sport: 'Handball',
-      achievement: '5x State Gold Medalist',
-      description: 'A key playmaker and captain of our Handball team, Aarti has represented Bihar in multiple national-level school championships.',
-      image: '/images/player_aarti.png',
-      joined: 'May 2023',
-    },
-    {
-      name: 'Pooja Patel',
-      sport: 'Football',
-      achievement: 'Best Striker Award (U17)',
-      description: 'An outstanding forward striker who scored 12 goals in the Regional Youth League. She has been shortlisted for state team trials.',
-      image: '/images/player_pooja.png',
-      joined: 'Feb 2024',
-    },
-    {
-      name: 'Rahul Kumar',
-      sport: 'Athletics',
-      achievement: 'National U16 800m Gold',
-      description: 'Rahul is a phenomenal middle-distance runner who clocked a personal best of 1m 58s in the National Athletics Championships.',
-      image: '/images/player_rahul.png',
-      joined: 'Sep 2024',
-    },
-  ];
-
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const [isAboutVisible, setIsAboutVisible] = React.useState(false);
   const teamRef = React.useRef<HTMLDivElement>(null);
   const [isTeamVisible, setIsTeamVisible] = React.useState(false);
   const [currentMember, setCurrentMember] = React.useState(0);
+  const storiesRef = React.useRef<HTMLDivElement>(null);
+  const [isStoriesVisible, setIsStoriesVisible] = React.useState(false);
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -103,6 +107,30 @@ export const Home: React.FC = () => {
     return () => {
       if (teamRef.current) {
         observer.unobserve(teamRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsStoriesVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (storiesRef.current) {
+      observer.observe(storiesRef.current);
+    }
+
+    return () => {
+      if (storiesRef.current) {
+        observer.unobserve(storiesRef.current);
       }
     };
   }, []);
@@ -378,7 +406,7 @@ export const Home: React.FC = () => {
                   <a
                     href="#/about/founders"
                     key={idx}
-                    className={`absolute inset-x-0 top-0 transition-all duration-500 ease-in-out transform flex flex-col sm:flex-row bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-[0_20px_40px_rgba(0,0,0,0.18)] min-h-[560px] sm:min-h-[440px] md:min-h-[360px] hover:shadow-[0_30px_60px_rgba(0,0,0,0.28)] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`absolute inset-x-0 top-0 transition-all duration-500 ease-in-out transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[560px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -431,120 +459,229 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Players Section */}
-      <section className="py-24 bg-soft-light border-y border-border-gray/30">
+
+      {/* The RLBSA Edge Section */}
+      <section className="py-24 bg-soft-light/40 w-full border-b border-border-gray/50">
         <div className="max-w-[1240px] mx-auto px-5">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Featured Players
-            </h2>
-            <p className="text-text-light text-base md:text-lg">
-              Meet the elite young champions representing our academy and achieving medals at state and national levels.
-            </p>
-          </div>
-
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth scroll-pl-5">
-            {players.map((player, idx) => (
-              <a
-                href="#/academy/featured-players"
-                key={idx}
-                className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-auto snap-start group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
-              >
-                {/* Image Section */}
-                <div className="h-[280px] overflow-hidden relative bg-soft-light">
-                  <img
-                    src={player.image}
-                    alt={player.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                  />
-                  <span className="absolute top-4 left-4 bg-accent text-primary text-[10px] font-black tracking-[0.12em] uppercase py-1 px-3.5 rounded-full shadow-sm leading-none border border-white/20">
-                    {player.sport}
-                  </span>
-                </div>
-
-                {/* Details Section */}
-                <div className="p-8 flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <h3 className="text-2xl font-extrabold text-primary mb-1 group-hover:text-accent transition-colors">
-                      {player.name}
-                    </h3>
-                    <span className="text-[11px] font-extrabold text-accent uppercase tracking-wider block mb-4">
-                      {player.achievement}
-                    </span>
-                    <p className="text-text-light text-sm leading-relaxed mb-6">
-                      {player.description}
-                    </p>
-                  </div>
-                  <div className="pt-4 border-t border-dashed border-border-gray/40 flex justify-between items-center text-[11px] text-text-light font-bold">
-                    <span>Joined Academy:</span>
-                    <span className="text-primary">{player.joined}</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* The Ranilaxmibai Edge Section */}
-      <section className="py-20 bg-white w-full border-b border-border-gray/50">
-        <div className="max-w-[1240px] mx-auto px-5">
-          <div className="text-center max-w-[700px] mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              The Ranilaxmibai Edge
+              RLBSA Edge
             </h2>
             <p className="text-text-light text-base md:text-lg">
               We go beyond ordinary coaching centers. We build a high-performance ecosystem for long-term athletic success.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-10 rounded-xl border border-border-gray hover:border-transparent hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-[60px] h-[60px] rounded-full bg-primary/5 text-primary flex items-center justify-center text-2xl mb-6 group-hover:bg-accent group-hover:text-primary transition-all">
-                <Medal size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-primary mb-3">Certified Curriculum</h3>
-              <p className="text-text-light text-sm leading-relaxed">
-                Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
-              </p>
+          {/* Grid Layout inspired by Reliance Foundation */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            
+            {/* Column 1: Large Featured Card (Spans full height on desktop) */}
+            <div className="lg:col-span-1 flex">
+              <a
+                href="#/about/what-we-do"
+                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 w-full group cursor-pointer"
+              >
+                <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
+                  <img
+                    src="/images/about_rlbsa.png"
+                    alt="RLBSA Residential Scholarship"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                  />
+                </div>
+                <div className="p-8 flex flex-col justify-between flex-grow text-left">
+                  <div>
+                    <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
+                      RESIDENTIAL SCHOLARSHIP
+                    </span>
+                    <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
+                      “We identify raw grassroots potential and nurture them into national-level sports champions.”
+                    </h3>
+                    <p className="text-text-light text-sm leading-relaxed mb-6">
+                      RLBSA provides selected talented kids from rural Bihar with free professional coaching, fully sponsored boarding, sports diet, and educational support.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
+                    READ MORE &rarr;
+                  </span>
+                </div>
+              </a>
             </div>
 
-            <div className="bg-white p-10 rounded-xl border border-border-gray hover:border-transparent hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-[60px] h-[60px] rounded-full bg-primary/5 text-primary flex items-center justify-center text-2xl mb-6 group-hover:bg-accent group-hover:text-primary transition-all">
-                <Barbell size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-primary mb-3">Modern Infrastructure</h3>
-              <p className="text-text-light text-sm leading-relaxed">
-                Access temperature-controlled pools, synthetic athletics track, indoor courts, and automated cricket nets.
-              </p>
+            {/* Columns 2 & 3: 2x2 Grid of Smaller Cards */}
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+              
+              {/* Card 2: Certified Curriculum */}
+              <a
+                href="#/about/what-we-do"
+                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                  <img
+                    src="/images/sports_training_card.jpg"
+                    alt="Certified Curriculum"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                  />
+                </div>
+                <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                  <div>
+                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                      CURRICULUM
+                    </span>
+                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                      Structured Multi-Sport Development Pathways
+                    </h3>
+                    <p className="text-text-light text-xs leading-relaxed">
+                      Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
+                    </p>
+                  </div>
+                </div>
+              </a>
+
+              {/* Card 3: Modern Infrastructure */}
+              <a
+                href="#/about/facilities"
+                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                  <img
+                    src="/images/hero2.jpg"
+                    alt="Modern Infrastructure"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                  />
+                </div>
+                <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                  <div>
+                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                      INFRASTRUCTURE
+                    </span>
+                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                      Vast Olympic-Level Sports Facilities & Arenas
+                    </h3>
+                    <p className="text-text-light text-xs leading-relaxed">
+                      Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
+                    </p>
+                  </div>
+                </div>
+              </a>
+
+              {/* Card 4: Sports Science & Diet */}
+              <a
+                href="#/about/what-we-do"
+                className="flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                  <img
+                    src="/images/nutrition_card.jpg"
+                    alt="Sports Science & Diet"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                  />
+                </div>
+                <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                  <div>
+                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                      SPORTS SCIENCE
+                    </span>
+                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                      Calorie-Mapped Nutrition & Rehab Metrics
+                    </h3>
+                    <p className="text-text-light text-xs leading-relaxed">
+                      Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
+                    </p>
+                  </div>
+                </div>
+              </a>
+
+              {/* Card 5: Solid Announcement Card */}
+              <a
+                href="#/events/registration"
+                className="flex flex-col bg-primary rounded-xl p-8 justify-between text-left border border-primary hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-lg h-full group cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-lg bg-accent text-primary flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
+                  <Trophy size={24} weight="bold" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-accent uppercase tracking-widest mb-2 block">
+                    UPCOMING TRIALS
+                  </span>
+                  <h3 className="text-lg font-extrabold text-white mb-3 leading-snug group-hover:text-accent transition-colors">
+                    Join Our Annual Selection Trials & Camps
+                  </h3>
+                  <p className="text-white/85 text-xs leading-relaxed mb-6">
+                    Annual selection trials are open for resident academy scholarships. Open to under-17 girls and boys in multiple athletic fields.
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-accent group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                  REGISTER NOW &rarr;
+                </span>
+              </a>
+
             </div>
 
-            <div className="bg-white p-10 rounded-xl border border-border-gray hover:border-transparent hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-[60px] h-[60px] rounded-full bg-primary/5 text-primary flex items-center justify-center text-2xl mb-6 group-hover:bg-accent group-hover:text-primary transition-all">
-                <Heartbeat size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-primary mb-3">Sports Science & Diet</h3>
-              <p className="text-text-light text-sm leading-relaxed">
-                Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
       {/* Success Testimonials Section */}
-      <section className="py-20 bg-soft-light w-full">
+      <section ref={storiesRef} className="py-24 bg-soft-light w-full border-t border-border-gray/30 overflow-hidden">
         <div className="max-w-[1240px] mx-auto px-5">
-          <div className="text-center max-w-[700px] mx-auto mb-12">
+          <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               Success Stories
             </h2>
             <p className="text-text-light text-base md:text-lg">
-              Real words from our athletes representing regional and national teams.
+              Meet our elite young champions whose lives and athletic careers were transformed at the academy.
             </p>
           </div>
 
-          <TestimonialsCarousel />
+          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth scroll-pl-5">
+            {successPlayers.map((player, idx) => {
+              const delays = ['delay-0', 'delay-200', 'delay-400'];
+              const delayClass = delays[idx] || 'delay-0';
+              return (
+                <a
+                  href="#/academy/featured-players"
+                  key={idx}
+                  className={`flex-shrink-0 w-[280px] sm:w-[320px] md:w-auto snap-start group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
+                    isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  {/* Image Section */}
+                  <div className="h-[280px] overflow-hidden relative bg-soft-light">
+                    <img
+                      src={player.image}
+                      alt={player.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                    <span className="absolute top-4 left-4 bg-accent text-primary text-[10px] font-black tracking-[0.12em] uppercase py-1 px-3.5 rounded-full shadow-sm leading-none border border-white/20">
+                      {player.sport}
+                    </span>
+                  </div>
+
+                  {/* Details Section */}
+                  <div className="p-8 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-primary mb-1 group-hover:text-accent transition-colors">
+                        {player.name}
+                      </h3>
+                      <span className="text-[11px] font-extrabold text-accent uppercase tracking-wider block mb-4">
+                        {player.achievement}
+                      </span>
+                      <p className="text-text-light text-sm leading-relaxed mb-4">
+                        {player.description}
+                      </p>
+                      <div className="pl-3 border-l-2 border-accent/60 italic text-xs text-text-light/95 leading-relaxed mb-6 font-medium">
+                        "{player.quote}"
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-dashed border-border-gray/40 flex justify-between items-center text-[11px] text-text-light font-bold">
+                      <span>Joined Academy:</span>
+                      <span className="text-primary">{player.joined}</span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
         </div>
       </section>
     </div>
