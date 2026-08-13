@@ -406,18 +406,18 @@ export const Home: React.FC = () => {
             {/* Sliding Buttons (Visible on all screens, styled responsive target) */}
             <button 
               onClick={() => setCurrentMember((prev) => (prev - 1 + team.length) % team.length)}
-              className="flex absolute left-1.5 sm:left-6 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
+              className="flex absolute left-3 sm:left-6 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Previous Member"
             >
-              <CaretLeft size={18} weight="bold" />
+              <CaretLeft className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
             </button>
 
             <button 
               onClick={() => setCurrentMember((prev) => (prev + 1) % team.length)}
-              className="flex absolute right-1.5 sm:right-6 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
+              className="flex absolute right-3 sm:right-6 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Next Member"
             >
-              <CaretRight size={18} weight="bold" />
+              <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
             </button>
 
             {/* Slider Viewport Container */}
@@ -428,12 +428,12 @@ export const Home: React.FC = () => {
                   <a
                     href="#/about/founders"
                     key={idx}
-                    className={`absolute inset-x-0 top-0 transition-all duration-500 ease-in-out transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[560px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[560px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
-                        ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto z-10' 
+                        ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
-                          ? 'opacity-0 -translate-x-full scale-95 pointer-events-none z-0'
-                          : 'opacity-0 translate-x-full scale-95 pointer-events-none z-0'
+                          ? 'opacity-0 translate-x-0 sm:-translate-x-full sm:scale-95 pointer-events-none z-0'
+                          : 'opacity-0 translate-x-0 sm:translate-x-full sm:scale-95 pointer-events-none z-0'
                     }`}
                   >
                     {/* Left Column: Photo */}
