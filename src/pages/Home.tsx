@@ -345,38 +345,34 @@ export const Home: React.FC = () => {
             })}
           </div>
 
-          {/* Mobile Layout: Infinite Horizontal Sliding Loop Track */}
-          <div className="md:hidden overflow-hidden w-full relative py-4">
-            {/* Edge fade gradient overlays */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-soft-light to-transparent z-30 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-soft-light to-transparent z-30 pointer-events-none"></div>
-
-            <div className="animate-marquee gap-6">
-              {[...cards, ...cards].map((card, idx) => {
+          {/* Mobile Layout: Swipeable Horizontal Carousel with Center Snapping */}
+          <div className="md:hidden w-full relative py-4">
+            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5">
+              {cards.map((card, idx) => {
                 const CardIcon = card.icon;
                 return (
                   <div
                     key={idx}
-                    className="rounded-lg overflow-hidden shadow-lg border border-border-gray relative h-[300px] bg-primary cursor-pointer w-[240px] flex-shrink-0"
+                    className="rounded-xl overflow-hidden shadow-lg border border-border-gray/30 relative h-[340px] bg-primary cursor-pointer w-[85vw] max-w-[320px] flex-shrink-0 snap-center first:ml-[7.5vw] last:mr-[7.5vw]"
                   >
                     <div
                       className="absolute inset-0 bg-cover bg-center"
                       style={{ backgroundImage: `url('${card.image}')` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10" />
                     <a
                       href="#/about/what-we-do"
-                      className="absolute inset-0 z-20 flex flex-col justify-end p-4 text-white text-left no-underline h-full"
+                      className="absolute inset-0 z-20 flex flex-col justify-end p-6 text-white text-left no-underline h-full"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-accent text-primary flex items-center justify-center mb-3 shadow-lg flex-shrink-0">
-                        <CardIcon size={18} weight="bold" />
+                      <div className="w-11 h-11 rounded-lg bg-accent text-primary flex items-center justify-center mb-4 shadow-md flex-shrink-0">
+                        <CardIcon size={22} weight="bold" />
                       </div>
-                      <span className="text-[8px] font-bold text-accent tracking-widest uppercase block mb-1">{card.tag}</span>
-                      <h3 className="text-base font-extrabold tracking-tight mb-1">{card.title}</h3>
-                      <p className="text-white/80 text-[10px] leading-relaxed font-semibold">
+                      <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">{card.tag}</span>
+                      <h3 className="text-xl font-extrabold tracking-tight mb-2">{card.title}</h3>
+                      <p className="text-white/80 text-xs leading-relaxed font-semibold mb-2">
                         {card.description}
                       </p>
-                      <span className="text-[8px] font-bold text-accent mt-3 flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-accent flex items-center gap-1">
                         LEARN MORE &rarr;
                       </span>
                     </a>
