@@ -403,21 +403,21 @@ export const Home: React.FC = () => {
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
-            {/* Sliding Buttons (Hidden on mobile/small screens, flex displayed on sm screens and above) */}
+            {/* Sliding Buttons (Visible on all screens, styled responsive target) */}
             <button 
               onClick={() => setCurrentMember((prev) => (prev - 1 + team.length) % team.length)}
-              className="hidden sm:flex absolute left-0 sm:left-6 top-1/2 -translate-y-1/2 w-10 md:w-12 h-10 md:h-12 rounded-full bg-white shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
+              className="flex absolute left-1.5 sm:left-6 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
               aria-label="Previous Member"
             >
-              <CaretLeft size={20} weight="bold" />
+              <CaretLeft size={18} weight="bold" />
             </button>
 
             <button 
               onClick={() => setCurrentMember((prev) => (prev + 1) % team.length)}
-              className="hidden sm:flex absolute right-0 sm:right-6 top-1/2 -translate-y-1/2 w-10 md:w-12 h-10 md:h-12 rounded-full bg-white shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
+              className="flex absolute right-1.5 sm:right-6 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary"
               aria-label="Next Member"
             >
-              <CaretRight size={20} weight="bold" />
+              <CaretRight size={18} weight="bold" />
             </button>
 
             {/* Slider Viewport Container */}
