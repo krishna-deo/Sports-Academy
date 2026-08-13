@@ -83,7 +83,7 @@ export const Header: React.FC = () => {
         <div className="max-w-[1240px] mx-auto px-5 flex justify-between items-center h-20">
 
           {/* Brand Logo */}
-          <a href="#/" className="flex items-center gap-3.5 mr-4 group">
+          <a href="#/" className="flex items-center gap-1.5 sm:gap-3.5 mr-4 group">
             {/* Direct Circular Logo (Simple, transparent and clean, no border/shadow) */}
             <img
               src="/images/logo.png"
@@ -92,17 +92,17 @@ export const Header: React.FC = () => {
             />
 
             {/* Elegant Vertical Divider */}
-            <div className="h-10 w-[1px] bg-slate-300 block"></div>
+            <div className="h-8 sm:h-10 w-[1px] bg-slate-300 block"></div>
 
             {/* Typography Lockup matching the shared image exactly */}
             <div className="flex flex-col justify-center text-left">
               <span
-                className="logo-title text-2xl md:text-[25px] font-black text-[#082142] leading-none transition-colors duration-300"
+                className="logo-title text-xl sm:text-2xl md:text-[25px] font-black text-[#082142] leading-none transition-colors duration-300"
               >
                 RLBSA
               </span>
               <span
-                className="logo-subtitle text-[9.5px] md:text-[10px] font-black text-[#00a896] leading-none mt-1"
+                className="logo-subtitle text-[8px] sm:text-[9.5px] md:text-[10px] font-black text-[#00a896] leading-none mt-1"
               >
                 FOUNDATION
               </span>
@@ -146,10 +146,10 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Header Action Button & Mobile Toggle */}
-          <div className="flex items-center gap-4 ml-auto xl:ml-0">
+          <div className="flex items-center gap-2 sm:gap-4 ml-auto xl:ml-0">
             <a
               href="#/donate"
-              className="bg-accent text-primary text-[13px] font-bold py-2 px-5 hover:bg-primary hover:text-white transition-all duration-200 whitespace-nowrap shrink-0 rounded"
+              className="bg-accent text-primary text-[12px] sm:text-[13px] font-bold py-1.5 px-3 sm:py-2 sm:px-5 hover:bg-primary hover:text-white transition-all duration-200 whitespace-nowrap shrink-0 rounded"
               id="btn-donate"
             >
               DONATE NOW
