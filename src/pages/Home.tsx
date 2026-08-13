@@ -406,7 +406,7 @@ export const Home: React.FC = () => {
             {/* Sliding Buttons (Visible on all screens, styled responsive target) */}
             <button 
               onClick={() => setCurrentMember((prev) => (prev - 1 + team.length) % team.length)}
-              className="flex absolute left-3 sm:left-6 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="flex absolute left-6 sm:left-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Previous Member"
             >
               <CaretLeft className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
@@ -414,7 +414,7 @@ export const Home: React.FC = () => {
 
             <button 
               onClick={() => setCurrentMember((prev) => (prev + 1) % team.length)}
-              className="flex absolute right-3 sm:right-6 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/95 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="flex absolute right-6 sm:right-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Next Member"
             >
               <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
