@@ -423,15 +423,15 @@ export const Home: React.FC = () => {
               <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
             </button>
 
-            {/* Slider Viewport Container (List view on mobile, slider on desktop) */}
-            <div className="flex flex-col gap-6 sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px]">
+            {/* Slider Viewport Container (Horizontal swipe on mobile, slider on desktop) */}
+            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px] sm:px-0 sm:mx-0">
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
                 return (
                   <a
                     href="#/about/founders"
                     key={idx}
-                    className={`relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-0 sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-[7.5vw] last:mr-[7.5vw] sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[480px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -440,7 +440,7 @@ export const Home: React.FC = () => {
                     }`}
                   >
                     {/* Left Column: Photo */}
-                    <div className="w-full sm:w-[340px] md:w-[400px] h-[300px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
+                    <div className="w-full sm:w-[340px] md:w-[400px] h-[240px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
                       <img 
                         src={member.image} 
                         alt={member.name} 
@@ -451,14 +451,14 @@ export const Home: React.FC = () => {
                     </div>
 
                     {/* Right Column: Member Details (Vertically Aligned) */}
-                    <div className="flex-grow p-8 sm:p-12 md:p-16 flex flex-col justify-center text-left">
-                      <h3 className="text-3xl md:text-4xl font-extrabold text-primary mb-2 leading-tight">
+                    <div className="flex-grow p-6 sm:p-12 md:p-16 flex flex-col justify-center text-left">
+                      <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary mb-2 leading-tight">
                         {member.name}
                       </h3>
                       <span className="text-[11px] md:text-[12.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-4 block leading-none">
                         {member.role}
                       </span>
-                      <p className="text-text-light text-base md:text-lg leading-relaxed max-w-[580px]">
+                      <p className="text-text-light text-sm sm:text-base md:text-lg leading-relaxed max-w-[580px]">
                         {member.bio}
                       </p>
                     </div>
