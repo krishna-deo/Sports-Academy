@@ -48,7 +48,7 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
 export const About: React.FC<AboutProps> = ({ sub }) => {
 
   return (
-    <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in">
+    <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       {sub === 'story' && (
         <>
           <div className="text-center max-w-[700px] mx-auto mb-16">

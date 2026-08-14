@@ -33,7 +33,7 @@ export const Donate: React.FC = () => {
   const finalAmount = amount === 'custom' ? customAmount : amount;
 
   return (
-    <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in text-left">
+    <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in text-left">
       <div className="text-center max-w-[750px] mx-auto mb-16">
         <span className="text-xs font-bold text-accent uppercase tracking-widest bg-accent/10 px-3.5 py-1.5 rounded-full inline-block mb-3.5">
           Support Our Foundation

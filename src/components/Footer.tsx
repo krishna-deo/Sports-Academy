@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-primary text-white pt-20 font-main">
-      <div className="max-w-[1240px] mx-auto px-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/10">
+      <div className="max-w-[1380px] mx-auto px-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/10">
         
         {/* Footer Brand Column */}
         <div className="flex flex-col gap-5">
@@ -103,7 +103,7 @@ export const Footer: React.FC = () => {
 
       {/* Bottom Copyright Bar */}
       <div className="bg-[#002D2D] py-6 text-xs text-white/50">
-        <div className="max-w-[1240px] mx-auto px-5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-[1380px] mx-auto px-5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p>&copy; 2026 Ranilaxmibai Sports Academy. All Rights Reserved.</p>
           <div className="flex gap-5">
             <a href="#" className="hover:text-accent">Privacy Policy</a>

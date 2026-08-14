@@ -92,7 +92,7 @@ export const HeroSlider: React.FC = () => {
           {/* Dark Overlay gradient */}
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-black/80 via-black/45 to-black/75 z-10"></div>
 
-          <div className="max-w-[1240px] mx-auto px-5 w-full relative z-20">
+          <div className="max-w-[1380px] mx-auto px-5 w-full relative z-20">
             <div className="max-w-[850px] text-left text-white">
               <span className="text-accent text-[13px] md:text-[14px] font-black tracking-[0.2em] uppercase mb-1.5 inline-block">
                 {slide.tagline}

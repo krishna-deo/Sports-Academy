@@ -82,7 +82,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
   };
 
   return (
-    <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in">
+    <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       {sub === 'coaches' && (
         <>
           <div className="text-center max-w-[700px] mx-auto mb-16">

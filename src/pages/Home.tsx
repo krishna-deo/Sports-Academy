@@ -239,7 +239,7 @@ export const Home: React.FC = () => {
 
       {/* About RLBSA Section */}
       <section className="py-10 md:py-24 bg-white w-full border-b border-border-gray/50 overflow-hidden">
-        <div className="max-w-[1240px] mx-auto px-5">
+        <div className="max-w-[1380px] mx-auto px-5">
           <div
             ref={aboutRef}
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
@@ -310,7 +310,7 @@ export const Home: React.FC = () => {
 
       {/* What We Do Cards Grid Section */}
       <section className="py-20 bg-soft-light w-full select-none border-b border-border-gray/50">
-        <div className="max-w-[1240px] mx-auto px-5">
+        <div className="max-w-[1380px] mx-auto px-5">
           <div className="text-center max-w-[700px] mx-auto mb-12">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               What We Do
@@ -403,7 +403,7 @@ export const Home: React.FC = () => {
 
       {/* Founders & Key Members Section */}
       <section className="py-24 px-5 bg-white w-full border-b border-border-gray/50 overflow-hidden select-none">
-        <div className="max-w-[1240px] mx-auto">
+        <div className="max-w-[1380px] mx-auto">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               Founders & Key Members
@@ -416,7 +416,7 @@ export const Home: React.FC = () => {
           {/* Slider Outer Wrapper */}
           <div 
             ref={teamRef}
-            className={`relative max-w-[1240px] mx-auto px-4 sm:px-16 md:px-24 transition-all duration-[1000ms] ease-out transform ${
+            className={`relative max-w-[1380px] mx-auto px-4 sm:px-8 md:px-10 transition-all duration-[1000ms] ease-out transform ${
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
@@ -501,7 +501,7 @@ export const Home: React.FC = () => {
 
       {/* The RLBSA Edge Section */}
       <section ref={edgeRef} className="py-24 bg-soft-light/40 w-full border-b border-border-gray/50 overflow-hidden">
-        <div className="max-w-[1240px] mx-auto px-5">
+        <div className="max-w-[1380px] mx-auto px-5">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               RLBSA Edge
@@ -672,7 +672,7 @@ export const Home: React.FC = () => {
 
       {/* Success Testimonials Section */}
       <section ref={storiesRef} className="py-24 bg-soft-light w-full border-t border-border-gray/30 overflow-hidden">
-        <div className="max-w-[1240px] mx-auto px-5">
+        <div className="max-w-[1380px] mx-auto px-5">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               Success Stories

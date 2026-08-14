@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
 
       {/* Header Navigation */}
       <header className="bg-white fixed top-0 left-0 w-full z-50 shadow-sm transition-all duration-300">
-        <div className="max-w-[1240px] mx-auto px-5 flex justify-between items-center h-20">
+        <div className="max-w-[1380px] mx-auto px-5 flex justify-between items-center h-20">
 
           {/* Brand Logo */}
           <a href="#/" className="flex items-center gap-1.5 sm:gap-3.5 mr-4 group">

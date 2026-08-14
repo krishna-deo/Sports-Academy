@@ -123,7 +123,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
 
   if (sub === 'registration') {
     return (
-      <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in">
+      <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
         <div className="text-center max-w-[700px] mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
             Event & Camp Registration
@@ -351,7 +351,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
   }
 
   return (
-    <section className="py-20 px-5 max-w-[1240px] mx-auto animate-fade-in">
+    <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       <div className="text-center max-w-[700px] mx-auto mb-12">
         <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
           {pageTitle}
