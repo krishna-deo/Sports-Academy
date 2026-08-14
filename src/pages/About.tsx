@@ -479,6 +479,64 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                 </>
               )}
             </RevealRow>
+
+            {/* 5. Gym & Fitness (Image Left, Text Right) */}
+            <RevealRow id="gym" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Image */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
+                      <img src="/images/gym_card.png" alt="Gym & Fitness" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+
+                  {/* Right Column: Details */}
+                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Strength & Conditioning</span>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Gym & Fitness</h3>
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                      Equipped with modern strength-building and cardio training machinery designed specifically for high-performance athletes. The gym has personal conditioning trainers who design custom workouts and physical therapists who guide rehabilitation and injury recovery.
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
+                      <li className="flex items-center gap-2">🏋️ Advanced Strength Gear</li>
+                      <li className="flex items-center gap-2">💪 Conditioning Audits</li>
+                      <li className="flex items-center gap-2">🧘 Injury Rehab & Physio</li>
+                      <li className="flex items-center gap-2">🏋️‍♀️ Trainer Supervision</li>
+                    </ul>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* 6. Transportation (Text Left, Image Right) */}
+            <RevealRow id="transportation" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Details */}
+                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
+                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Safe Transit</span>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Transportation</h3>
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                      Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
+                      <li className="flex items-center gap-2">🚌 Free Pick & Drop</li>
+                      <li className="flex items-center gap-2">📍 GPS Fleet Tracking</li>
+                      <li className="flex items-center gap-2">🛡️ Safe & Trained Drivers</li>
+                      <li className="flex items-center gap-2">🕒 Daily Timely Commutes</li>
+                    </ul>
+                  </div>
+
+                  {/* Right Column: Image */}
+                  <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
+                      <img src="/images/transportation_card.png" alt="Transportation" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
           </div>
         </>
       )}
