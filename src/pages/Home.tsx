@@ -514,155 +514,158 @@ export const Home: React.FC = () => {
           {/* Grid Layout inspired by Reliance Foundation */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
             
-            {/* Column 1: Large Featured Card (Spans full height on desktop) */}
-            <div className="lg:col-span-1 flex">
-              <a
-                href="#/about/what-we-do"
-                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
-                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                }`}
-              >
-                <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
-                  <img
-                    src="/images/about_rlbsa.png"
-                    alt="RLBSA Residential Scholarship"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                  />
-                </div>
-                <div className="p-8 flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
-                      RESIDENTIAL SCHOLARSHIP
-                    </span>
-                    <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
-                      “We identify raw grassroots potential and nurture them into national-level sports champions.”
-                    </h3>
-                    <p className="text-text-light text-sm leading-relaxed mb-6">
-                      RLBSA provides selected talented kids from rural Bihar with free professional coaching, fully sponsored boarding, sports diet, and educational support.
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
-                    READ MORE &rarr;
-                  </span>
-                </div>
-              </a>
-            </div>
-
-            {/* Columns 2 & 3: 2x2 Grid of Smaller Cards */}
-            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
-              
-              {/* Card 2: Certified Curriculum */}
-              <a
-                href="#/about/what-we-do"
-                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-150 group cursor-pointer ${
-                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                }`}
-              >
-                <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                  <img
-                    src="/images/sports_training_card.jpg"
-                    alt="Certified Curriculum"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                  />
-                </div>
-                <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                      CURRICULUM
-                    </span>
-                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                      Structured Multi-Sport Development Pathways
-                    </h3>
-                    <p className="text-text-light text-xs leading-relaxed">
-                      Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
-                    </p>
-                  </div>
-                </div>
-              </a>
-
-              {/* Card 3: Modern Infrastructure */}
-              <a
-                href="#/about/facilities"
-                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-300 group cursor-pointer ${
-                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                }`}
-              >
-                <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                  <img
-                    src="/images/hero2.jpg"
-                    alt="Modern Infrastructure"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                  />
-                </div>
-                <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                      INFRASTRUCTURE
-                    </span>
-                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                      Vast Olympic-Level Sports Facilities & Arenas
-                    </h3>
-                    <p className="text-text-light text-xs leading-relaxed">
-                      Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
-                    </p>
-                  </div>
-                </div>
-              </a>
-
-              {/* Card 4: Sports Science & Diet */}
-              <a
-                href="#/about/what-we-do"
-                className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-450 group cursor-pointer ${
-                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                }`}
-              >
-                <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                  <img
-                    src="/images/nutrition_card.jpg"
-                    alt="Sports Science & Diet"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                  />
-                </div>
-                <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                      SPORTS SCIENCE
-                    </span>
-                    <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                      Calorie-Mapped Nutrition & Rehab Metrics
-                    </h3>
-                    <p className="text-text-light text-xs leading-relaxed">
-                      Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
-                    </p>
-                  </div>
-                </div>
-              </a>
-
-              {/* Card 5: Solid Announcement Card */}
-              <a
-                href="#/events/registration"
-                className={`flex flex-col bg-primary rounded-xl p-8 justify-between text-left border border-primary hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-600 shadow-sm hover:shadow-lg h-full group cursor-pointer ${
-                  isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                }`}
-              >
-                <div className="w-12 h-12 rounded-lg bg-accent text-primary flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                  <Trophy size={24} weight="bold" />
-                </div>
-                <div>
-                  <span className="text-[9px] font-black text-accent uppercase tracking-widest mb-2 block">
-                    UPCOMING TRIALS
-                  </span>
-                  <h3 className="text-lg font-extrabold text-white mb-3 leading-snug group-hover:text-accent transition-colors">
-                    Join Our Annual Selection Trials & Camps
-                  </h3>
-                  <p className="text-white/85 text-xs leading-relaxed mb-6">
-                    Annual selection trials are open for resident academy scholarships. Open to under-17 girls and boys in multiple athletic fields.
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-accent group-hover:translate-x-1 transition-transform flex items-center gap-1 mt-auto">
-                  REGISTER NOW &rarr;
-                </span>
-              </a>
+             {/* Column 1: Large Featured Card (Spans full height on desktop) */}
+             <div className="lg:col-span-1 flex">
+               <a
+                 href="#/academy/success-stories"
+                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
+                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                 }`}
+               >
+                 <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
+                   <img
+                     src="/images/role_models_card.png"
+                     alt="RLBSA Role Models"
+                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                   />
+                 </div>
+                 <div className="p-8 flex flex-col justify-between flex-grow text-left">
+                   <div>
+                     <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
+                       ROLE MODELS
+                     </span>
+                     <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
+                       “Our athletes inspire future generations of rural sports champions.”
+                     </h3>
+                     <p className="text-text-light text-sm leading-relaxed mb-6">
+                       RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
+                     </p>
+                   </div>
+                   <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
+                     MEET CHAMPIONS &rarr;
+                   </span>
+                 </div>
+               </a>
+             </div>
+ 
+             {/* Columns 2 & 3: 2x2 Grid of Smaller Cards */}
+             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+               
+               {/* Card 2: Certified Curriculum */}
+               <a
+                 href="#/about/what-we-do"
+                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-150 group cursor-pointer ${
+                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                 }`}
+               >
+                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                   <img
+                     src="/images/sports_training_card.jpg"
+                     alt="Certified Curriculum"
+                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                   />
+                 </div>
+                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                   <div>
+                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                       CURRICULUM
+                     </span>
+                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                       Structured Multi-Sport Development Pathways
+                     </h3>
+                     <p className="text-text-light text-xs leading-relaxed">
+                       Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
+                     </p>
+                   </div>
+                 </div>
+               </a>
+ 
+               {/* Card 3: Modern Infrastructure */}
+               <a
+                 href="#/about/facilities"
+                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-300 group cursor-pointer ${
+                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                 }`}
+               >
+                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                   <img
+                     src="/images/hero2.jpg"
+                     alt="Modern Infrastructure"
+                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                   />
+                 </div>
+                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                   <div>
+                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                       INFRASTRUCTURE
+                     </span>
+                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                       Vast Olympic-Level Sports Facilities & Arenas
+                     </h3>
+                     <p className="text-text-light text-xs leading-relaxed">
+                       Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
+                     </p>
+                   </div>
+                 </div>
+               </a>
+ 
+               {/* Card 4: Sports Science & Diet */}
+               <a
+                 href="#/about/what-we-do"
+                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-450 group cursor-pointer ${
+                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                 }`}
+               >
+                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                   <img
+                     src="/images/nutrition_card.jpg"
+                     alt="Sports Science & Diet"
+                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                   />
+                 </div>
+                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                   <div>
+                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                       SPORTS SCIENCE
+                     </span>
+                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                       Calorie-Mapped Nutrition & Rehab Metrics
+                     </h3>
+                     <p className="text-text-light text-xs leading-relaxed">
+                       Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
+                     </p>
+                   </div>
+                 </div>
+               </a>
+ 
+               {/* Card 5: Residential Scholarship (Moved & Shrunk) */}
+               <a
+                 href="#/about/what-we-do"
+                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-600 group cursor-pointer ${
+                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                 }`}
+               >
+                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                   <img
+                     src="/images/about_rlbsa.png"
+                     alt="Residential Scholarship"
+                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                   />
+                 </div>
+                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                   <div>
+                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                       RESIDENTIAL SCHOLARSHIP
+                     </span>
+                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                       Grassroots Potential to National Champions
+                     </h3>
+                     <p className="text-text-light text-xs leading-relaxed">
+                       Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
+                     </p>
+                   </div>
+                 </div>
+               </a>
 
             </div>
 
