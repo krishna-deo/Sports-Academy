@@ -162,6 +162,9 @@ export const Home: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return;
+    }
     const timer = setInterval(() => {
       setCurrentMember((prev) => (prev + 1) % team.length);
     }, 3000); // Auto-slide every 3 seconds
@@ -403,10 +406,10 @@ export const Home: React.FC = () => {
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
-            {/* Sliding Buttons (Visible on all screens, styled responsive target) */}
+            {/* Sliding Buttons (Visible on desktop/tablet, hidden on mobile) */}
             <button 
               onClick={() => setCurrentMember((prev) => (prev - 1 + team.length) % team.length)}
-              className="flex absolute left-6 sm:left-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="hidden sm:flex absolute left-6 sm:left-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Previous Member"
             >
               <CaretLeft className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
@@ -414,26 +417,26 @@ export const Home: React.FC = () => {
 
             <button 
               onClick={() => setCurrentMember((prev) => (prev + 1) % team.length)}
-              className="flex absolute right-6 sm:right-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="hidden sm:flex absolute right-6 sm:right-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
               aria-label="Next Member"
             >
               <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
             </button>
 
-            {/* Slider Viewport Container */}
-            <div className="relative overflow-hidden w-full min-h-[580px] sm:min-h-[460px] md:min-h-[380px]">
+            {/* Slider Viewport Container (List view on mobile, slider on desktop) */}
+            <div className="flex flex-col gap-6 sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px]">
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
                 return (
                   <a
                     href="#/about/founders"
                     key={idx}
-                    className={`absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[560px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-0 sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
-                          ? 'opacity-0 translate-x-0 sm:-translate-x-full sm:scale-95 pointer-events-none z-0'
-                          : 'opacity-0 translate-x-0 sm:translate-x-full sm:scale-95 pointer-events-none z-0'
+                          ? 'opacity-100 sm:opacity-0 translate-x-0 sm:-translate-x-full sm:scale-95 pointer-events-auto sm:pointer-events-none z-10 sm:z-0'
+                          : 'opacity-100 sm:opacity-0 translate-x-0 sm:translate-x-full sm:scale-95 pointer-events-auto sm:pointer-events-none z-10 sm:z-0'
                     }`}
                   >
                     {/* Left Column: Photo */}
@@ -464,8 +467,8 @@ export const Home: React.FC = () => {
               })}
             </div>
 
-            {/* Dots Indicator */}
-            <div className="flex justify-center gap-2.5 mt-8">
+            {/* Dots Indicator (Hidden on mobile) */}
+            <div className="hidden sm:flex justify-center gap-2.5 mt-8">
               {team.map((_, idx) => (
                 <button
                   key={idx}
