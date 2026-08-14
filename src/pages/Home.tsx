@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Barbell, Bus } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 
 export const Home: React.FC = () => {
@@ -200,6 +200,20 @@ export const Home: React.FC = () => {
       description: 'Secure gated campus, studying rooms, and clean laundry.',
       image: '/images/hostel_card.png',
       icon: House,
+    },
+    {
+      title: 'Gym & Fitness',
+      tag: 'Strength & Conditioning',
+      description: 'Fully equipped high-performance gym, strength training, and rehabilitation.',
+      image: '/images/gym_card.png',
+      icon: Barbell,
+    },
+    {
+      title: 'Transportation',
+      tag: 'Safe Transit',
+      description: 'Daily safe pickup and drop facilities for local and remote student-athletes.',
+      image: '/images/transportation_card.png',
+      icon: Bus,
     },
   ];
 
