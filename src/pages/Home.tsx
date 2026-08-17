@@ -441,6 +441,7 @@ export const Home: React.FC = () => {
                         src={member.image} 
                         alt={member.name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        style={{ objectPosition: member.objectPosition || 'center' }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
                       <div className="absolute inset-0 bg-gradient-to-l from-black/15 via-transparent to-transparent pointer-events-none" />

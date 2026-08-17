@@ -725,7 +725,12 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                           : (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8')
                       } ${!isEven ? 'order-1 md:order-2' : ''}`}>
                         <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
-                          <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                          <img 
+                            src={member.image} 
+                            alt={member.name} 
+                            className="w-full h-full object-cover" 
+                            style={{ objectPosition: member.objectPosition || 'center' }}
+                          />
                         </div>
                       </div>
                     );

@@ -5,6 +5,7 @@ export interface TeamMember {
   role: string;
   bio: string;
   image: string;
+  objectPosition?: string;
 }
 
 export const teamMembers: TeamMember[] = [
@@ -14,6 +15,7 @@ export const teamMembers: TeamMember[] = [
     role: 'Founder & Director',
     bio: 'A visionary leader and sports administrator, Mr. Pathak founded the academy with a commitment to providing state-of-the-art training infrastructure and supporting grassroots athletes from underprivileged rural communities.',
     image: '/images/Mr. Sanjay Pathak (Founder and Director).jpeg',
+    objectPosition: 'center 15%',
   },
   {
     id: 'shrad-chaudhary',
@@ -21,6 +23,7 @@ export const teamMembers: TeamMember[] = [
     role: 'Director',
     bio: 'An accomplished academician and sports enthusiast, Dr. Chaudhary oversees sports integration programs, fostering a balanced approach between academic development and physical excellence for student-athletes.',
     image: '/images/Dr. Shrad Chaudhary (Director).jpeg',
+    objectPosition: 'center 15%',
   },
   {
     id: 'rita-sinha',
@@ -28,6 +31,7 @@ export const teamMembers: TeamMember[] = [
     role: 'Director',
     bio: 'A dedicated advocate for youth empowerment and sports education, Dr. Sinha specializes in building inclusive developmental programs, mentoring junior athletes, and promoting sports wellness initiatives.',
     image: '/images/Dr. Rita Sinha (Director).jpeg',
+    objectPosition: 'center 10%',
   },
   {
     id: 'rajeev-mishra',
@@ -35,6 +39,7 @@ export const teamMembers: TeamMember[] = [
     role: 'Director',
     bio: 'Bringing years of administrative expertise, Mr. Mishra leads strategic growth and partnership building, steering the academy\'s community outreach programs and talent scout networks.',
     image: '/images/Rajeev Lochan Mishra (Director).jpeg',
+    objectPosition: 'center 10%',
   },
   {
     id: 'alakh-pandey',
@@ -42,5 +47,6 @@ export const teamMembers: TeamMember[] = [
     role: 'Director',
     bio: 'Mr. Pandey guides the development of residential infrastructure, campus operations, and athlete welfare programs, ensuring a secure and supportive training environment.',
     image: '/images/Dr. Alakh Niranjan Pandey (Director).jpeg',
+    objectPosition: 'center 15%',
   },
 ];
