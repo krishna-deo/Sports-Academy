@@ -16,11 +16,11 @@ export const teamMembers: TeamMember[] = [
     image: '/images/Mr. Sanjay Pathak (Founder and Director).jpeg',
   },
   {
-    id: 'sharad-sinha',
-    name: 'Dr. Sharad Sinha',
+    id: 'shrad-chaudhary',
+    name: 'Dr. Shrad Chaudhary',
     role: 'Director',
-    bio: 'An accomplished academician and sports enthusiast, Dr. Sinha oversees sports integration programs, fostering a balanced approach between academic development and physical excellence for student-athletes.',
-    image: '/images/Dr. Sharad Sinha (Director).jpeg',
+    bio: 'An accomplished academician and sports enthusiast, Dr. Chaudhary oversees sports integration programs, fostering a balanced approach between academic development and physical excellence for student-athletes.',
+    image: '/images/Dr. Shrad Chaudhary (Director).jpeg',
   },
   {
     id: 'rita-sinha',
