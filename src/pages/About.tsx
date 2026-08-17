@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eye, Target } from '@phosphor-icons/react';
 import { SportSVG } from '../components/SportSVG';
+import { teamMembers } from '../data/teamData';
 
 interface AboutProps {
   sub: string;
@@ -712,74 +713,51 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
 
           {/* Staggered Alternating Rows (Flat Typography Theme) */}
           <div className="flex flex-col gap-28 max-w-[1140px] mx-auto overflow-hidden pb-12">
-            {/* 1. Sanjay Kumar (Image Left, Details Right) */}
-            <RevealRow id="sanjay" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/member_sanjay.png" alt="Sanjay Kumar" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
+            {teamMembers.map((member, idx) => {
+              const isEven = idx % 2 === 0;
+              return (
+                <RevealRow key={member.id} id={member.id} className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+                  {(isVisible) => {
+                    const imageCol = (
+                      <div className={`transition-all duration-[1000ms] ease-out transform ${
+                        isEven 
+                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8')
+                          : (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8')
+                      } ${!isEven ? 'order-1 md:order-2' : ''}`}>
+                        <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
+                          <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                    );
 
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-                    <span className="text-[11px] md:text-[12.5px] font-black tracking-[0.15em] uppercase mb-2 block leading-none text-accent">Founder & President</span>
-                    <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">Sanjay Kumar</h3>
-                    <p className="text-text-light text-base leading-relaxed mb-6">
-                      Sanjay Kumar is the core visionary who founded Rani Laxmibai Sports Academy. Driven by the mission to elevate sports opportunities for rural youth in Bihar, he established free lodging, training, and academic support to ensure financial background never limits athletic dreams.
-                    </p>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+                    const detailsCol = (
+                      <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${
+                        isEven 
+                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8')
+                          : (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8')
+                      } ${!isEven ? 'order-2 md:order-1' : ''}`}>
+                        <span className="text-[11px] md:text-[12.5px] font-black tracking-[0.15em] uppercase mb-2 block leading-none text-accent">
+                          {member.role}
+                        </span>
+                        <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                          {member.name}
+                        </h3>
+                        <p className="text-text-light text-base leading-relaxed mb-6">
+                          {member.bio}
+                        </p>
+                      </div>
+                    );
 
-            {/* 2. Poonam Devi (Details Left, Image Right) */}
-            <RevealRow id="poonam" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Details */}
-                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-                    <span className="text-[11px] md:text-[12.5px] font-black tracking-[0.15em] uppercase mb-2 block leading-none text-accent">Co-Founder & Director of Welfare</span>
-                    <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">Poonam Devi</h3>
-                    <p className="text-text-light text-base leading-relaxed mb-6">
-                      Poonam Devi co-founded the academy with a strong commitment to children's welfare and safety. She manages hostel operations, nutritional sports diet charting, and is highly active in creating a secure, empowering environment for female athletes.
-                    </p>
-                  </div>
-
-                  {/* Right Column: Image */}
-                  <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/member_poonam.png" alt="Poonam Devi" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 3. Vikram Rathore (Image Left, Details Right) */}
-            <RevealRow id="vikram" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/member_vikram.png" alt="Vikram Rathore" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-                    <span className="text-[11px] md:text-[12.5px] font-black tracking-[0.15em] uppercase mb-2 block leading-none text-accent">Director of Athletics</span>
-                    <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">Vikram Rathore</h3>
-                    <p className="text-text-light text-base leading-relaxed mb-6">
-                      Vikram Rathore manages sports training modules, athlete bio-assessments, and national development pathways. Under his supervision, multiple academy members have qualified for state and national selections across different athletic categories.
-                    </p>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+                    return (
+                      <>
+                        {imageCol}
+                        {detailsCol}
+                      </>
+                    );
+                  }}
+                </RevealRow>
+              );
+            })}
           </div>
         </>
       )}

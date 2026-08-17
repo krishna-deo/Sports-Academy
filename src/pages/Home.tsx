@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Barbell, Bus } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
+import { teamMembers } from '../data/teamData';
 
 export const Home: React.FC = () => {
   const successPlayers = [
@@ -33,26 +34,7 @@ export const Home: React.FC = () => {
     },
   ];
 
-  const team = [
-    {
-      name: 'Sanjay Kumar',
-      role: 'Founder & President',
-      bio: 'A visionary leader dedicated to discovering and elevating grassroots sports talent from underprivileged rural communities.',
-      image: '/images/member_sanjay.png',
-    },
-    {
-      name: 'Poonam Devi',
-      role: 'Co-Founder & Director of Welfare',
-      bio: 'Ensuring absolute care, nutritious sports diet management, and a secure residential environment for academy students.',
-      image: '/images/member_poonam.png',
-    },
-    {
-      name: 'Vikram Rathore',
-      role: 'Director of Athletics',
-      bio: 'Leading sports training modules, athlete biomechanical assessment, and tournament performance pathway strategies.',
-      image: '/images/member_vikram.png',
-    },
-  ];
+  const team = teamMembers;
 
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const aboutRef = React.useRef<HTMLDivElement>(null);
