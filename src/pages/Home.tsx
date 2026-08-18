@@ -2,39 +2,61 @@ import React from 'react';
 import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Barbell, Bus } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
+import { successStories } from '../data/sportsData';
 
 export const Home: React.FC = () => {
-  const successPlayers = [
-    {
-      name: 'Aarti Kumari',
-      sport: 'Handball',
-      achievement: '5x State Gold Medalist',
-      description: 'A key playmaker and captain of our Handball team, Aarti has represented Bihar in multiple national-level school championships.',
-      quote: 'Rani Laxmibai Academy gave me free boarding, kit, and coaching that changed my life. Now, I hope to represent India.',
-      image: '/images/player_aarti.png',
-      joined: 'May 2023',
-    },
-    {
-      name: 'Pooja Patel',
-      sport: 'Football',
-      achievement: 'Best Striker Award (U17)',
-      description: 'An outstanding forward striker who scored 12 goals in the Regional Youth League. She has been shortlisted for state team trials.',
-      quote: 'The intensive practice matches and constant support of coaches prepared me for national-level trials.',
-      image: '/images/player_pooja.png',
-      joined: 'Feb 2024',
-    },
-    {
-      name: 'Rahul Kumar',
-      sport: 'Athletics',
-      achievement: 'National U16 800m Gold',
-      description: 'Rahul is a phenomenal middle-distance runner who clocked a personal best of 1m 58s in the National Athletics Championships.',
-      quote: 'Refining my sprinting form with Coach Vikram helped me shave off half a second from my running times.',
-      image: '/images/player_rahul.png',
-      joined: 'Sep 2024',
-    },
-  ];
-
+  const successPlayers = successStories;
   const team = teamMembers;
+
+  const whatWeDoRef = React.useRef<HTMLDivElement>(null);
+  const [whatWeDoDirection, setWhatWeDoDirection] = React.useState<'right' | 'left'>('right');
+  const foundersScrollRef = React.useRef<HTMLDivElement>(null);
+  const [foundersDirection, setFoundersDirection] = React.useState<'right' | 'left'>('right');
+
+  const handleWhatWeDoScroll = () => {
+    const el = whatWeDoRef.current;
+    if (!el) return;
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
+      setWhatWeDoDirection('left');
+    } else if (el.scrollLeft <= 30) {
+      setWhatWeDoDirection('right');
+    }
+  };
+
+  const handleFoundersScroll = () => {
+    const el = foundersScrollRef.current;
+    if (!el) return;
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
+      setFoundersDirection('left');
+    } else if (el.scrollLeft <= 30) {
+      setFoundersDirection('right');
+    }
+  };
+
+  const handleScrollClick = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    direction: 'right' | 'left',
+    setDirection: React.Dispatch<React.SetStateAction<'right' | 'left'>>
+  ) => {
+    const el = ref.current;
+    if (!el) return;
+    const scrollAmount = el.clientWidth * 0.8;
+    if (direction === 'right') {
+      el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(() => {
+        if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 50) {
+          setDirection('left');
+        }
+      }, 400);
+    } else {
+      el.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      setTimeout(() => {
+        if (el.scrollLeft <= 50) {
+          setDirection('right');
+        }
+      }, 400);
+    }
+  };
 
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const aboutRef = React.useRef<HTMLDivElement>(null);
@@ -245,7 +267,7 @@ export const Home: React.FC = () => {
                 } lg:hidden my-6`}>
                 <div className="relative rounded-md overflow-hidden shadow-2xl group border border-border-gray/30">
                   <img
-                    src="/images/about_rlbsa.png"
+                    src="/images/about_rlbsa.jpeg"
                     alt="Young Indian athletes training at RLBSA"
                     className="w-full h-[300px] object-cover"
                   />
@@ -279,7 +301,7 @@ export const Home: React.FC = () => {
               }`}>
               <div className="relative rounded-md overflow-hidden shadow-2xl group border border-border-gray/30">
                 <img
-                  src="/images/about_rlbsa.png"
+                  src="/images/about_rlbsa.jpeg"
                   alt="Young Indian athletes training at RLBSA"
                   className="w-full h-[450px] object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -346,7 +368,11 @@ export const Home: React.FC = () => {
 
           {/* Mobile Layout: Swipeable Horizontal Carousel with Center Snapping */}
           <div className="md:hidden w-full relative py-4">
-            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar">
+            <div 
+              ref={whatWeDoRef}
+              onScroll={handleWhatWeDoScroll}
+              className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar"
+            >
               {cards.map((card, idx) => {
                 const CardIcon = card.icon;
                 return (
@@ -379,6 +405,23 @@ export const Home: React.FC = () => {
                 );
               })}
             </div>
+            {/* Mobile Swipe Hint */}
+            <button
+              onClick={() => handleScrollClick(whatWeDoRef, whatWeDoDirection, setWhatWeDoDirection)}
+              className="flex items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+            >
+              {whatWeDoDirection === 'right' ? (
+                <>
+                  <span>Swipe Right</span>
+                  <span className="inline-block animate-bounce-horizontal-right">&rarr;</span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block animate-bounce-horizontal">&larr;</span>
+                  <span>Swipe Left</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </section>
@@ -419,8 +462,11 @@ export const Home: React.FC = () => {
               <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
             </button>
 
-            {/* Slider Viewport Container (Horizontal swipe on mobile, slider on desktop) */}
-            <div className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px] sm:px-0 sm:mx-0">
+            <div 
+              ref={foundersScrollRef}
+              onScroll={handleFoundersScroll}
+              className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px] sm:px-0 sm:mx-0"
+            >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
                 return (
@@ -463,6 +509,24 @@ export const Home: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Mobile Swipe Hint */}
+            <button
+              onClick={() => handleScrollClick(foundersScrollRef, foundersDirection, setFoundersDirection)}
+              className="flex sm:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+            >
+              {foundersDirection === 'right' ? (
+                <>
+                  <span>Swipe Right</span>
+                  <span className="inline-block animate-bounce-horizontal-right">&rarr;</span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block animate-bounce-horizontal">&larr;</span>
+                  <span>Swipe Left</span>
+                </>
+              )}
+            </button>
 
             {/* Dots Indicator (Hidden on mobile) */}
             <div className="hidden sm:flex justify-center gap-2.5 mt-8">
@@ -630,7 +694,7 @@ export const Home: React.FC = () => {
                >
                  <div className="h-[160px] overflow-hidden relative bg-soft-light">
                    <img
-                     src="/images/about_rlbsa.png"
+                     src="/images/about_rlbsa.jpeg"
                      alt="Residential Scholarship"
                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                    />
@@ -668,10 +732,10 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar">
+          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar">
             {successPlayers.map((player, idx) => {
-              const delays = ['delay-0', 'delay-200', 'delay-400'];
-              const delayClass = delays[idx] || 'delay-0';
+              const delays = ['delay-0', 'delay-200', 'delay-400', 'delay-600'];
+              const delayClass = delays[idx % 4] || 'delay-0';
               return (
                 <a
                   href="#/academy/featured-players"
@@ -681,37 +745,22 @@ export const Home: React.FC = () => {
                   }`}
                 >
                   {/* Image Section */}
-                  <div className="h-[280px] overflow-hidden relative bg-soft-light">
+                  <div className="h-[340px] overflow-hidden relative bg-soft-light">
                     <img
                       src={player.image}
                       alt={player.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                      className={`w-full h-full object-cover ${player.objectPosition || 'object-top'} group-hover:scale-105 transition-all duration-500`}
                     />
-                    <span className="absolute top-4 left-4 bg-accent text-primary text-[10px] font-black tracking-[0.12em] uppercase py-1 px-3.5 rounded-full shadow-sm leading-none border border-white/20">
-                      {player.sport}
-                    </span>
                   </div>
 
                   {/* Details Section */}
-                  <div className="p-8 flex flex-col justify-between flex-grow text-left">
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-primary mb-1 group-hover:text-accent transition-colors">
-                        {player.name}
-                      </h3>
-                      <span className="text-[11px] font-extrabold text-accent uppercase tracking-wider block mb-4">
-                        {player.achievement}
-                      </span>
-                      <p className="text-text-light text-sm leading-relaxed mb-4">
-                        {player.description}
-                      </p>
-                      <div className="pl-3 border-l-2 border-accent/60 italic text-xs text-text-light/95 leading-relaxed mb-6 font-medium">
-                        "{player.quote}"
-                      </div>
-                    </div>
-                    <div className="pt-4 border-t border-dashed border-border-gray/40 flex justify-between items-center text-[11px] text-text-light font-bold">
-                      <span>Joined Academy:</span>
-                      <span className="text-primary">{player.joined}</span>
-                    </div>
+                  <div className="p-6 flex flex-col justify-center flex-grow text-left">
+                    <h3 className="text-xl font-extrabold text-primary mb-1 group-hover:text-accent transition-colors">
+                      {player.name}
+                    </h3>
+                    <span className="text-xs font-bold text-accent uppercase tracking-wider block">
+                      {player.sport}
+                    </span>
                   </div>
                 </a>
               );

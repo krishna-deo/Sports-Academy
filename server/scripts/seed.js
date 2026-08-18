@@ -134,11 +134,12 @@ const initialEvents = [
 ];
 
 const initialStudents = [
-  { id: "ST-101", name: "Aarti Kumari", age: 16, sport: "Handball", joined: "2023-05-12", medalNumber: 5, avatar: "👩‍🎓" },
-  { id: "ST-102", name: "Pooja Patel", age: 15, sport: "Football", joined: "2024-02-18", medalNumber: 3, avatar: "👩‍🎓" },
-  { id: "ST-103", name: "Rahul Kumar", age: 14, sport: "Athletics", joined: "2024-09-05", medalNumber: 8, avatar: "👨‍🎓" },
-  { id: "ST-104", name: "Soniya Sinha", age: 17, sport: "Handball", joined: "2022-11-20", medalNumber: 2, avatar: "👩‍🎓" },
-  { id: "ST-105", name: "Karan Mehra", age: 15, sport: "Rugby", joined: "2025-01-10", medalNumber: 4, avatar: "👨‍🎓" }
+  { id: "ST-101", name: "Amrit Kumari", age: 24, sport: "Football", joined: "2018-06-15", medalNumber: 15, avatar: "👩‍🎓" },
+  { id: "ST-102", name: "Tara Khatoon", age: 20, sport: "Football", joined: "2020-01-10", medalNumber: 10, avatar: "👩‍🎓" },
+  { id: "ST-103", name: "Khushbu Kumari", age: 21, sport: "Football & Handball", joined: "2019-08-05", medalNumber: 12, avatar: "👩‍🎓" },
+  { id: "ST-104", name: "Nisha Kumari", age: 22, sport: "Football", joined: "2019-09-20", medalNumber: 8, avatar: "👩‍🎓" },
+  { id: "ST-105", name: "Khushi Kumari", age: 19, sport: "Football", joined: "2021-03-12", medalNumber: 14, avatar: "👩‍🎓" },
+  { id: "ST-106", name: "Shruti Kumari", age: 18, sport: "Football", joined: "2020-11-18", medalNumber: 11, avatar: "👩‍🎓" }
 ];
 
 const initialEnquiries = [

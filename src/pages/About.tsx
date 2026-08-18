@@ -252,7 +252,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   {/* Right Side: Image */}
                   <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2 mb-6 md:mb-0`}>
                     <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/about_rlbsa.png" alt="Growing Partnerships" className="w-full h-full object-cover" />
+                      <img src="/images/about_rlbsa.jpeg" alt="Growing Partnerships" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 </>

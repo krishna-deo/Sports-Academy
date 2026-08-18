@@ -15,38 +15,45 @@
     },
     {
       "id": "ST-101",
-      "name": "Aarti Kumari",
-      "age": 16,
-      "sport": "Handball",
-      "joined": "2023-05-12"
+      "name": "Amrit Kumari",
+      "age": 24,
+      "sport": "Football",
+      "joined": "2018-06-15"
     },
     {
       "id": "ST-102",
-      "name": "Pooja Patel",
-      "age": 15,
+      "name": "Tara Khatoon",
+      "age": 20,
       "sport": "Football",
-      "joined": "2024-02-18"
+      "joined": "2020-01-10"
     },
     {
       "id": "ST-103",
-      "name": "Rahul Kumar",
-      "age": 14,
-      "sport": "Athletics",
-      "joined": "2024-09-05"
+      "name": "Khushbu Kumari",
+      "age": 21,
+      "sport": "Football & Handball",
+      "joined": "2019-08-05"
     },
     {
       "id": "ST-104",
-      "name": "Soniya Sinha",
-      "age": 17,
-      "sport": "Handball",
-      "joined": "2022-11-20"
+      "name": "Nisha Kumari",
+      "age": 22,
+      "sport": "Football",
+      "joined": "2019-09-20"
     },
     {
       "id": "ST-105",
-      "name": "Karan Mehra",
-      "age": 15,
-      "sport": "Rugby",
-      "joined": "2025-01-10"
+      "name": "Khushi Kumari",
+      "age": 19,
+      "sport": "Football",
+      "joined": "2021-03-12"
+    },
+    {
+      "id": "ST-106",
+      "name": "Shruti Kumari",
+      "age": 18,
+      "sport": "Football",
+      "joined": "2020-11-18"
     }
   ],
   "coaches": [

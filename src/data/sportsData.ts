@@ -19,11 +19,17 @@ export interface CoachItem {
 }
 
 export interface SuccessStory {
+  id: string;
   name: string;
   sport: string;
   achievement: string;
+  description: string;
   quote: string;
   image: string;
+  joined: string;
+  age: number;
+  medals: number;
+  objectPosition?: string;
 }
 
 export interface CertificationItem {
@@ -140,25 +146,77 @@ export const coachesList: CoachItem[] = [
 
 export const successStories: SuccessStory[] = [
   {
-    name: "Aarti Kumari",
-    sport: "Handball (Under-19 State Team)",
-    achievement: "Represented Bihar at School National Games",
-    quote: "Rani Laxmibai Academy gave me free boarding, kit, and coaching that changed my life. Now, I hope to represent India.",
-    image: "aarti"
+    id: "amrit",
+    name: "Amrit Kumari",
+    sport: "Football",
+    achievement: "Former Indian Team Captain & Clerk, Bihar Govt",
+    description: "Amrit Kumari is a legendary figure in Bihar women's sports. She captained the Indian national football team, demonstrating exemplary leadership on the field. Her achievements secured her a role as a Clerk in the Bihar Government under the state's sports quota.",
+    quote: "Leading the national team was an absolute honor. Rani Laxmibai Sports Academy provided the foundation and support that made my dreams a reality.",
+    image: "/images/Amrit Kumari Former Indian team captain(Clerk Bihar Govr).jpeg",
+    joined: "June 2018",
+    age: 24,
+    medals: 15
   },
   {
-    name: "Pooja Patel",
-    sport: "Football (National Sub-Junior Camp)",
-    achievement: "Selected for National Zonal Selection",
-    quote: "The intensive practice matches and constant support of coaches prepared me for national-level trials.",
-    image: "pooja"
+    id: "tara",
+    name: "Tara Khatoon",
+    sport: "Football",
+    achievement: "National Football Player",
+    description: "Known for her exceptional speed and dribbling mastery on the wings, Tara Khatoon has represented Bihar and India in major national-level tournaments, becoming a cornerstone of our senior football lineup.",
+    quote: "With consistent guidance and elite coaching at the academy, I transformed my passion into a professional football career.",
+    image: "/images/Tara Khatoon (FootBall).jpeg",
+    joined: "January 2020",
+    age: 20,
+    medals: 10
   },
   {
-    name: "Rahul Kumar",
-    sport: "Athletics (100m Sprint Gold)",
-    achievement: "Gold Medal at State Athletics Championship",
-    quote: "Refining my sprinting form with Coach Vikram helped me shave off half a second from my running times.",
-    image: "rahul"
+    id: "khushbu",
+    name: "Khushbu Kumari",
+    sport: "Football & Handball",
+    achievement: "Dual-Sport National Athlete",
+    description: "Khushbu is an outstanding multi-sport athlete, excelling at the national level in both Football and Handball. Her athletic versatility and determination make her a true role model for young academy players.",
+    quote: "The multi-sport training environment at RLBSA helped me develop unique stamina and versatility to compete in both sports.",
+    image: "/images/Khushbu Kumari (Football, HandBall).jpeg",
+    joined: "August 2019",
+    age: 21,
+    medals: 12,
+    objectPosition: "object-center"
+  },
+  {
+    id: "nisha",
+    name: "Nisha Kumari",
+    sport: "Football",
+    achievement: "National Player (Home Guard, Bihar Govt)",
+    description: "Nisha is a rock-solid defender who played at the national level. Through her sports credentials and dedication, she earned employment as a Home Guard with the Bihar Government, securing her family's livelihood.",
+    quote: "Sports gave me not just fitness and medals, but also a stable life and career through the Bihar government's support.",
+    image: "/images/NIsha Kumari (Homeguard Bihar Govr).jpeg",
+    joined: "September 2019",
+    age: 22,
+    medals: 8
+  },
+  {
+    id: "khushi",
+    name: "Khushi Kumari",
+    sport: "Football",
+    achievement: "Indian Team Goalkeeper",
+    description: "Khushi Kumari is a phenomenal goalkeeper who earned selection for the Indian National Women's Football team. Her lightning-fast reflexes and commanding presence in the box make her a tough barrier to breach.",
+    quote: "Goalkeeping requires extreme mental strength. The academy's specialized coaches pushed me to my absolute limits.",
+    image: "/images/Khushi Kumari (Football Goal keeper Indian Team).jpeg",
+    joined: "March 2021",
+    age: 19,
+    medals: 14
+  },
+  {
+    id: "shruti",
+    name: "Shruti Kumari",
+    sport: "Football",
+    achievement: "International Football Player",
+    description: "Shruti is a talented international-level winger who has represented India in youth championships. Her tactical intelligence and crossing ability have won praise from international selectors.",
+    quote: "Playing internationally was my ultimate goal. The training standards and diet support at the academy made it possible.",
+    image: "/images/Shruti Kumari (International football player).jpeg",
+    joined: "November 2020",
+    age: 18,
+    medals: 11
   }
 ];
 
@@ -233,7 +291,7 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     id: 5,
-    title: "Aarti Kumari receiving state award",
+    title: "Amrit Kumari receiving state award",
     category: "student-achievements",
     mediaType: "photo",
     src: "rhea_gold"

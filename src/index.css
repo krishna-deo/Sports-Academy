@@ -100,3 +100,19 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Swipe horizontal bounce animations */
+@keyframes bounceHorizontal {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+}
+@keyframes bounceHorizontalRight {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+.animate-bounce-horizontal {
+  animation: bounceHorizontal 1.5s infinite ease-in-out;
+}
+.animate-bounce-horizontal-right {
+  animation: bounceHorizontalRight 1.5s infinite ease-in-out;
+}
