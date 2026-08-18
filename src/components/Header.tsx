@@ -41,10 +41,10 @@ export const Header: React.FC = () => {
       dropdown: [
         { label: 'Our Story', href: '#/about/story' },
         { label: 'Vision & Mission', href: '#/about/vision-mission' },
+        { label: 'Founders & Key Members', href: '#/about/founders' },
         { label: 'What We Do', href: '#/about/what-we-do' },
         { label: 'Facilities', href: '#/about/facilities' },
         { label: 'Achievements', href: '#/about/achievements' },
-        { label: 'Founders & Key Members', href: '#/about/founders' },
       ],
     },
     {
