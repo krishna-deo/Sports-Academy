@@ -421,7 +421,7 @@ export const Home: React.FC = () => {
             {/* Mobile Swipe Hint */}
             <button
               onClick={() => handleScrollClick(whatWeDoRef, whatWeDoDirection, setWhatWeDoDirection)}
-              className="flex items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+              className="flex items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-0 cursor-pointer active:scale-95 transition-all outline-none"
             >
               {whatWeDoDirection === 'right' ? (
                 <>
@@ -526,7 +526,7 @@ export const Home: React.FC = () => {
             {/* Mobile Swipe Hint */}
             <button
               onClick={() => handleScrollClick(foundersScrollRef, foundersDirection, setFoundersDirection)}
-              className="flex sm:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+              className="flex sm:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-1 cursor-pointer active:scale-95 transition-all outline-none"
             >
               {foundersDirection === 'right' ? (
                 <>
@@ -787,7 +787,7 @@ export const Home: React.FC = () => {
           {/* Mobile Swipe Hint */}
           <button
             onClick={() => handleScrollClick(successStoriesScrollRef, successStoriesDirection, setSuccessStoriesDirection)}
-            className="flex md:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+            className="flex md:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-0 cursor-pointer active:scale-95 transition-all outline-none"
           >
             {successStoriesDirection === 'right' ? (
               <>
