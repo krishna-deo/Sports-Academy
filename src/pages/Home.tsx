@@ -33,6 +33,19 @@ export const Home: React.FC = () => {
     }
   };
 
+  const successStoriesScrollRef = React.useRef<HTMLDivElement>(null);
+  const [successStoriesDirection, setSuccessStoriesDirection] = React.useState<'right' | 'left'>('right');
+
+  const handleSuccessStoriesScroll = () => {
+    const el = successStoriesScrollRef.current;
+    if (!el) return;
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
+      setSuccessStoriesDirection('left');
+    } else if (el.scrollLeft <= 30) {
+      setSuccessStoriesDirection('right');
+    }
+  };
+
   const handleScrollClick = (
     ref: React.RefObject<HTMLDivElement | null>,
     direction: 'right' | 'left',
@@ -378,7 +391,7 @@ export const Home: React.FC = () => {
                 return (
                   <div
                     key={idx}
-                    className="rounded-xl overflow-hidden shadow-lg border border-border-gray/30 relative h-[340px] bg-primary cursor-pointer w-[85vw] max-w-[320px] flex-shrink-0 snap-center first:ml-[7.5vw] last:mr-[7.5vw]"
+                    className="rounded-xl overflow-hidden shadow-lg border border-border-gray/30 relative h-[340px] bg-primary cursor-pointer w-[85vw] max-w-[320px] flex-shrink-0 snap-center first:ml-5 last:mr-5"
                   >
                     <div
                       className="absolute inset-0 bg-cover bg-center"
@@ -473,7 +486,7 @@ export const Home: React.FC = () => {
                   <a
                     href="#/about/founders"
                     key={idx}
-                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-[7.5vw] last:mr-[7.5vw] sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[480px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-5 last:mr-5 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[480px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -732,7 +745,11 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar">
+          <div 
+            ref={successStoriesScrollRef}
+            onScroll={handleSuccessStoriesScroll}
+            className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar"
+          >
             {successPlayers.map((player, idx) => {
               const delays = ['delay-0', 'delay-200', 'delay-400', 'delay-600'];
               const delayClass = delays[idx % 4] || 'delay-0';
@@ -740,7 +757,7 @@ export const Home: React.FC = () => {
                 <a
                   href="#/academy/featured-players"
                   key={idx}
-                  className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-[7.5vw] md:first:ml-0 last:mr-[7.5vw] md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
+                  className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
                   }`}
                 >
@@ -766,6 +783,24 @@ export const Home: React.FC = () => {
               );
             })}
           </div>
+
+          {/* Mobile Swipe Hint */}
+          <button
+            onClick={() => handleScrollClick(successStoriesScrollRef, successStoriesDirection, setSuccessStoriesDirection)}
+            className="flex md:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-5 cursor-pointer active:scale-95 transition-all outline-none"
+          >
+            {successStoriesDirection === 'right' ? (
+              <>
+                <span>Swipe Right</span>
+                <span className="inline-block animate-bounce-horizontal-right">&rarr;</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-block animate-bounce-horizontal">&larr;</span>
+                <span>Swipe Left</span>
+              </>
+            )}
+          </button>
         </div>
       </section>
     </div>
