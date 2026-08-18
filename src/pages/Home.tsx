@@ -454,7 +454,7 @@ export const Home: React.FC = () => {
           {/* Slider Outer Wrapper */}
           <div 
             ref={teamRef}
-            className={`relative max-w-[1380px] mx-auto px-4 sm:px-8 md:px-10 transition-all duration-[1000ms] ease-out transform ${
+            className={`relative max-w-[1380px] mx-auto px-5 sm:px-8 md:px-10 transition-all duration-[1000ms] ease-out transform ${
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
@@ -526,7 +526,7 @@ export const Home: React.FC = () => {
             {/* Mobile Swipe Hint */}
             <button
               onClick={() => handleScrollClick(foundersScrollRef, foundersDirection, setFoundersDirection)}
-              className="flex sm:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-1 cursor-pointer active:scale-95 transition-all outline-none"
+              className="flex sm:hidden items-center gap-1.5 mt-6 text-sm font-extrabold text-primary border-b-2 border-accent pb-0.5 w-fit ml-0 cursor-pointer active:scale-95 transition-all outline-none"
             >
               {foundersDirection === 'right' ? (
                 <>
