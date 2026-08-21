@@ -18,7 +18,9 @@ function App() {
 
   // Scroll to top on hash route change
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (!hash.includes('?member=')) {
+      window.scrollTo(0, 0);
+    }
   }, [hash]);
 
   const normalizedHash = hash.split('?')[0];

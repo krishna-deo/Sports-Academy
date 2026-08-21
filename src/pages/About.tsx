@@ -2,6 +2,7 @@ import React from 'react';
 import { Eye, Target } from '@phosphor-icons/react';
 import { SportSVG } from '../components/SportSVG';
 import { teamMembers } from '../data/teamData';
+import { useHash } from '../hooks/useHash';
 
 interface AboutProps {
   sub: string;
@@ -40,13 +41,44 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
   }, []);
 
   return (
-    <div ref={ref} className={className} data-id={id}>
+    <div ref={ref} id={id} className={className} data-id={id}>
       {children(isVisible)}
     </div>
   );
 };
 
 export const About: React.FC<AboutProps> = ({ sub }) => {
+  const hash = useHash();
+
+  React.useEffect(() => {
+    if (sub === 'founders') {
+      const hashParts = hash.split('?');
+      if (hashParts.length > 1) {
+        const params = new URLSearchParams(hashParts[1]);
+        const memberId = params.get('member');
+        if (memberId) {
+          const scrollToElement = () => {
+            const element = document.getElementById(memberId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'auto', block: 'center' });
+              return true;
+            }
+            return false;
+          };
+
+          // Try immediately
+          if (!scrollToElement()) {
+            const interval = setInterval(() => {
+              if (scrollToElement()) {
+                clearInterval(interval);
+              }
+            }, 50);
+            setTimeout(() => clearInterval(interval), 1000);
+          }
+        }
+      }
+    }
+  }, [hash, sub]);
 
   return (
     <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">

@@ -484,7 +484,7 @@ export const Home: React.FC = () => {
                 const isActive = idx === currentMember;
                 return (
                   <a
-                    href="#/about/founders"
+                    href={`#/about/founders?member=${member.id}`}
                     key={idx}
                     className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-5 last:mr-5 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[480px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
                       isActive 
