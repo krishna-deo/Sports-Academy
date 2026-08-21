@@ -191,6 +191,7 @@ export const Home: React.FC = () => {
 
   const cards = [
     {
+      id: 'sports',
       title: 'Sports Training',
       tag: 'Empowerment',
       description: 'Free professional coaching, kits, and tournament sponsorships.',
@@ -198,6 +199,7 @@ export const Home: React.FC = () => {
       icon: Trophy,
     },
     {
+      id: 'education',
       title: 'Education',
       tag: 'Scholarship',
       description: '100% sponsored schooling, tuition fees, and books.',
@@ -205,6 +207,7 @@ export const Home: React.FC = () => {
       icon: BookOpen,
     },
     {
+      id: 'nutrition',
       title: 'Food & Nutrition',
       tag: 'Athletic Diet',
       description: 'Calorie-mapped healthy diets and high-protein sports meals.',
@@ -212,6 +215,7 @@ export const Home: React.FC = () => {
       icon: ForkKnife,
     },
     {
+      id: 'hostel',
       title: 'Hostel & Lodging',
       tag: 'Residential',
       description: 'Secure gated campus, studying rooms, and clean laundry.',
@@ -219,6 +223,7 @@ export const Home: React.FC = () => {
       icon: House,
     },
     {
+      id: 'gym',
       title: 'Gym & Fitness',
       tag: 'Strength & Conditioning',
       description: 'Fully equipped high-performance gym, strength training, and rehabilitation.',
@@ -226,6 +231,7 @@ export const Home: React.FC = () => {
       icon: Barbell,
     },
     {
+      id: 'transportation',
       title: 'Transportation',
       tag: 'Safe Transit',
       description: 'Daily safe pickup and drop facilities for local and remote student-athletes.',
@@ -355,7 +361,7 @@ export const Home: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent z-10" />
                   <a
-                    href="#/about/what-we-do"
+                    href={`#/about/what-we-do?section=${card.id}`}
                     className="absolute inset-0 z-20 flex flex-col justify-end p-6 text-white text-left no-underline h-full"
                   >
                     <div className="w-12 h-12 rounded-lg bg-accent text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300 shadow-lg flex-shrink-0">
@@ -399,7 +405,7 @@ export const Home: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10" />
                     <a
-                      href="#/about/what-we-do"
+                      href={`#/about/what-we-do?section=${card.id}`}
                       className="absolute inset-0 z-20 flex flex-col justify-end p-6 text-white text-left no-underline h-full"
                     >
                       <div className="w-11 h-11 rounded-lg bg-accent text-primary flex items-center justify-center mb-4 shadow-md flex-shrink-0">
@@ -755,7 +761,7 @@ export const Home: React.FC = () => {
               const delayClass = delays[idx % 4] || 'delay-0';
               return (
                 <a
-                  href="#/academy/featured-players"
+                  href={`#/academy/featured-players?player=${player.id}`}
                   key={idx}
                   className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'

@@ -18,7 +18,7 @@ function App() {
 
   // Scroll to top on hash route change
   useEffect(() => {
-    if (!hash.includes('?member=')) {
+    if (!hash.includes('?member=') && !hash.includes('?section=') && !hash.includes('?player=')) {
       window.scrollTo(0, 0);
     }
   }, [hash]);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CaretDown } from '@phosphor-icons/react';
 import { coachesList as initialCoaches, certificationsList, faqsList, successStories } from '../data/sportsData';
-
+import { useHash } from '../hooks/useHash';
 
 interface RevealRowProps {
   id: string;
@@ -36,7 +36,7 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
   }, []);
 
   return (
-    <div ref={ref} className={className} data-id={id}>
+    <div ref={ref} id={id} className={className} data-id={id}>
       {children(isVisible)}
     </div>
   );
@@ -47,9 +47,40 @@ interface AcademyProps {
 }
 
 export const Academy: React.FC<AcademyProps> = ({ sub }) => {
+  const hash = useHash();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [coaches, setCoaches] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (sub === 'success-stories' || sub === 'featured-players') {
+      const hashParts = hash.split('?');
+      if (hashParts.length > 1) {
+        const params = new URLSearchParams(hashParts[1]);
+        const playerId = params.get('player');
+        if (playerId) {
+          const scrollToElement = () => {
+            const element = document.getElementById(playerId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'auto', block: 'center' });
+              return true;
+            }
+            return false;
+          };
+
+          // Try immediately
+          if (!scrollToElement()) {
+            const interval = setInterval(() => {
+              if (scrollToElement()) {
+                clearInterval(interval);
+              }
+            }, 50);
+            setTimeout(() => clearInterval(interval), 1000);
+          }
+        }
+      }
+    }
+  }, [hash, sub]);
 
   useEffect(() => {
     if (sub === 'coaches') {

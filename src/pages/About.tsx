@@ -51,30 +51,34 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
   const hash = useHash();
 
   React.useEffect(() => {
-    if (sub === 'founders') {
-      const hashParts = hash.split('?');
-      if (hashParts.length > 1) {
-        const params = new URLSearchParams(hashParts[1]);
-        const memberId = params.get('member');
-        if (memberId) {
-          const scrollToElement = () => {
-            const element = document.getElementById(memberId);
-            if (element) {
-              element.scrollIntoView({ behavior: 'auto', block: 'center' });
-              return true;
-            }
-            return false;
-          };
+    const hashParts = hash.split('?');
+    if (hashParts.length > 1) {
+      const params = new URLSearchParams(hashParts[1]);
+      let targetId = '';
+      if (sub === 'founders') {
+        targetId = params.get('member') || '';
+      } else if (sub === 'what-we-do') {
+        targetId = params.get('section') || '';
+      }
 
-          // Try immediately
-          if (!scrollToElement()) {
-            const interval = setInterval(() => {
-              if (scrollToElement()) {
-                clearInterval(interval);
-              }
-            }, 50);
-            setTimeout(() => clearInterval(interval), 1000);
+      if (targetId) {
+        const scrollToElement = () => {
+          const element = document.getElementById(targetId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'auto', block: 'center' });
+            return true;
           }
+          return false;
+        };
+
+        // Try immediately
+        if (!scrollToElement()) {
+          const interval = setInterval(() => {
+            if (scrollToElement()) {
+              clearInterval(interval);
+            }
+          }, 50);
+          setTimeout(() => clearInterval(interval), 1000);
         }
       }
     }
