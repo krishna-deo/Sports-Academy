@@ -176,7 +176,7 @@ export const successStories: SuccessStory[] = [
     achievement: "Dual-Sport National Athlete",
     description: "Khushbu is an outstanding multi-sport athlete, excelling at the national level in both Football and Handball. Her athletic versatility and determination make her a true role model for young academy players.",
     quote: "The multi-sport training environment at RLBSA helped me develop unique stamina and versatility to compete in both sports.",
-    image: "/images/Khushbu Kumari (Football, HandBall).jpeg",
+    image: "/images/Khushbu Kumari (Football, HandBall).jpg",
     joined: "August 2019",
     age: 21,
     medals: 12,
