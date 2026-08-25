@@ -295,7 +295,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
                   <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
                     Gate Entry Venue
                   </span>
-                  <p className="text-sm font-bold text-primary mt-0.5">Ranilaxmibai Main Complex, Vadodara</p>
+                  <p className="text-sm font-bold text-primary mt-0.5">RLBSA Campus, Laxmipur, Siwan, Bihar</p>
                 </div>
               </div>
 

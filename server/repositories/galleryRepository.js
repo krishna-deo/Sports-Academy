@@ -16,31 +16,28 @@ class GalleryRepository {
       page = 1, 
       limit = 12, 
       category, 
-      mediaType, 
       search, 
       status, 
-      isDeleted = false, 
-      featured 
+      mediaType,
+      isDeleted = false
     } = filters;
     
     const query = { isDeleted };
 
-    if (category) {
-      query.category = category;
-    }
     if (mediaType) {
       query.mediaType = mediaType;
+    }
+    if (category) {
+      query.category = { $regex: new RegExp(`^${category}$`, 'i') };
     }
     if (status) {
       query.status = status;
     }
-    if (featured !== undefined) {
-      query.featured = featured;
-    }
     if (search) {
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -49,7 +46,7 @@ class GalleryRepository {
 
     const total = await Gallery.countDocuments(query);
     const items = await Gallery.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ date: -1, createdAt: -1 })
       .skip((parsedPage - 1) * parsedLimit)
       .limit(parsedLimit);
 

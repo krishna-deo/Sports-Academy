@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, Envelope, CheckCircle, MapPinArea } from '@phosphor-icons/react';
+import { MapPin, Phone, Envelope, CheckCircle } from '@phosphor-icons/react';
 
 export const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -57,7 +57,7 @@ export const Contact: React.FC = () => {
             <div>
               <h3 className="text-[15px] font-bold text-primary mb-0.5">Academy Address</h3>
               <p className="text-text-light text-sm">
-                Ranilaxmibai Sports Complex, Vasna-Bhayli Road, Vadodara, Gujarat - 390021
+                Vill- Laxmipur, P.O- Seotapur, P.S- Mairwa, Siwan, 841239, Bihar
               </p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export const Contact: React.FC = () => {
             <div>
               <h3 className="text-[15px] font-bold text-primary mb-0.5">Phone Enquiries</h3>
               <p className="text-text-light text-sm">
-                +91 98765 43210 (Admissions) &bull; +91 98765 43211 (Office)
+                +91 95239 37934 (Admissions &amp; Office)
               </p>
             </div>
           </div>
@@ -81,41 +81,21 @@ export const Contact: React.FC = () => {
             <div>
               <h3 className="text-[15px] font-bold text-primary mb-0.5">Email Support</h3>
               <p className="text-text-light text-sm">
-                admissions@rlbsports.in &bull; contact@rlbsports.in
+                foundationrlbsa@gmail.com
               </p>
             </div>
           </div>
 
-          {/* Join Academy Card */}
-          <div className="p-6 bg-gradient-to-br from-primary to-primary/80 text-white rounded-xl shadow-lg flex flex-col gap-4 border border-primary/20">
-            <h3 className="text-lg font-bold text-accent">Join Rani Laxmibai Sports Academy</h3>
-            <p className="text-white/80 text-xs leading-relaxed">
-              Ready to take the field? Fill out our academy registration form to register as a student, recruit, or candidate. Our admissions team will review your application details.
-            </p>
-            <a
-              href="#/events/registration"
-              className="bg-accent text-primary font-bold py-2.5 px-4 rounded text-xs text-center hover:bg-white hover:text-primary transition-all self-start"
-            >
-              FILL ADMISSION FORM &rarr;
-            </a>
-          </div>
-
-          {/* Map Vector Graphic */}
-          <div className="h-[250px] bg-[#E2ECEC] rounded-xl overflow-hidden relative border border-border-gray mt-2.5">
-            <svg className="w-full h-full opacity-25" viewBox="0 0 400 250" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="250" fill="#E2ECEC" />
-              <path d="M 0 50 L 400 50" stroke="#FFF" strokeWidth="12" />
-              <path d="M 0 180 L 400 180" stroke="#FFF" strokeWidth="16" />
-              <path d="M 120 0 L 120 250" stroke="#FFF" strokeWidth="14" />
-              <path d="M 300 0 L 300 250" stroke="#FFF" strokeWidth="10" />
-              <rect x="10" y="70" width="90" height="90" rx="8" fill="#CDE5D8" />
-              <rect x="320" y="80" width="60" height="80" rx="8" fill="#CDE5D8" />
-              <path d="M 0 240 Q 200 210 400 235" stroke="#BFD3E6" strokeWidth="20" fill="none" />
-            </svg>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white py-2.5 px-5 rounded-full shadow-lg text-[13px] font-bold flex items-center gap-2 border border-accent">
-              <MapPinArea size={16} className="text-accent" />
-              <span>RANILAXMIBAI SPORTS CAMPUS</span>
-            </div>
+          {/* Live Google Map embed */}
+          <div className="h-[280px] bg-[#E2ECEC] rounded-xl overflow-hidden relative border border-border-gray mt-2.5 shadow-sm">
+            <iframe 
+              src="https://maps.google.com/maps?q=Rani%20Laxmibai%20Sports%20Academy%20Laxmipur%20Mairwa%20Siwan%20Bihar&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              className="w-full h-full border-0"
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Rani Laxmibai Sports Academy Location"
+            ></iframe>
           </div>
 
         </div>

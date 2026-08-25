@@ -1,6 +1,5 @@
 import React from 'react';
 import { Eye, Target } from '@phosphor-icons/react';
-import { SportSVG } from '../components/SportSVG';
 import { teamMembers } from '../data/teamData';
 import { useHash } from '../hooks/useHash';
 
@@ -23,10 +22,11 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.unobserve(entry.target);
+        } else {
+          setIsVisible(false);
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.15 }
     );
 
     if (ref.current) {
@@ -48,6 +48,19 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
 };
 
 export const About: React.FC<AboutProps> = ({ sub }) => {
+  const [team, setTeam] = React.useState<any[]>(teamMembers);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/team')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTeam(data);
+        }
+      })
+      .catch(err => console.error("Error loading team database values:", err));
+  }, []);
+
   const hash = useHash();
 
   React.useEffect(() => {
@@ -430,14 +443,14 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               )}
             </RevealRow>
 
-            {/* 2. Education & Schooling (Text Left, Image Right) */}
+            {/* 2. Education & Academic Support (Text Left, Image Right) */}
             <RevealRow id="education" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
               {(isVisible) => (
                 <>
                   {/* Left Column: Details */}
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Academic Excellence</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Education & Schooling</h3>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Education & Academic Support</h3>
                     <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
                       Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.
                     </p>
@@ -452,7 +465,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   {/* Right Column: Image */}
                   <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/education_card.jpg" alt="Education & Schooling" className="w-full h-full object-cover" />
+                      <img src="/images/education_card.jpg" alt="Education & Academic Support" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 </>
@@ -488,14 +501,14 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               )}
             </RevealRow>
 
-            {/* 4. Hostel & Lodging (Text Left, Image Right) */}
+            {/* 4. Hostel & Accommodation (Text Left, Image Right) */}
             <RevealRow id="hostel" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
               {(isVisible) => (
                 <>
                   {/* Left Column: Details */}
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Residential Boarding</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Hostel & Lodging</h3>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Hostel & Accommodation</h3>
                     <p className="text-text-light text-base md:text-lg leading-relaxed mb-6">
                       Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.
                     </p>
@@ -510,48 +523,26 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   {/* Right Column: Image */}
                   <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/hostel_card.png" alt="Hostel & Lodging" className="w-full h-full object-cover" />
+                      <img src="/images/hostel_card.png" alt="Hostel & Accommodation" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 </>
               )}
             </RevealRow>
 
-            {/* 5. Gym & Fitness (Image Left, Text Right) */}
-            <RevealRow id="gym" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+            {/* 5. Transportation (Image Left, Text Right) */}
+            <RevealRow id="transportation" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
               {(isVisible) => (
                 <>
                   {/* Left Column: Image */}
                   <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/gym_card.png" alt="Gym & Fitness" className="w-full h-full object-cover" />
+                      <img src="/images/transportation_card.png" alt="Transportation" className="w-full h-full object-cover" />
                     </div>
                   </div>
 
                   {/* Right Column: Details */}
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Strength & Conditioning</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Gym & Fitness</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
-                      Equipped with modern strength-building and cardio training machinery designed specifically for high-performance athletes. The gym has personal conditioning trainers who design custom workouts and physical therapists who guide rehabilitation and injury recovery.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🏋️ Advanced Strength Gear</li>
-                      <li className="flex items-center gap-2">💪 Conditioning Audits</li>
-                      <li className="flex items-center gap-2">🧘 Injury Rehab & Physio</li>
-                      <li className="flex items-center gap-2">🏋️‍♀️ Trainer Supervision</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 6. Transportation (Text Left, Image Right) */}
-            <RevealRow id="transportation" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Details */}
-                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Safe Transit</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Transportation</h3>
                     <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
@@ -564,12 +555,63 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                       <li className="flex items-center gap-2">🕒 Daily Timely Commutes</li>
                     </ul>
                   </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* 6. Career & Athlete Development (Text Left, Image Right) */}
+            <RevealRow id="career" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Details */}
+                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
+                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Future Planning</span>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Career & Athlete Development</h3>
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                      Guiding our student-athletes towards bright future careers inside and outside of professional sports. We organize regular career counseling workshops, university admission assistance, vocational training programs, and job placement support.
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
+                      <li className="flex items-center gap-2">🎯 Career Counseling</li>
+                      <li className="flex items-center gap-2">🎓 College Admissions</li>
+                      <li className="flex items-center gap-2">💼 Vocational Training</li>
+                      <li className="flex items-center gap-2">🚀 Placement Assistance</li>
+                    </ul>
+                  </div>
 
                   {/* Right Column: Image */}
                   <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/transportation_card.png" alt="Transportation" className="w-full h-full object-cover" />
+                      <img src="/images/career_development.png" alt="Career & Athlete Development" className="w-full h-full object-cover" />
                     </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* 7. Tournament & Competition Preparation (Image Left, Text Right) */}
+            <RevealRow id="tournament" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+              {(isVisible) => (
+                <>
+                  {/* Left Column: Image */}
+                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
+                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
+                      <img src="/images/tournament_prep.png" alt="Tournament & Competition Preparation" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+
+                  {/* Right Column: Details */}
+                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Championship Bound</span>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Tournament & Competition Preparation</h3>
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                      Getting our trainees physically, tactically, and mentally prepared for high-stakes tournaments. We conduct simulated match plays, video analysis of opponents, sports psychology counseling, and special game-strategy briefings.
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
+                      <li className="flex items-center gap-2">📈 Match Simulations</li>
+                      <li className="flex items-center gap-2">🎥 Tactical Video Analysis</li>
+                      <li className="flex items-center gap-2">🧠 Sports Psychology</li>
+                      <li className="flex items-center gap-2">🛡️ Opponent Scouting</li>
+                    </ul>
                   </div>
                 </>
               )}
@@ -592,96 +634,144 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Facility Card 1 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="football" colorStart="#004D4D" colorEnd="#1A1A1A" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/sports_training_card.jpg" alt="Sports Infrastructure" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  FIFA Quality
+                  Olympic Standard
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Elite Synthetic Football Turf</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Sports Infrastructure</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  Full-size pitch featuring shock-absorption turf technology to reduce knee stress, equipped with high-intensity spotlights for night matches.
+                  Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.
                 </p>
               </div>
             </div>
 
             {/* Facility Card 2 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="swimming" colorStart="#002B36" colorEnd="#1E3A8A" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/gym_card.png" alt="Gym & Fitness Center" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  25 &deg;C Heated
+                  Advanced Gear
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Olympic Swimming Arena</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Gym & Fitness Center</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  10-lane temperature-controlled pool with underwater camera ports for video analysis and dedicated physical recovery steam room.
+                  State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.
                 </p>
               </div>
             </div>
 
             {/* Facility Card 3 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="basketball" colorStart="#854D0E" colorEnd="#1A1A1A" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/hostel_card.png" alt="Hostel & Accommodation" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Indoor Wood
+                  Residential
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Indoor Multi-Sport Arena</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Hostel & Accommodation</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  Premium wooden flooring basketball and badminton courts designed with optimal bounce metrics, fully air-conditioned with seating for 1,000 spectators.
+                  Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.
                 </p>
               </div>
             </div>
 
             {/* Facility Card 4 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="cricket" colorStart="#003C3C" colorEnd="#854D0E" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/nutrition_card.jpg" alt="Mess & Dining" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Auto nets
+                  Nutritional Diet
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Cricket Lanes & Bowling Sims</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Mess & Dining</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  Four turf and synthetic cricket pitches equipped with automated bowling machines and speed cameras tracking bowling rotations.
+                  Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.
                 </p>
               </div>
             </div>
 
             {/* Facility Card 5 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="tennis" colorStart="#EA580C" colorEnd="#1A1A1A" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/education_card.jpg" alt="Education & Study Facilities" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Clay Courts
+                  Modern Learning
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Hard & Clay Tennis Courts</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Education & Study Facilities</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  6 international-standard courts mapping tournament dimensions, featuring specialized high-grip surfaces and automatic ball launchers.
+                  Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.
                 </p>
               </div>
             </div>
 
             {/* Facility Card 6 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] bg-primary flex items-center justify-center text-5xl relative">
-                <SportSVG sportType="athletics" colorStart="#111827" colorEnd="#005A5A" />
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/medical_card.png" alt="Medical & Physiotherapy" className="w-full h-full object-cover" />
                 <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  ISO Certified
+                  24/7 Care
                 </span>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Strength & Bio-Performance Lab</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Medical & Physiotherapy</h3>
                 <p className="text-text-light text-sm leading-relaxed">
-                  Modern conditioning gym containing high-twitch muscle builders, dynamic run track grids, and medical body fat mapping machinery.
+                  On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.
+                </p>
+              </div>
+            </div>
+
+            {/* Facility Card 7 */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/security_card.png" alt="Safety & Security" className="w-full h-full object-cover" />
+                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
+                  Secure Campus
+                </span>
+              </div>
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-primary mb-2">Safety & Security</h3>
+                <p className="text-text-light text-sm leading-relaxed">
+                  24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.
+                </p>
+              </div>
+            </div>
+
+            {/* Facility Card 8 */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/recreation_card.png" alt="Recreation & Common Areas" className="w-full h-full object-cover" />
+                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
+                  Lounge Zone
+                </span>
+              </div>
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-primary mb-2">Recreation & Common Areas</h3>
+                <p className="text-text-light text-sm leading-relaxed">
+                  Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.
+                </p>
+              </div>
+            </div>
+
+            {/* Facility Card 9 */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+              <div className="h-[200px] relative overflow-hidden bg-primary">
+                <img src="/images/wifi_card.png" alt="Wi-Fi & Technology" className="w-full h-full object-cover" />
+                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
+                  High-Speed
+                </span>
+              </div>
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-primary mb-2">Wi-Fi & Technology</h3>
+                <p className="text-text-light text-sm leading-relaxed">
+                  High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.
                 </p>
               </div>
             </div>
@@ -738,64 +828,93 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
       {sub === 'founders' && (
         <>
           {/* Centered Heading */}
-          <div className="text-center max-w-[700px] mx-auto mb-20 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Founders & Key Members
+          <div className="text-center max-w-[700px] mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
+              Founders &amp; Directors
             </h2>
-            <p className="text-text-light text-base md:text-lg">
-              The dedicated team behind the establishment, welfare, and coaching excellence of the Ranilaxmibai Sports Academy.
+            <p className="text-text-light text-base md:text-lg animate-fade-in">
+              Meet the visionary leadership and directors steering the welfare, academic growth, and athletic excellence of Rani Laxmibai Sports Academy.
             </p>
           </div>
 
-          {/* Staggered Alternating Rows (Flat Typography Theme) */}
-          <div className="flex flex-col gap-28 max-w-[1140px] mx-auto overflow-hidden pb-12">
-            {teamMembers.map((member, idx) => {
+          <div className="flex flex-col gap-10 max-w-[1140px] mx-auto overflow-hidden pb-12">
+            {/* HERO CARD: Founder & Director (Mr. Sanjay Pathak) */}
+            {team.length > 0 && (
+              <RevealRow id={team[0].id} className="w-full">
+                {(isVisible) => (
+                  <div className={`bg-white border border-border-gray/70 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
+                    {/* Hero Left: Image */}
+                    <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
+                      <img 
+                        src={team[0].image} 
+                        alt={team[0].name} 
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: team[0].objectPosition || 'center' }}
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-accent text-primary text-xs font-black px-3 py-1.5 rounded shadow uppercase tracking-wider">
+                          FOUNDER &amp; LEADER
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Hero Right: Details */}
+                    <div className="lg:w-1/2 p-8 md:p-12 flex flex-col justify-center text-left">
+                      <span className="text-accent text-[11.5px] font-black tracking-[0.2em] uppercase mb-2 block">
+                        {team[0].role}
+                      </span>
+                      <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                        {team[0].name}
+                      </h3>
+                      <p className="text-text-light text-sm md:text-base leading-relaxed">
+                        {team[0].bio}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </RevealRow>
+            )}
+
+            {/* DIRECTORS STACK: Alternating smaller horizontal profile cards */}
+            {team.slice(1).map((member, idx) => {
               const isEven = idx % 2 === 0;
+              const isImgLeft = !isEven;
+              const slideInClass = isImgLeft ? '-translate-x-24' : 'translate-x-24';
+              const directionClass = isImgLeft ? 'lg:flex-row' : 'lg:flex-row-reverse';
+
               return (
-                <RevealRow key={member.id} id={member.id} className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-                  {(isVisible) => {
-                    const imageCol = (
-                      <div className={`transition-all duration-[1000ms] ease-out transform ${
-                        isEven 
-                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8')
-                          : (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8')
-                      } ${!isEven ? 'order-1 md:order-2' : ''}`}>
-                        <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30 bg-soft-light">
-                          <img 
-                            src={member.image} 
-                            alt={member.name} 
-                            className="w-full h-full object-cover" 
-                            style={{ objectPosition: member.objectPosition || 'center' }}
-                          />
+                <RevealRow key={member.id} id={member.id} className="w-full">
+                  {(isVisible) => (
+                    <div className={`bg-white border border-border-gray/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
+                      {/* Image container */}
+                      <div className="lg:w-[38%] relative h-[220px] lg:h-auto min-h-[220px] bg-primary">
+                        <img 
+                          src={member.image} 
+                          alt={member.name} 
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: member.objectPosition || 'center' }}
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded tracking-wider uppercase">
+                            DIRECTOR
+                          </span>
                         </div>
                       </div>
-                    );
 
-                    const detailsCol = (
-                      <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${
-                        isEven 
-                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8')
-                          : (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8')
-                      } ${!isEven ? 'order-2 md:order-1' : ''}`}>
-                        <span className="text-[11px] md:text-[12.5px] font-black tracking-[0.15em] uppercase mb-2 block leading-none text-accent">
+                      {/* Content container */}
+                      <div className="lg:w-[62%] p-6 md:p-8 flex flex-col justify-center text-left">
+                        <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-1.5 block">
                           {member.role}
                         </span>
-                        <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                        <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-3 leading-tight">
                           {member.name}
                         </h3>
-                        <p className="text-text-light text-base leading-relaxed mb-6">
+                        <p className="text-text-light text-xs md:text-sm leading-relaxed">
                           {member.bio}
                         </p>
                       </div>
-                    );
-
-                    return (
-                      <>
-                        {imageCol}
-                        {detailsCol}
-                      </>
-                    );
-                  }}
+                    </div>
+                  )}
                 </RevealRow>
               );
             })}

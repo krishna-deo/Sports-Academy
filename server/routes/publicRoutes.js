@@ -6,6 +6,8 @@ const Gallery = require('../models/Gallery');
 const Event = require('../models/Event');
 const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
+const TeamMember = require('../models/TeamMember');
+const SuccessStory = require('../models/SuccessStory');
 
 function sanitizeInput(str) {
   if (typeof str !== 'string') return str;
@@ -23,9 +25,29 @@ router.get('/coaches', async (req, res) => {
 
 router.get('/students', async (req, res) => {
   try {
-    const students = await Student.find({}).sort({ joined: -1 });
-    res.json(students);
+    const students = await Student.find({ showOnPublicWebsite: true, isDeleted: false }).sort({ admissionDate: -1 });
+    const mapped = students.map(student => {
+      const dob = student.dateOfBirth;
+      let calculatedAge = 0;
+      if (dob) {
+        const diff = Date.now() - new Date(dob).getTime();
+        calculatedAge = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+      }
+      return {
+        id: student.id,
+        name: student.fullName,
+        age: calculatedAge,
+        sport: student.primarySport,
+        joined: student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : '',
+        medalNumber: student.medalNumber || 0,
+        avatar: student.avatar || '🎓',
+        gender: student.gender || 'girl',
+        residency: student.residency || 'resident'
+      };
+    });
+    res.json(mapped);
   } catch (err) {
+    console.error("Public fetch students error:", err);
     res.status(500).json({ error: "Failed to fetch student roster." });
   }
 });
@@ -93,6 +115,24 @@ router.post('/enquiry', async (req, res) => {
   } catch (err) {
     console.error("Enquiry saving error:", err);
     res.status(500).json({ error: "Failed to submit enquiry." });
+  }
+});
+
+router.get('/team', async (req, res) => {
+  try {
+    const team = await TeamMember.find({}).sort({ createdAt: 1 });
+    res.json(team);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch founders and directors list." });
+  }
+});
+
+router.get('/success-stories', async (req, res) => {
+  try {
+    const stories = await SuccessStory.find({}).sort({ createdAt: 1 });
+    res.json(stories);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch success stories." });
   }
 });
 

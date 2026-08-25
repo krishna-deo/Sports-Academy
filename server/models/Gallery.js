@@ -1,59 +1,49 @@
 const mongoose = require('mongoose');
 
 const GallerySchema = new mongoose.Schema({
-  title: { 
+  name: { 
     type: String, 
     required: true,
     trim: true
+  },
+  category: { 
+    type: String, 
+    required: true,
+    enum: ['Events', 'Tournaments', 'Training', 'Achievements', 'Workshops', 'Celebrations', 'Videos', 'Other']
+  },
+  date: { 
+    type: Date, 
+    required: true 
   },
   description: { 
     type: String, 
     trim: true,
     default: ''
   },
-  category: { 
+  location: { 
     type: String, 
-    required: true,
-    enum: ['Tournament', 'Training Sessions', 'Academy Events', 'Student Achievements', 'Facilities', 'Summer Camp', 'Workshops', 'Others']
+    trim: true,
+    default: ''
   },
-  mediaType: { 
-    type: String, 
-    required: true, 
-    enum: ['image', 'video'] 
-  },
-  originalFile: {
-    path: { type: String, required: true },
-    size: { type: Number, required: true },
-    mimeType: { type: String, required: true }
-  },
-  optimizedFile: {
-    path: { type: String },          // WebP format (Image) or compressed video
-    size: { type: Number },
-    compressionRatio: { type: Number },
-    dimensions: {
-      width: { type: Number },
-      height: { type: Number }
-    },
-    // Multi-resolutions for responsive images
-    sizes: {
-      thumbnail: { type: String },   // 300x300 WebP
-      medium: { type: String },      // 800x600 WebP
-      large: { type: String }        // 1600x900 WebP
-    }
-  },
-  thumbnail: { 
+  coverImage: { 
     type: String, 
     default: '' 
-  }, // Custom thumbnail, or auto-generated video frame
-  featured: { 
-    type: Boolean, 
-    default: false 
   },
-  visibility: { 
-    type: String, 
-    default: 'public', 
-    enum: ['public', 'private'] 
+  mediaType: {
+    type: String,
+    enum: ['image', 'video'],
+    default: 'image'
   },
+  videoUrl: {
+    type: String,
+    default: ''
+  },
+  photos: [
+    {
+      path: { type: String, required: true },
+      size: { type: Number, default: 0 }
+    }
+  ],
   status: { 
     type: String, 
     default: 'draft', 
@@ -81,6 +71,6 @@ const GallerySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Ensure text indexes for search support
-GallerySchema.index({ title: 'text', description: 'text', category: 'text' });
+GallerySchema.index({ name: 'text', description: 'text', category: 'text' });
 
 module.exports = mongoose.model('Gallery', GallerySchema);

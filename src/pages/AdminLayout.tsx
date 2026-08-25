@@ -447,11 +447,11 @@ export const AdminLayout: React.FC = () => {
     { id: 'events', label: 'Events', icon: <Calendar size={20} /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy size={20} /> },
     { id: 'facilities', label: 'Facilities', icon: <Buildings size={20} /> },
-    { id: 'testimonials', label: 'Testimonials', icon: <ChatText size={20} /> },
+    { id: 'success-stories', label: 'Success Stories', icon: <ChatText size={20} /> },
     { id: 'announcements', label: 'Announcements', icon: <Megaphone size={20} /> },
     { id: 'documents', label: 'Documents', icon: <FileText size={20} /> },
     { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
-    { id: 'content', label: 'Website Content', icon: <Notebook size={20} /> },
+    { id: 'founders', label: 'Founders & Directors', icon: <Notebook size={20} /> },
     { id: 'users', label: 'Admin Users', icon: <UserGear size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Gear size={20} /> },
   ];

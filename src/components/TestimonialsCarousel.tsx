@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
-import { successStories } from '../data/sportsData';
+import React, { useState, useEffect } from 'react';
+import { successStories as initialSuccessStories } from '../data/sportsData';
 
 export const TestimonialsCarousel: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [stories, setStories] = useState<any[]>(initialSuccessStories);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/public/success-stories')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setStories(data);
+        }
+      })
+      .catch(err => console.error("Error loading success stories:", err));
+  }, []);
 
   return (
     <div className="relative max-w-[800px] mx-auto">
       {/* Slides */}
-      {successStories.map((story, idx) => (
+      {stories.map((story, idx) => (
         <div 
           key={idx} 
           className={`text-center transition-opacity duration-500 ease-in-out ${
@@ -31,7 +43,7 @@ export const TestimonialsCarousel: React.FC = () => {
 
       {/* Dots navigation */}
       <div className="flex justify-center gap-2 mt-8">
-        {successStories.map((_, idx) => (
+        {stories.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setActiveIndex(idx)}

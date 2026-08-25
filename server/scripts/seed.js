@@ -10,6 +10,8 @@ const Gallery = require('../models/Gallery');
 const Event = require('../models/Event');
 const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
+const TeamMember = require('../models/TeamMember');
+const SuccessStory = require('../models/SuccessStory');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://krishnasinghhaji26_db_user:UiXTvIEJs8l5ehjP@cluster0.3gnkbbd.mongodb.net/';
 
@@ -50,53 +52,32 @@ const initialCoaches = [
 
 const initialGallery = [
   {
-    id: 1,
-    title: "Academy Football Team Practice Drill",
-    category: "tour",
-    mediaType: "photo",
-    src: "football_win"
+    name: "Academy Football Team Practice Drill",
+    category: "Training",
+    date: new Date("2026-08-10"),
+    description: "Daily tactical passing and sprint practice drills on the track and football grounds.",
+    location: "Football Ground Area",
+    coverImage: "/uploads/gallery/football_win.jpg",
+    photos: [
+      { path: "/uploads/gallery/football_win.jpg", size: 102456 }
+    ],
+    status: "published",
+    uploadedBy: "admin",
+    logs: [{ action: "upload", timestamp: new Date(), operator: "admin" }]
   },
   {
-    id: 2,
-    title: "Handball Match at State School Games",
-    category: "tournament",
-    mediaType: "photo",
-    src: "handball_win"
-  },
-  {
-    id: 3,
-    title: "Athletes practicing sprints on track",
-    category: "tour",
-    mediaType: "photo",
-    src: "cricket_practice"
-  },
-  {
-    id: 4,
-    title: "Rugby introductory clinic for children",
-    category: "events",
-    mediaType: "photo",
-    src: "strength_conditioning"
-  },
-  {
-    id: 5,
-    title: "Aarti Kumari receiving state award",
-    category: "student-achievements",
-    mediaType: "photo",
-    src: "rhea_gold"
-  },
-  {
-    id: 6,
-    title: "Annual Sports Festival Highlights",
-    category: "events",
-    mediaType: "photo",
-    src: "summer_camp_opening"
-  },
-  {
-    id: 7,
-    title: "Ex-National coach showing tactical passing",
-    category: "videos",
-    mediaType: "video",
-    src: "passing_drills"
+    name: "Annual State Handball Selections Camp",
+    category: "Events",
+    date: new Date("2026-08-12"),
+    description: "State level selection trials and matches played at Rani Laxmi Bai Sports Academy.",
+    location: "Main Indoor Sports Court",
+    coverImage: "/uploads/gallery/handball_win.jpg",
+    photos: [
+      { path: "/uploads/gallery/handball_win.jpg", size: 84930 }
+    ],
+    status: "published",
+    uploadedBy: "admin",
+    logs: [{ action: "upload", timestamp: new Date(), operator: "admin" }]
   }
 ];
 
@@ -134,12 +115,15 @@ const initialEvents = [
 ];
 
 const initialStudents = [
-  { id: "ST-101", name: "Amrit Kumari", age: 24, sport: "Football", joined: "2018-06-15", medalNumber: 15, avatar: "👩‍🎓" },
-  { id: "ST-102", name: "Tara Khatoon", age: 20, sport: "Football", joined: "2020-01-10", medalNumber: 10, avatar: "👩‍🎓" },
-  { id: "ST-103", name: "Khushbu Kumari", age: 21, sport: "Football & Handball", joined: "2019-08-05", medalNumber: 12, avatar: "👩‍🎓" },
-  { id: "ST-104", name: "Nisha Kumari", age: 22, sport: "Football", joined: "2019-09-20", medalNumber: 8, avatar: "👩‍🎓" },
-  { id: "ST-105", name: "Khushi Kumari", age: 19, sport: "Football", joined: "2021-03-12", medalNumber: 14, avatar: "👩‍🎓" },
-  { id: "ST-106", name: "Shruti Kumari", age: 18, sport: "Football", joined: "2020-11-18", medalNumber: 11, avatar: "👩‍🎓" }
+  { id: "ST-101", name: "Amrit Kumari", age: 24, sport: "Football", joined: "2018-06-15", medalNumber: 15, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+  { id: "ST-102", name: "Tara Khatoon", age: 20, sport: "Football", joined: "2020-01-10", medalNumber: 10, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+  { id: "ST-103", name: "Khushbu Kumari", age: 21, sport: "Football & Handball", joined: "2019-08-05", medalNumber: 12, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+  { id: "ST-104", name: "Nisha Kumari", age: 22, sport: "Football", joined: "2019-09-20", medalNumber: 8, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+  { id: "ST-105", name: "Khushi Kumari", age: 19, sport: "Football", joined: "2021-03-12", medalNumber: 14, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+  { id: "ST-106", name: "Shruti Kumari", age: 18, sport: "Football", joined: "2020-11-18", medalNumber: 11, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+  { id: "ST-107", name: "Aarav Singh", age: 16, sport: "Football", joined: "2023-04-12", medalNumber: 9, avatar: "👦", gender: "boy", residency: "resident" },
+  { id: "ST-108", name: "Rahul Kumar", age: 17, sport: "Athletics", joined: "2022-09-15", medalNumber: 7, avatar: "👦", gender: "boy", residency: "non-resident" },
+  { id: "ST-109", name: "Vikram Jeet", age: 18, sport: "Handball", joined: "2021-11-03", medalNumber: 12, avatar: "👦", gender: "boy", residency: "resident" }
 ];
 
 const initialEnquiries = [
@@ -172,6 +156,125 @@ const initialEnquiries = [
   }
 ];
 
+const initialTeamMembers = [
+  {
+    id: 'sanjay-pathak',
+    name: 'Mr. Sanjay Pathak',
+    role: 'Founder & Director',
+    bio: 'A visionary leader and sports administrator, Mr. Pathak founded the academy with a commitment to providing state-of-the-art training infrastructure and supporting grassroots athletes from underprivileged rural communities.',
+    image: '/images/Mr. Sanjay Pathak (Founder and Director).jpeg',
+    objectPosition: 'center 15%',
+  },
+  {
+    id: 'shrad-chaudhary',
+    name: 'Dr. Shrad Chaudhary',
+    role: 'Director',
+    bio: 'An accomplished academician and sports enthusiast, Dr. Chaudhary oversees sports integration programs, fostering a balanced approach between academic development and physical excellence for student-athletes.',
+    image: '/images/Dr. Shrad Chaudhary (Director).jpeg',
+    objectPosition: 'center 15%',
+  },
+  {
+    id: 'rita-sinha',
+    name: 'Dr. Rita Sinha',
+    role: 'Director',
+    bio: 'A dedicated advocate for youth empowerment and sports education, Dr. Sinha specializes in building inclusive developmental programs, mentoring junior athletes, and promoting sports wellness initiatives.',
+    image: '/images/Dr. Rita Sinha (Director).jpeg',
+    objectPosition: 'center 10%',
+  },
+  {
+    id: 'rajeev-mishra',
+    name: 'Rajeev Lochan Mishra',
+    role: 'Director',
+    bio: 'Bringing years of administrative expertise, Mr. Mishra leads strategic growth and partnership building, steering the academy\'s community outreach programs and talent scout networks.',
+    image: '/images/Rajeev Lochan Mishra (Director).jpeg',
+    objectPosition: 'center 10%',
+  },
+  {
+    id: 'alakh-pandey',
+    name: 'Mr. Alakh Niranjan Pandey',
+    role: 'Director',
+    bio: 'Mr. Pandey guides the development of residential infrastructure, campus operations, and athlete welfare programs, ensuring a secure and supportive training environment.',
+    image: '/images/Dr. Alakh Niranjan Pandey (Director).jpeg',
+    objectPosition: 'center 15%',
+  }
+];
+
+const initialSuccessStories = [
+  {
+    id: "amrit",
+    name: "Amrit Kumari",
+    sport: "Football",
+    achievement: "Former Indian Team Captain & Clerk, Bihar Govt",
+    description: "Amrit Kumari is a legendary figure in Bihar women's sports. She captained the Indian national football team, demonstrating exemplary leadership on the field. Her achievements secured her a role as a Clerk in the Bihar Government under the state's sports quota.",
+    quote: "Leading the national team was an absolute honor. Rani Laxmibai Sports Academy provided the foundation and support that made my dreams a reality.",
+    image: "/images/Amrit Kumari Former Indian team captain(Clerk Bihar Govr).jpeg",
+    joined: "June 2018",
+    age: 24,
+    medals: 15
+  },
+  {
+    id: "tara",
+    name: "Tara Khatoon",
+    sport: "Football",
+    achievement: "National Football Player",
+    description: "Known for her exceptional speed and dribbling mastery on the wings, Tara Khatoon has represented Bihar and India in major national-level tournaments, becoming a cornerstone of our senior football lineup.",
+    quote: "With consistent guidance and elite coaching at the academy, I transformed my passion into a professional football career.",
+    image: "/images/Tara Khatoon (FootBall).jpeg",
+    joined: "January 2020",
+    age: 20,
+    medals: 10
+  },
+  {
+    id: "khushbu",
+    name: "Khushbu Kumari",
+    sport: "Football & Handball",
+    achievement: "Dual-Sport National Athlete",
+    description: "Khushbu is an outstanding multi-sport athlete, excelling at the national level in both Football and Handball. Her athletic versatility and determination make her a true role model for young academy players.",
+    quote: "The multi-sport training environment at RLBSA helped me develop unique stamina and versatility to compete in both sports.",
+    image: "/images/Khushbu Kumari (Football, HandBall).jpg",
+    joined: "August 2019",
+    age: 21,
+    medals: 12,
+    objectPosition: "object-center"
+  },
+  {
+    id: "nisha",
+    name: "Nisha Kumari",
+    sport: "Football",
+    achievement: "National Player (Home Guard, Bihar Govt)",
+    description: "Nisha is a rock-solid defender who played at the national level. Through her sports credentials and dedication, she earned employment as a Home Guard with the Bihar Government, securing her family's livelihood.",
+    quote: "Sports gave me not just fitness and medals, but also a stable life and career through the Bihar government's support.",
+    image: "/images/NIsha Kumari (Homeguard Bihar Govr).jpeg",
+    joined: "September 2019",
+    age: 22,
+    medals: 8
+  },
+  {
+    id: "khushi",
+    name: "Khushi Kumari",
+    sport: "Football",
+    achievement: "Indian Team Goalkeeper",
+    description: "Khushi Kumari is a phenomenal goalkeeper who earned selection for the Indian National Women's Football team. Her lightning-fast reflexes and commanding presence in the box make her a tough barrier to breach.",
+    quote: "Goalkeeping requires extreme mental strength. The academy's specialized coaches pushed me to my absolute limits.",
+    image: "/images/Khushi Kumari (Football Goal keeper Indian Team).jpeg",
+    joined: "March 2021",
+    age: 19,
+    medals: 14
+  },
+  {
+    id: "shruti",
+    name: "Shruti Kumari",
+    sport: "Football",
+    achievement: "International Football Player",
+    description: "Shruti is a talented international-level winger who has represented India in youth championships. Her tactical intelligence and crossing ability have won praise from international selectors.",
+    quote: "Playing internationally was my ultimate goal. The training standards and diet support at the academy made it possible.",
+    image: "/images/Shruti Kumari (International football player).jpeg",
+    joined: "November 2020",
+    age: 18,
+    medals: 11
+  }
+];
+
 async function seed() {
   console.log("Connecting to MongoDB for seeding...");
   await mongoose.connect(MONGODB_URI);
@@ -195,11 +298,9 @@ async function seed() {
   }
 
   // 3. Seed Gallery
-  const galleryCount = await Gallery.countDocuments({});
-  if (galleryCount === 0) {
-    await Gallery.insertMany(initialGallery);
-    console.log("Gallery items seeded.");
-  }
+  await Gallery.deleteMany({});
+  await Gallery.insertMany(initialGallery);
+  console.log("Gallery items seeded.");
 
   // 4. Seed Events
   const eventCount = await Event.countDocuments({});
@@ -231,6 +332,16 @@ async function seed() {
     });
     console.log("Milestones seeded.");
   }
+
+  // 8. Seed Team Members
+  await TeamMember.deleteMany({});
+  await TeamMember.insertMany(initialTeamMembers);
+  console.log("Team members (Founders & Directors) seeded.");
+
+  // 9. Seed Success Stories
+  await SuccessStory.deleteMany({});
+  await SuccessStory.insertMany(initialSuccessStories);
+  console.log("Success stories seeded.");
 
   console.log("Database seeding completed.");
   await mongoose.connection.close();

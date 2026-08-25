@@ -29,7 +29,16 @@ export const SportSVG: React.FC<SportSVGProps> = ({
       personal: "🎯",
       story: "🏛️",
       facilities: "🏟️",
-      blog: "📰"
+      blog: "📰",
+      sports_infra: "🏟️",
+      gym: "🏋️",
+      hostel: "🏢",
+      dining: "🍽️",
+      education: "📚",
+      medical: "🩺",
+      safety: "🛡️",
+      recreation: "🎮",
+      wifi: "📶"
     };
     return emojis[type] || "🏅";
   };

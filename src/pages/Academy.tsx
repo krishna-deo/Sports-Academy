@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CaretDown } from '@phosphor-icons/react';
-import { coachesList as initialCoaches, certificationsList, faqsList, successStories } from '../data/sportsData';
+import { coachesList as initialCoaches, certificationsList, faqsList, successStories as initialStories } from '../data/sportsData';
 import { useHash } from '../hooks/useHash';
 
 interface RevealRowProps {
@@ -51,6 +51,25 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [coaches, setCoaches] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [genderFilter, setGenderFilter] = useState<'all' | 'boy' | 'girl'>('all');
+  const [residencyFilter, setResidencyFilter] = useState<'all' | 'resident' | 'non-resident'>('all');
+  const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
+  const [isResidencyDropdownOpen, setIsResidencyDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setIsGenderDropdownOpen(false);
+      setIsResidencyDropdownOpen(false);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  const handleGenderFilterChange = (filter: 'all' | 'boy' | 'girl') => {
+    setGenderFilter(filter);
+    setResidencyFilter('all');
+  };
 
   useEffect(() => {
     if (sub === 'success-stories' || sub === 'featured-players') {
@@ -98,13 +117,30 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
         .catch(err => {
           console.error(err);
           setStudents([
-            { id: "ST-101", name: "Amrit Kumari", age: 24, sport: "Football", joined: "2018-06-15", medalNumber: 15, avatar: "👩‍🎓" },
-            { id: "ST-102", name: "Tara Khatoon", age: 20, sport: "Football", joined: "2020-01-10", medalNumber: 10, avatar: "👩‍🎓" },
-            { id: "ST-103", name: "Khushbu Kumari", age: 21, sport: "Football & Handball", joined: "2019-08-05", medalNumber: 12, avatar: "👩‍🎓" },
-            { id: "ST-104", name: "Nisha Kumari", age: 22, sport: "Football", joined: "2019-09-20", medalNumber: 8, avatar: "👩‍🎓" },
-            { id: "ST-105", name: "Khushi Kumari", age: 19, sport: "Football", joined: "2021-03-12", medalNumber: 14, avatar: "👩‍🎓" },
-            { id: "ST-106", name: "Shruti Kumari", age: 18, sport: "Football", joined: "2020-11-18", medalNumber: 11, avatar: "👩‍🎓" }
+            { id: "ST-101", name: "Amrit Kumari", age: 24, sport: "Football", joined: "2018-06-15", medalNumber: 15, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+            { id: "ST-102", name: "Tara Khatoon", age: 20, sport: "Football", joined: "2020-01-10", medalNumber: 10, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+            { id: "ST-103", name: "Khushbu Kumari", age: 21, sport: "Football & Handball", joined: "2019-08-05", medalNumber: 12, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+            { id: "ST-104", name: "Nisha Kumari", age: 22, sport: "Football", joined: "2019-09-20", medalNumber: 8, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+            { id: "ST-105", name: "Khushi Kumari", age: 19, sport: "Football", joined: "2021-03-12", medalNumber: 14, avatar: "👩‍🎓", gender: "girl", residency: "resident" },
+            { id: "ST-106", name: "Shruti Kumari", age: 18, sport: "Football", joined: "2020-11-18", medalNumber: 11, avatar: "👩‍🎓", gender: "girl", residency: "non-resident" },
+            { id: "ST-107", name: "Aarav Singh", age: 16, sport: "Football", joined: "2023-04-12", medalNumber: 9, avatar: "👦", gender: "boy", residency: "resident" },
+            { id: "ST-108", name: "Rahul Kumar", age: 17, sport: "Athletics", joined: "2022-09-15", medalNumber: 7, avatar: "👦", gender: "boy", residency: "non-resident" },
+            { id: "ST-109", name: "Vikram Jeet", age: 18, sport: "Handball", joined: "2021-11-03", medalNumber: 12, avatar: "👦", gender: "boy", residency: "resident" }
           ]);
+        });
+    } else if (sub === 'success-stories' || sub === 'featured-players') {
+      fetch('http://localhost:5000/api/public/success-stories')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setStories(data);
+          } else {
+            setStories(initialStories);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setStories(initialStories);
         });
     }
   }, [sub]);
@@ -156,49 +192,220 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
         </>
       )}
 
-      {sub === 'students' && (
-        <>
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Our Student Directory
-            </h2>
-            <p className="text-text-light text-base md:text-lg">
-              Meet our dedicated academy players, active tournament competitors, and medal winners.
-            </p>
-          </div>
+      {sub === 'students' && (() => {
+        const filteredStudents = students.filter(student => {
+          const sGender = student.gender || 'girl';
+          if (genderFilter !== 'all' && sGender !== genderFilter) {
+            return false;
+          }
+          const sResidency = student.residency || 'resident';
+          if (residencyFilter !== 'all' && sResidency !== residencyFilter) {
+            return false;
+          }
+          return true;
+        });
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {students.map((student, idx) => (
-              <div 
-                key={idx} 
-                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300 flex flex-col items-center p-6 text-center"
-              >
-                <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-accent/40 flex items-center justify-center text-4xl mb-4 relative shadow-sm">
-                  {student.avatar || '🎓'}
-                  <span className="absolute bottom-0 right-0 bg-accent text-primary text-[10px] font-extrabold py-0.5 px-2 rounded-full border border-white">
-                    Age {student.age}
+        return (
+          <>
+            <div className="text-center max-w-[700px] mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+                Our Student Directory
+              </h2>
+              <p className="text-text-light text-base md:text-lg">
+                Meet our dedicated academy players, active tournament competitors, and medal winners.
+              </p>
+            </div>
+
+            {/* FILTER CONTROLS & COUNT HEADER */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-5 mb-10 animate-fade-in z-50 relative">
+              {/* Left Side: Count Indicator */}
+              {filteredStudents.length > 0 && (
+                <div className="text-left self-start md:self-end">
+                  <span className="text-[10px] font-bold text-text-light uppercase tracking-wider bg-soft-light border border-border-gray py-2.5 px-4.5 rounded-full shadow-xs">
+                    Showing {filteredStudents.length} {filteredStudents.length === 1 ? 'Athlete' : 'Athletes'} Matching Selection
                   </span>
                 </div>
-                
-                <h3 className="text-base font-bold text-primary mb-1">{student.name}</h3>
-                <p className="text-xs font-bold text-accent uppercase tracking-wider mb-3">
-                  {student.sport || 'Athlete'}
-                </p>
-                
-                <div className="w-full pt-3 border-t border-dashed border-border-gray flex justify-between items-center text-xs text-text-light">
-                  <span className="font-semibold">Joined:</span>
-                  <span>{student.joined || 'N/A'}</span>
+              )}
+
+              {/* Right Side: Dropdowns */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-stretch sm:items-end justify-end ml-auto">
+                {/* Gender Dropdown */}
+                <div className="relative w-full sm:w-56 text-left">
+                  <label className="block text-left text-[10px] font-bold text-accent uppercase tracking-wider mb-1.5 pl-1">
+                    Gender Group
+                  </label>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsGenderDropdownOpen(!isGenderDropdownOpen);
+                      setIsResidencyDropdownOpen(false);
+                    }}
+                    className="w-full bg-white border border-border-gray py-3 px-4.5 rounded-xl text-xs font-bold text-primary flex justify-between items-center shadow-xs cursor-pointer hover:border-accent hover:shadow-md transition-all outline-none"
+                  >
+                    <span className="flex items-center gap-2">
+                      {genderFilter === 'all' && '🌍 All Athletes'}
+                      {genderFilter === 'boy' && '👦 Boys Section'}
+                      {genderFilter === 'girl' && '👧 Girls Section'}
+                    </span>
+                    <CaretDown size={14} className={`transition-transform duration-200 text-primary-light ${isGenderDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isGenderDropdownOpen && (
+                    <div className="absolute left-0 right-0 mt-2 bg-white border border-border-gray rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleGenderFilterChange('all');
+                          setIsGenderDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${genderFilter === 'all' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        🌍 All Athletes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleGenderFilterChange('boy');
+                          setIsGenderDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${genderFilter === 'boy' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        👦 Boys Section
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleGenderFilterChange('girl');
+                          setIsGenderDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${genderFilter === 'girl' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        👧 Girls Section
+                      </button>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="w-full mt-2 flex justify-between items-center text-xs text-text-body bg-soft-light py-1.5 px-3 rounded-lg border border-border-gray">
-                  <span className="font-bold flex items-center gap-1"><span className="text-sm">🏅</span> Medals Won:</span>
-                  <span className="font-extrabold text-primary">{student.medalNumber || 0}</span>
+
+                {/* Residency Dropdown */}
+                <div className="relative w-full sm:w-56 text-left">
+                  <label className="block text-left text-[10px] font-bold text-accent uppercase tracking-wider mb-1.5 pl-1">
+                    Residency Status
+                  </label>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsResidencyDropdownOpen(!isResidencyDropdownOpen);
+                      setIsGenderDropdownOpen(false);
+                    }}
+                    className="w-full bg-white border border-border-gray py-3 px-4.5 rounded-xl text-xs font-bold text-primary flex justify-between items-center shadow-xs cursor-pointer hover:border-accent hover:shadow-md transition-all outline-none"
+                  >
+                    <span className="flex items-center gap-2">
+                      {residencyFilter === 'all' && '🏢 All Residencies'}
+                      {residencyFilter === 'resident' && '🏠 Boarding (Residents)'}
+                      {residencyFilter === 'non-resident' && '🎒 Day Scholar'}
+                    </span>
+                    <CaretDown size={14} className={`transition-transform duration-200 text-primary-light ${isResidencyDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isResidencyDropdownOpen && (
+                    <div className="absolute left-0 right-0 mt-2 bg-white border border-border-gray rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResidencyFilter('all');
+                          setIsResidencyDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${residencyFilter === 'all' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        🏢 All Residencies
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResidencyFilter('resident');
+                          setIsResidencyDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${residencyFilter === 'resident' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        🏠 Boarding (Residents)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResidencyFilter('non-resident');
+                          setIsResidencyDropdownOpen(false);
+                        }}
+                        className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${residencyFilter === 'non-resident' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
+                      >
+                        🎒 Day Scholar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        </>
-      )}
+            </div>
+
+            {filteredStudents.length === 0 ? (
+              <div className="text-center py-20 px-4 bg-soft-light rounded-3xl border border-dashed border-border-gray max-w-[480px] mx-auto animate-fade-in mb-12 shadow-xs">
+                <span className="text-5xl block mb-4">🔍</span>
+                <h3 className="text-lg font-bold text-primary mb-1.5">No athletes found</h3>
+                <p className="text-xs text-text-light leading-relaxed max-w-[340px] mx-auto">
+                  We don't have records matching these filters currently. Try selecting another residency or gender group.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredStudents.map((student, idx) => (
+                  <div 
+                    key={idx} 
+                    className="bg-white rounded-2xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-6 text-center group relative"
+                  >
+                    {/* top highlight gradient strip */}
+                    <div className={`absolute top-0 left-0 right-0 h-1.5 ${(student.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+
+                    <div className="w-24 h-24 rounded-full bg-soft-light border-4 border-white shadow-md flex items-center justify-center text-4xl mb-4 relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden">
+                      {student.avatar && (student.avatar.startsWith('data:') || student.avatar.includes('/') || student.avatar.includes('.')) ? (
+                        <img src={student.avatar} alt={student.name} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <span>{student.avatar || '🎓'}</span>
+                      )}
+                      <span className="absolute -bottom-1 -right-1 bg-accent text-primary text-[10px] font-black py-0.5 px-2.5 rounded-full border border-white shadow-xs">
+                        Age {student.age}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-base font-extrabold text-primary mb-1 tracking-tight group-hover:text-accent transition-colors duration-200">{student.name}</h3>
+                    <span className="inline-block bg-primary/5 text-primary text-[10px] font-bold py-0.5 px-2.5 rounded-md uppercase tracking-wider mb-3">
+                      {student.sport || 'Athlete'}
+                    </span>
+
+                    <div className="mb-4">
+                      <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider py-1 px-3 rounded-full shadow-xs ${
+                        (student.residency || 'resident') === 'resident'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {(student.residency || 'resident') === 'resident' ? '🏠 Boarding Athlete' : '🎒 Day Scholar'}
+                      </span>
+                    </div>
+                    
+                    <div className="w-full mt-auto pt-3.5 border-t border-dashed border-border-gray">
+                      <div className="flex justify-between items-center text-[11px] text-text-light font-semibold mb-2">
+                        <span>Joined Academy:</span>
+                        <span className="font-bold text-primary">{student.joined || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs text-text-body bg-soft-light py-2 px-3.5 rounded-xl border border-border-gray transition-all group-hover:bg-accent/10 group-hover:border-accent/20">
+                        <span className="font-bold flex items-center gap-1.5"><span className="text-sm">🏅</span> Medals Won:</span>
+                        <span className="font-black text-sm text-primary">{student.medalNumber || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {(sub === 'success-stories' || sub === 'featured-players') && (
         <>
@@ -214,7 +421,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
           </div>
 
           <div className="flex flex-col gap-24 md:gap-32 max-w-[1000px] mx-auto">
-            {successStories.map((player, idx) => {
+            {stories.map((player, idx) => {
               const isEven = idx % 2 === 0;
               return (
                 <RevealRow id={player.id} className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center" key={player.id}>

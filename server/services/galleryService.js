@@ -44,9 +44,9 @@ class GalleryService {
       if (!allowedExts.includes(ext) || !allowedMimes.includes(mime)) {
         throw new Error("Invalid video format. Allowed: MP4, MOV.");
       }
-      // Max video size: 300MB
-      if (file.size > 300 * 1024 * 1024) {
-        throw new Error("Video exceeds maximum allowed size of 300 MB.");
+      // Max video size: 1GB (auto-compressed if > 300MB)
+      if (file.size > 1024 * 1024 * 1024) {
+        throw new Error("Video exceeds maximum allowed upload size of 1 GB.");
       }
     } else {
       throw new Error("Unsupported media type specified.");
@@ -181,8 +181,19 @@ class GalleryService {
 
     if (hasFFmpeg) {
       try {
-        // Compress and downscale if larger than 1920x1080 using libx264
-        const cmd = `ffmpeg -i "${fullOriginalPath}" -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" -vcodec libx264 -crf 28 -preset fast -acodec aac -b:a 128k -y "${fullOptimizedPath}"`;
+        // Compress and downscale
+        // If file size is > 300MB, compress aggressively to 720p with crf 32. Otherwise, standard 1080p crf 28.
+        let scaleFilter = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease";
+        let crfVal = 28;
+        let audioBitrate = "128k";
+        
+        if (originalSize > 300 * 1024 * 1024) {
+          scaleFilter = "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease";
+          crfVal = 32;
+          audioBitrate = "96k";
+        }
+
+        const cmd = `ffmpeg -i "${fullOriginalPath}" -vf "${scaleFilter}" -vcodec libx264 -crf ${crfVal} -preset fast -acodec aac -b:a ${audioBitrate} -y "${fullOptimizedPath}"`;
         await execPromise(cmd);
         optimizedSize = fs.statSync(fullOptimizedPath).size;
         compressionRatio = Number(((originalSize - optimizedSize) / originalSize * 100).toFixed(2));
@@ -243,7 +254,55 @@ class GalleryService {
           large: thumbnailPath
         }
       },
-      thumbnail: thumbnailPath
+    };
+  }
+
+  async processCustomThumbnail(tempFilePath) {
+    const uuid = uuidv4();
+    const thumbnailFileName = `${uuid}-thumb.webp`;
+    const fullThumbnailPath = path.join(__dirname, '..', 'uploads', 'gallery', 'thumbnails', thumbnailFileName);
+    
+    await sharp(tempFilePath)
+      .resize(300, 300, { fit: 'cover' })
+      .webp({ quality: 80 })
+      .toFile(fullThumbnailPath);
+    
+    if (fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
+    return `/uploads/gallery/thumbnails/${thumbnailFileName}`;
+  }
+
+  async optimizeEventPhoto(tempFilePath, originalName) {
+    const uuid = uuidv4();
+    const originalExt = path.extname(originalName).toLowerCase();
+    
+    // Save original
+    const originalUrl = await storageService.save(tempFilePath, 'original', `${uuid}-orig${originalExt}`);
+    const fullOriginalPath = path.join(__dirname, '..', originalUrl.startsWith('/') ? originalUrl.substring(1) : originalUrl);
+    
+    // Convert and save optimized WebP
+    const optimizedFileName = `${uuid}.webp`;
+    const optimizedUrlPath = `/uploads/gallery/optimized/${optimizedFileName}`;
+    const fullOptimizedPath = path.join(__dirname, '..', 'uploads', 'gallery', 'optimized', optimizedFileName);
+    
+    const meta = await sharp(fullOriginalPath).metadata();
+    let resizeOptions = {};
+    if ((meta.width || 0) > 1920 || (meta.height || 0) > 1080) {
+      resizeOptions = { width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true };
+    }
+    
+    let sharpInstance = sharp(fullOriginalPath);
+    if (Object.keys(resizeOptions).length > 0) {
+      sharpInstance = sharpInstance.resize(resizeOptions);
+    }
+    
+    await sharpInstance.webp({ quality: 80 }).toFile(fullOptimizedPath);
+    const optimizedSize = fs.statSync(fullOptimizedPath).size;
+    
+    return {
+      path: optimizedUrlPath,
+      size: optimizedSize
     };
   }
 }

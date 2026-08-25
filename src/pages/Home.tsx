@@ -1,12 +1,32 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Barbell, Bus } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
-import { successStories } from '../data/sportsData';
+import { successStories as initialSuccessStories } from '../data/sportsData';
 
 export const Home: React.FC = () => {
-  const successPlayers = successStories;
-  const team = teamMembers;
+  const [successPlayers, setSuccessPlayers] = React.useState<any[]>(initialSuccessStories);
+  const [team, setTeam] = React.useState<any[]>(teamMembers);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/team')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTeam(data);
+        }
+      })
+      .catch(err => console.error("Error loading team database values:", err));
+
+    fetch('http://localhost:5000/api/public/success-stories')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSuccessPlayers(data);
+        }
+      })
+      .catch(err => console.error("Error loading success stories database values:", err));
+  }, []);
 
   const whatWeDoRef = React.useRef<HTMLDivElement>(null);
   const [whatWeDoDirection, setWhatWeDoDirection] = React.useState<'right' | 'left'>('right');
@@ -200,8 +220,8 @@ export const Home: React.FC = () => {
     },
     {
       id: 'education',
-      title: 'Education',
-      tag: 'Scholarship',
+      title: 'Education & Academic Support',
+      tag: 'Academic Support',
       description: '100% sponsored schooling, tuition fees, and books.',
       image: '/images/education_card.jpg',
       icon: BookOpen,
@@ -216,19 +236,11 @@ export const Home: React.FC = () => {
     },
     {
       id: 'hostel',
-      title: 'Hostel & Lodging',
+      title: 'Hostel & Accommodation',
       tag: 'Residential',
       description: 'Secure gated campus, studying rooms, and clean laundry.',
       image: '/images/hostel_card.png',
       icon: House,
-    },
-    {
-      id: 'gym',
-      title: 'Gym & Fitness',
-      tag: 'Strength & Conditioning',
-      description: 'Fully equipped high-performance gym, strength training, and rehabilitation.',
-      image: '/images/gym_card.png',
-      icon: Barbell,
     },
     {
       id: 'transportation',
@@ -442,15 +454,26 @@ export const Home: React.FC = () => {
               )}
             </button>
           </div>
+          
+          {/* Centered View More Button */}
+          <div className="text-center mt-12">
+            <a
+              href="#/about/what-we-do"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/95 text-white hover:text-accent font-bold py-3 px-8 rounded-full shadow-md transition-all duration-300 hover:shadow-lg scale-100 hover:scale-105 active:scale-95 text-sm uppercase tracking-wider"
+            >
+              View All Operations
+              <span>&rarr;</span>
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* Founders & Key Members Section */}
+      {/* Founders & Directors Section */}
       <section className="py-24 px-5 bg-white w-full border-b border-border-gray/50 overflow-hidden select-none">
         <div className="max-w-[1380px] mx-auto">
           <div className="text-center max-w-[700px] mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Founders & Key Members
+              Founders & Directors
             </h2>
             <p className="text-text-light text-base md:text-lg">
               Meet the visionary minds driving the mission of RLBSA Foundation to nurture athletic excellence and build youth sports champions.

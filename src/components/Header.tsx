@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
       dropdown: [
         { label: 'Our Story', href: '#/about/story' },
         { label: 'Vision & Mission', href: '#/about/vision-mission' },
-        { label: 'Founders & Key Members', href: '#/about/founders' },
+        { label: 'Founders & Directors', href: '#/about/founders' },
         { label: 'What We Do', href: '#/about/what-we-do' },
         { label: 'Facilities', href: '#/about/facilities' },
         { label: 'Achievements', href: '#/about/achievements' },
@@ -59,19 +59,7 @@ export const Header: React.FC = () => {
         { label: 'FAQs', href: '#/academy/faqs' },
       ],
     },
-    {
-      label: '🖼️ Gallery',
-      href: '#/gallery/photos',
-      dropdown: [
-        { label: 'Photos', href: '#/gallery/photos' },
-        { label: 'Videos', href: '#/gallery/videos' },
-        { label: 'Tournament Highlights', href: '#/gallery/tournament' },
-        { label: 'Academy Events', href: '#/gallery/events' },
-        { label: 'Student Achievements', href: '#/gallery/student-achievements' },
-        { label: 'Facilities Tour', href: '#/gallery/tour' },
-        { label: 'Media Coverage', href: '#/gallery/media' },
-      ],
-    },
+    { label: '🖼️ Gallery', href: '#/gallery/all' },
     { label: '📞 Contact Us', href: '#/contact' },
   ];
 
@@ -152,7 +140,7 @@ export const Header: React.FC = () => {
               className="bg-accent text-primary text-[12px] sm:text-[13px] font-bold py-1.5 px-3 sm:py-2 sm:px-5 hover:bg-primary hover:text-white transition-all duration-200 whitespace-nowrap shrink-0 rounded"
               id="btn-donate"
             >
-              DONATE NOW
+              DONATE US
             </a>
 
             <button
@@ -236,7 +224,7 @@ export const Header: React.FC = () => {
               href="#/donate"
               className="block w-full bg-accent text-primary font-bold py-3 px-5 hover:bg-primary hover:text-white transition-all duration-200 rounded-md"
             >
-              DONATE NOW
+              DONATE US
             </a>
           </div>
         </div>

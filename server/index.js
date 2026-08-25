@@ -15,7 +15,43 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+  const Student = require('./models/Student');
+  const User = require('./models/User');
+
+  // Set default role of existing users to superadmin
+  User.updateMany({ role: { $exists: false } }, { $set: { role: 'superadmin' } })
+    .then(r => { if (r.modifiedCount > 0) console.log(`Seeded roles for ${r.modifiedCount} users.`); })
+    .catch(err => console.error("Migration error for user roles:", err));
+
+  // Auto-heal/migrate old student documents
+  Student.find({ studentId: { $exists: false } })
+    .then(async (oldStudents) => {
+      if (oldStudents.length > 0) {
+        console.log(`Running migration for ${oldStudents.length} legacy student documents...`);
+        for (const student of oldStudents) {
+          const calculatedAge = student.age || 18;
+          const approxDOB = new Date();
+          approxDOB.setFullYear(approxDOB.getFullYear() - calculatedAge);
+          approxDOB.setMonth(5);
+          approxDOB.setDate(15);
+
+          student.studentId = student.id;
+          student.fullName = student.name;
+          student.dateOfBirth = approxDOB;
+          student.primarySport = student.sport || 'Football';
+          student.admissionDate = student.joined ? new Date(student.joined) : new Date();
+          student.status = 'Active';
+          student.isDeleted = false;
+          student.showOnPublicWebsite = true;
+          
+          await student.save();
+        }
+        console.log("Legacy student database migration completed successfully.");
+      }
+    })
+    .catch(err => console.error("Migration error for students schema:", err));
+});
 
 // Middleware
 app.use(cors());

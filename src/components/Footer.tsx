@@ -94,8 +94,8 @@ export const Footer: React.FC = () => {
             </button>
           </form>
           <div className="flex flex-col gap-2 text-sm font-semibold text-white/85">
-            <p className="flex items-center gap-2"><Phone size={16} className="text-accent" /> +91 98765 43210</p>
-            <p className="flex items-center gap-2"><Envelope size={16} className="text-accent" /> contact@rlbsports.in</p>
+            <p className="flex items-center gap-2"><Phone size={16} className="text-accent" /> +91 95239 37934</p>
+            <p className="flex items-center gap-2"><Envelope size={16} className="text-accent" /> foundationrlbsa@gmail.com</p>
           </div>
         </div>
 
