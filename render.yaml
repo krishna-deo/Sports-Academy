@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sports-academy
+    runtime: node
+    buildCommand: npm install && npm run build && cd server && npm install
+    startCommand: cd server && node index.js
+    envVars:
+      - key: MONGODB_URI
+        value: mongodb+srv://krishnasinghhaji26_db_user:UiXTvIEJs8l5ehjP@cluster0.3gnkbbd.mongodb.net/
+      - key: NODE_ENV
+        value: production
