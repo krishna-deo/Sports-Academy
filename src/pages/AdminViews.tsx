@@ -593,6 +593,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     setStudentDocFiles([]);
     setDeletedDocuments([]);
     setEditingStudentProfile(null);
+    setActiveModal(null);
+    setActiveStudentFormTab('personal');
   };
 
   const handleEditStudentClick = (student: any) => {
