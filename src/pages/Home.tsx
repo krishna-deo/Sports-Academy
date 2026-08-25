@@ -204,7 +204,7 @@ export const Home: React.FC = () => {
     }
     const timer = setInterval(() => {
       setCurrentMember((prev) => (prev + 1) % team.length);
-    }, 3000); // Auto-slide every 3 seconds
+    }, 5000); // Auto-slide every 5 seconds
     return () => clearInterval(timer);
   }, [currentMember, team.length]);
 
