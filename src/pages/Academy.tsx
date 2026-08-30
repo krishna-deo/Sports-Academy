@@ -172,7 +172,15 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded">
                     {coach.experience}
                   </span>
-                  {coach.avatar}
+                  {coach.avatar && (coach.avatar.startsWith('http') || coach.avatar.startsWith('/') || coach.avatar.startsWith('data:')) ? (
+                    <img 
+                      src={coach.avatar} 
+                      alt={coach.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    coach.avatar
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="text-base font-bold text-primary mb-1">{coach.name}</h3>

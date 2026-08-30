@@ -769,16 +769,24 @@ router.get('/students/documents/:filename', async (req, res) => {
 // Coaches CRUD
 router.post('/coaches', async (req, res) => {
   let { name, role, specialization, experience, bio, avatar } = req.body;
-  if (!name || !role || !specialization || !experience) {
-    return res.status(400).json({ error: "Required fields are missing." });
+  if (!name || !role || !experience) {
+    return res.status(400).json({ error: "Required fields (name, role, experience) are missing." });
   }
 
   name = sanitizeInput(name).trim();
   role = sanitizeInput(role).trim();
-  specialization = sanitizeInput(specialization).trim();
+  specialization = specialization ? sanitizeInput(specialization).trim() : role;
   experience = sanitizeInput(experience).trim();
   bio = bio ? sanitizeInput(bio).trim() : '';
   avatar = avatar ? sanitizeInput(avatar).trim() : '👨‍🏫';
+
+  if (avatar && avatar.startsWith('data:image/')) {
+    try {
+      avatar = await storageService.uploadBase64(avatar, 'coaches');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for coach avatar:", err);
+    }
+  }
 
   try {
     const newCoach = new Coach({ name, role, specialization, experience, bio, avatar });

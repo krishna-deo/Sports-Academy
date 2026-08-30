@@ -257,7 +257,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
   const [imageSize, setImageSize] = useState({ width: 1, height: 1 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
-  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story'>('story');
+  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach'>('story');
 
   const token = localStorage.getItem('rlbsa_admin_token') || '';
 
@@ -552,6 +552,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
             });
         } else if (croppingTarget === 'team') {
           setTeamForm({ ...teamForm, image: croppedBase64 });
+        } else if (croppingTarget === 'coach') {
+          setCoachForm({ ...coachForm, avatar: croppedBase64 });
         } else {
           setStoryForm({ ...storyForm, image: croppedBase64 });
         }
@@ -742,6 +744,10 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleAddCoach = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!coachForm.avatar || coachForm.avatar === '👨‍🏫') {
+      alert("Please upload and crop a profile photo for the coach.");
+      return;
+    }
     try {
       const response = await fetch('http://localhost:5000/api/admin/coaches', {
         method: 'POST',
@@ -751,6 +757,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         },
         body: JSON.stringify({
           ...coachForm,
+          specialization: coachForm.role, // Automatically default specialization to role title
           experience: coachForm.experience + ' Years Coaching'
         })
       });
@@ -2351,8 +2358,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {coaches.map((coach, idx) => (
               <div key={idx} className="p-5 border border-border-gray rounded-xl flex gap-4 text-left hover:shadow-sm transition-all items-start relative group">
-                <div className="w-12 h-12 bg-border-gray text-2xl rounded-full flex items-center justify-center shrink-0">
-                  {coach.avatar}
+                <div className="w-12 h-12 bg-border-gray rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                  {coach.avatar && (coach.avatar.startsWith('http') || coach.avatar.startsWith('/') || coach.avatar.startsWith('data:')) ? (
+                    <img 
+                      src={coach.avatar} 
+                      alt={coach.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <span className="text-2xl">{coach.avatar}</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-primary text-base">{coach.name}</h4>
@@ -4534,16 +4549,55 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                 <input required type="text" placeholder="E.g. Head Athletics Coach" value={coachForm.role} onChange={(e) => setCoachForm({...coachForm, role: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Certifications</label>
-                <input required type="text" placeholder="E.g. NIS Certified, ex-athlete" value={coachForm.specialization} onChange={(e) => setCoachForm({...coachForm, specialization: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
-              </div>
-              <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Experience (Years)</label>
                 <input required type="number" min="1" max="40" placeholder="E.g. 10" value={coachForm.experience} onChange={(e) => setCoachForm({...coachForm, experience: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Bio Description</label>
                 <textarea required rows={3} placeholder="Coach profile info..." value={coachForm.bio} onChange={(e) => setCoachForm({...coachForm, bio: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo</label>
+                {coachForm.avatar && (coachForm.avatar.startsWith('http') || coachForm.avatar.startsWith('/') || coachForm.avatar.startsWith('data:')) ? (
+                  <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
+                    <img 
+                      src={coachForm.avatar} 
+                      alt="Cropped Coach" 
+                      className="w-20 h-15 object-cover rounded border border-border-gray shadow-xs" 
+                    />
+                    <div className="text-left">
+                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready</span>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setCroppingTarget('coach');
+                          setCropperSource('');
+                          setCropZoom(1);
+                          setCropPosition({ x: 0, y: 0 });
+                          setShowCropperModal(true);
+                        }}
+                        className="block mt-1.5 text-xs text-primary-light hover:text-accent font-bold cursor-pointer underline bg-transparent border-none p-0"
+                      >
+                        Change Photo
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCroppingTarget('coach');
+                      setCropperSource('');
+                      setCropZoom(1);
+                      setCropPosition({ x: 0, y: 0 });
+                      setShowCropperModal(true);
+                    }}
+                    className="w-full py-5 px-4 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-2 bg-soft-light hover:bg-white transition-all cursor-pointer group outline-none"
+                  >
+                    <Plus size={20} className="text-text-light group-hover:text-primary transition-colors" />
+                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (4:3)</span>
+                  </button>
+                )}
               </div>
               <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm">
                 Save Record
