@@ -154,6 +154,17 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   // Modal Control States
   const [activeModal, setActiveModal] = useState<string | null>(null); // 'student' | 'coach' | 'gallery' | 'event'
   const [successToast, setSuccessToast] = useState<string>('');
+  const [confirmationModal, setConfirmationModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   // Form Fields State
   // Student Management Module states
@@ -409,20 +420,29 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   };
 
   const deleteStory = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this success story?")) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/success-stories/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setStories(stories.filter(s => s.id !== id));
-        triggerSuccess('Success story deleted.');
-      } else {
-        alert(data.error || "Error deleting success story.");
+    setConfirmationModal({
+      show: true,
+      title: "Delete Success Story",
+      message: "Are you sure you want to delete this success story?",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/success-stories/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            setStories(stories.filter(s => s.id !== id));
+            triggerSuccess('Success story deleted.');
+          } else {
+            alert(data.error || "Error deleting success story.");
+          }
+        } catch (err) {
+          alert("Error contacting the backend server.");
+        }
       }
-    } catch (err) {
+    });
+  };
       alert("Error deleting success story.");
     }
   };
@@ -814,27 +834,33 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   };
 
   const handleDeleteTeamMember = async (id: string) => {
-    if (!window.confirm("Are you sure you want to remove this team member?")) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/team/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('rlbsa_admin_token');
-        window.location.reload();
-        return;
+    setConfirmationModal({
+      show: true,
+      title: "Remove Team Member",
+      message: "Are you sure you want to remove this team member?",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/team/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('rlbsa_admin_token');
+            window.location.reload();
+            return;
+          }
+          const data = await response.json();
+          if (response.ok && data.success) {
+            setTeam(team.filter(m => m.id !== id));
+            triggerSuccess('Team member removed successfully.');
+          } else {
+            alert(data.error || "Failed to delete team member.");
+          }
+        } catch (err) {
+          alert("Error contacting the backend server.");
+        }
       }
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setTeam(team.filter(m => m.id !== id));
-        triggerSuccess('Team member removed successfully.');
-      } else {
-        alert(data.error || "Failed to delete team member.");
-      }
-    } catch (err) {
-      alert("Error contacting the backend server.");
-    }
+    });
   };
 
   useEffect(() => {
@@ -1000,20 +1026,26 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   };
 
   const handleSoftDelete = async (id: string) => {
-    if (!window.confirm("क्या आप इस फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move this media item to the Trash Bin?")) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/soft`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        triggerSuccess('Event moved to Trash Bin.');
-        fetchGallery();
-        fetchGalleryStats();
+    setConfirmationModal({
+      show: true,
+      title: "Move to Trash Bin",
+      message: "क्या आप इस फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move this media item to the Trash Bin?",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/soft`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            triggerSuccess('Event moved to Trash Bin.');
+            fetchGallery();
+            fetchGalleryStats();
+          }
+        } catch (err) {
+          alert("Error soft deleting event.");
+        }
       }
-    } catch (err) {
-      alert("Error soft deleting event.");
-    }
+    });
   };
 
   const handleRestore = async (id: string) => {
@@ -1037,20 +1069,26 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       alert("Cannot delete mock item. Only uploaded database items can be permanently deleted.");
       return;
     }
-    if (!window.confirm("क्या आप इस फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete this media item? This action is irreversible.")) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/permanent`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        triggerSuccess('Media item permanently deleted.');
-        fetchGallery();
-        fetchGalleryStats();
+    setConfirmationModal({
+      show: true,
+      title: "Permanently Delete",
+      message: "क्या आप इस फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete this media item? This action is irreversible.",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/permanent`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            triggerSuccess('Media item permanently deleted.');
+            fetchGallery();
+            fetchGalleryStats();
+          }
+        } catch (err) {
+          alert("Error permanently deleting media item.");
+        }
       }
-    } catch (err) {
-      alert("Error permanently deleting media item.");
-    }
+    });
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1129,24 +1167,30 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleBulkSoftDelete = async () => {
     if (selectedGalleryIds.length === 0) return;
-    if (!window.confirm(`क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move the selected ${selectedGalleryIds.length} media items to the Trash Bin?`)) return;
-    try {
-      const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-soft-delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ids: selectedGalleryIds })
-      });
-      if (response.ok) {
-        triggerSuccess(`${selectedGalleryIds.length} items moved to Trash Bin.`);
-        setSelectedGalleryIds([]);
-        fetchGallery();
+    setConfirmationModal({
+      show: true,
+      title: "Bulk Move to Trash Bin",
+      message: `क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move the selected ${selectedGalleryIds.length} media items to the Trash Bin?`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-soft-delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids: selectedGalleryIds })
+          });
+          if (response.ok) {
+            triggerSuccess(`${selectedGalleryIds.length} items moved to Trash Bin.`);
+            setSelectedGalleryIds([]);
+            fetchGallery();
+          }
+        } catch (err) {
+          alert("Error performing bulk delete.");
+        }
       }
-    } catch (err) {
-      alert("Error performing bulk delete.");
-    }
+    });
   };
 
   const handleBulkRestore = async () => {
@@ -1172,9 +1216,34 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleBulkPermanentDelete = async () => {
     if (selectedGalleryIds.length === 0) return;
-    if (!window.confirm(`क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete the ${selectedGalleryIds.length} selected media files? This is irreversible.`)) return;
-    try {
-      const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-permanent-delete', {
+    setConfirmationModal({
+      show: true,
+      title: "Bulk Permanently Delete",
+      message: `क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete the ${selectedGalleryIds.length} selected media files? This is irreversible.`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-permanent-delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids: selectedGalleryIds })
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            triggerSuccess(`${selectedGalleryIds.length} items permanently deleted.`);
+            setSelectedGalleryIds([]);
+            fetchGallery();
+          } else {
+            alert(data.error || "Failed to bulk delete permanently.");
+          }
+        } catch (err) {
+          alert("Error performing bulk permanent delete.");
+        }
+      }
+    });
+  };
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1338,19 +1407,25 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   // Delete Handlers
   const deleteStudent = async (id: string, name?: string) => {
     const displayName = name ? ` "${name}"` : '';
-    if (!window.confirm(`Are you sure you want to deactivate/delete student${displayName}? They will be marked as inactive and soft-deleted.`)) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/students/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        triggerSuccess('Student record soft-deleted/deactivated.');
-        fetchStudents();
+    setConfirmationModal({
+      show: true,
+      title: "Deactivate/Delete Student",
+      message: `Are you sure you want to deactivate/delete student${displayName}? They will be marked as inactive and soft-deleted.`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/students/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            triggerSuccess('Student record soft-deleted/deactivated.');
+            fetchStudents();
+          }
+        } catch (err) {
+          alert("Error soft-deleting student.");
+        }
       }
-    } catch (err) {
-      alert("Error soft-deleting student.");
-    }
+    });
   };
 
   const restoreStudent = async (id: string) => {
@@ -1391,9 +1466,31 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleBulkDelete = async () => {
     if (selectedStudentIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to deactivate/soft-delete the ${selectedStudentIds.length} selected student records?`)) return;
-    try {
-      const response = await fetch('http://localhost:5000/api/admin/students/bulk-delete', {
+    setConfirmationModal({
+      show: true,
+      title: "Bulk Deactivate/Soft-Delete",
+      message: `Are you sure you want to deactivate/soft-delete the ${selectedStudentIds.length} selected student records?`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/admin/students/bulk-delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids: selectedStudentIds })
+          });
+          if (response.ok) {
+            triggerSuccess(`Deactivated ${selectedStudentIds.length} student records.`);
+            setSelectedStudentIds([]);
+            fetchStudents();
+          }
+        } catch (err) {
+          alert("Error deactivating students in bulk.");
+        }
+      }
+    });
+  };
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -5059,6 +5156,36 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                 {isVerifyingEmail ? 'VERIFYING...' : 'CONFIRM EMAIL CHANGE'}
               </button>
             </form>
+          </div>
+        </div>
+      {confirmationModal.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-center justify-center p-5 animate-fade-in" onClick={() => setConfirmationModal(prev => ({ ...prev, show: false }))}>
+          <div className="bg-white rounded-xl border border-border-gray shadow-xl max-w-md w-full overflow-hidden animate-scale-up text-left" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                <span className="text-rose-500">⚠️</span> {confirmationModal.title}
+              </h3>
+              <p className="text-text-body text-sm mt-3 whitespace-pre-line leading-relaxed">
+                {confirmationModal.message}
+              </p>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setConfirmationModal(prev => ({ ...prev, show: false }))}
+                  className="px-4 py-2 border border-border-gray bg-white rounded-lg text-xs font-bold text-text-light hover:bg-soft-light transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    confirmationModal.onConfirm();
+                    setConfirmationModal(prev => ({ ...prev, show: false }));
+                  }}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
