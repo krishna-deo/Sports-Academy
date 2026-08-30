@@ -618,8 +618,6 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
 
     </section>
       
-    </section>
-      
       {/* Detailed Student Modal */}
       {selectedStudent && (
         <div 
