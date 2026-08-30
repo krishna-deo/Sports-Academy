@@ -24,6 +24,13 @@ const Milestone = require('../models/Milestone');
 const User = require('../models/User');
 const TeamMember = require('../models/TeamMember');
 const SuccessStory = require('../models/SuccessStory');
+const Policy = require('../models/Policy');
+const Document = require('../models/Document');
+const StudentConsent = require('../models/StudentConsent');
+const Complaint = require('../models/Complaint');
+const Incident = require('../models/Incident');
+const ComplianceReminder = require('../models/ComplianceReminder');
+const AuditLog = require('../models/AuditLog');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
@@ -41,7 +48,8 @@ router.get('/profile', async (req, res) => {
       success: true,
       username: adminUser.username,
       name: adminUser.name || 'Administrator',
-      email: adminUser.email || 'admin@sportsacademy.com'
+      email: adminUser.email || 'admin@sportsacademy.com',
+      role: adminUser.role || 'admin'
     });
   } catch (err) {
     console.error("Fetch profile error:", err);
@@ -1160,14 +1168,406 @@ router.put('/success-stories/:id', async (req, res) => {
   }
 });
 
-router.delete('/success-stories/:id', async (req, res) => {
+// --- Administrative Legal & Compliance CMS Routes ---
+
+// Helper to log administrative actions to AuditLog
+async function logAdminAction(username, action, target, details) {
   try {
-    const result = await SuccessStory.findOneAndDelete({ id: req.params.id });
-    if (!result) return res.status(404).json({ error: "Success story not found." });
+    const logId = `AUD-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newLog = new AuditLog({
+      id: logId,
+      user: username,
+      action,
+      target,
+      details
+    });
+    await newLog.save();
+  } catch (err) {
+    console.error("Failed to write audit log:", err);
+  }
+}
+
+// 1. Dashboard Statistics
+router.get('/compliance/stats', async (req, res) => {
+  try {
+    const totalPolicies = await Policy.countDocuments({});
+    const publishedPolicies = await Policy.countDocuments({ status: 'published' });
+    const draftPolicies = await Policy.countDocuments({ status: 'draft' });
+    
+    const totalDocuments = await Document.countDocuments({});
+    const publicDocs = await Document.countDocuments({ visibility: 'public', status: 'published' });
+    const internalDocs = await Document.countDocuments({ visibility: 'internal' });
+    const privateDocs = await Document.countDocuments({ visibility: 'private' });
+    
+    const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const expiringSoonReminders = await ComplianceReminder.countDocuments({
+      status: 'pending',
+      dueDate: { $lte: thirtyDaysFromNow }
+    });
+    
+    const pendingConsents = await StudentConsent.countDocuments({ status: 'denied' });
+    const openComplaints = await Complaint.countDocuments({ status: { $in: ['pending', 'in-progress'] } });
+    const openIncidents = await Incident.countDocuments({ status: { $in: ['reported', 'investigating'] } });
+    
+    res.json({
+      success: true,
+      stats: {
+        totalPolicies,
+        publishedPolicies,
+        draftPolicies,
+        totalDocuments,
+        publicDocs,
+        internalDocs,
+        privateDocs,
+        expiringSoonReminders,
+        pendingConsents,
+        openComplaints,
+        openIncidents
+      }
+    });
+  } catch (err) {
+    console.error("Fetch compliance stats error:", err);
+    res.status(500).json({ error: "Failed to load compliance statistics." });
+  }
+});
+
+// 2. Policies Management (CRUD)
+router.get('/compliance/policies', async (req, res) => {
+  try {
+    const policies = await Policy.find({}).sort({ updatedAt: -1 });
+    res.json({ success: true, policies });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch policies." });
+  }
+});
+
+router.post('/compliance/policies', async (req, res) => {
+  const { id, title, description, content, status, version, effectiveDate, attachments } = req.body;
+  if (!id || !title) {
+    return res.status(400).json({ error: "Policy ID and Title are required." });
+  }
+  
+  try {
+    const newPolicy = new Policy({
+      id: sanitizeInput(id).trim(),
+      title: sanitizeInput(title).trim(),
+      description: description ? sanitizeInput(description).trim() : '',
+      content: content || '',
+      status: status || 'draft',
+      version: version || '1.0',
+      effectiveDate: effectiveDate ? new Date(effectiveDate) : new Date(),
+      lastUpdated: new Date(),
+      attachments: attachments || []
+    });
+    
+    await newPolicy.save();
+    await logAdminAction(req.admin.username, 'policy-create', newPolicy.id, `Created policy: ${newPolicy.title}`);
+    res.status(201).json({ success: true, policy: newPolicy });
+  } catch (err) {
+    console.error("Create policy error:", err);
+    res.status(500).json({ error: "Failed to create policy: " + err.message });
+  }
+});
+
+router.put('/compliance/policies/:id', async (req, res) => {
+  const { title, description, content, status, version, effectiveDate, attachments } = req.body;
+  try {
+    const policy = await Policy.findOne({ id: req.params.id });
+    if (!policy) return res.status(404).json({ error: "Policy not found." });
+    
+    if (version && version !== policy.version) {
+      policy.history.push({
+        version: policy.version,
+        content: policy.content,
+        lastUpdated: policy.lastUpdated
+      });
+    }
+    
+    if (title !== undefined) policy.title = sanitizeInput(title).trim();
+    if (description !== undefined) policy.description = sanitizeInput(description).trim();
+    if (content !== undefined) policy.content = content;
+    if (status !== undefined) policy.status = status;
+    if (version !== undefined) policy.version = version;
+    if (effectiveDate !== undefined) policy.effectiveDate = new Date(effectiveDate);
+    if (attachments !== undefined) policy.attachments = attachments;
+    policy.lastUpdated = new Date();
+    
+    await policy.save();
+    await logAdminAction(req.admin.username, 'policy-update', policy.id, `Updated policy: ${policy.title} to version ${policy.version}`);
+    res.json({ success: true, policy });
+  } catch (err) {
+    console.error("Update policy error:", err);
+    res.status(500).json({ error: "Failed to update policy: " + err.message });
+  }
+});
+
+router.delete('/compliance/policies/:id', async (req, res) => {
+  try {
+    const result = await Policy.findOneAndDelete({ id: req.params.id });
+    if (!result) return res.status(404).json({ error: "Policy not found." });
+    
+    await logAdminAction(req.admin.username, 'policy-delete', req.params.id, `Deleted policy: ${result.title}`);
     res.json({ success: true });
   } catch (err) {
-    console.error("Error deleting success story:", err);
-    res.status(500).json({ error: "Failed to delete success story." });
+    res.status(500).json({ error: "Failed to delete policy." });
+  }
+});
+
+// 3. Document Management (Upload/Delete)
+router.get('/compliance/documents', async (req, res) => {
+  try {
+    const documents = await Document.find({}).sort({ createdAt: -1 });
+    res.json({ success: true, documents });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch documents." });
+  }
+});
+
+router.post('/compliance/documents', upload.single('file'), async (req, res) => {
+  const { name, visibility, status, expiryDate } = req.body;
+  if (!name || !req.file) {
+    return res.status(400).json({ error: "Document Name and File upload are required." });
+  }
+  
+  try {
+    let filePath = '';
+    if (storageService.isCloudinaryActive()) {
+      filePath = await storageService.uploadToCloud(req.file.path, 'documents');
+    } else {
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+      filePath = await storageService.save(req.file.path, 'original', fileName);
+    }
+    
+    const docId = `DOC-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newDoc = new Document({
+      id: docId,
+      name: sanitizeInput(name).trim(),
+      path: filePath,
+      visibility: visibility || 'public',
+      status: status || 'published',
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
+      uploadedAt: new Date()
+    });
+    
+    await newDoc.save();
+    await logAdminAction(req.admin.username, 'document-upload', newDoc.id, `Uploaded document: ${newDoc.name}`);
+    res.status(201).json({ success: true, document: newDoc });
+  } catch (err) {
+    console.error("Document upload error:", err);
+    res.status(500).json({ error: "Failed to upload document: " + err.message });
+  }
+});
+
+router.delete('/compliance/documents/:id', async (req, res) => {
+  try {
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) return res.status(404).json({ error: "Document not found." });
+    
+    await storageService.delete(doc.path);
+    await Document.deleteOne({ id: req.params.id });
+    
+    await logAdminAction(req.admin.username, 'document-delete', req.params.id, `Deleted document: ${doc.name}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete document error:", err);
+    res.status(500).json({ error: "Failed to delete document." });
+  }
+});
+
+// 4. Student Consents Management
+router.get('/compliance/consents', async (req, res) => {
+  try {
+    const consents = await StudentConsent.find({}).sort({ updatedAt: -1 });
+    res.json({ success: true, consents });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch student consents." });
+  }
+});
+
+router.post('/compliance/consents', async (req, res) => {
+  const { studentId, consentType, status, givenBy, policyVersion, proof } = req.body;
+  if (!studentId || !consentType || !status || !givenBy) {
+    return res.status(400).json({ error: "studentId, consentType, status, and givenBy are required." });
+  }
+  
+  try {
+    let consent = await StudentConsent.findOne({ studentId, consentType });
+    const isNew = !consent;
+    
+    if (isNew) {
+      const consentId = `CNS-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+      consent = new StudentConsent({
+        id: consentId,
+        studentId,
+        consentType,
+        status,
+        givenBy: sanitizeInput(givenBy).trim(),
+        policyVersion: policyVersion || '1.0',
+        proof: proof || '',
+        updatedAt: new Date()
+      });
+    } else {
+      consent.status = status;
+      consent.givenBy = sanitizeInput(givenBy).trim();
+      if (policyVersion) consent.policyVersion = policyVersion;
+      if (proof !== undefined) consent.proof = proof;
+      consent.updatedAt = new Date();
+    }
+    
+    await consent.save();
+    await logAdminAction(
+      req.admin.username, 
+      isNew ? 'consent-record' : 'consent-update', 
+      consent.studentId, 
+      `${isNew ? 'Recorded' : 'Updated'} ${consent.consentType} consent for student ${consent.studentId} to status: ${consent.status}`
+    );
+    res.json({ success: true, consent });
+  } catch (err) {
+    console.error("Save consent error:", err);
+    res.status(500).json({ error: "Failed to save student consent: " + err.message });
+  }
+});
+
+// 5. Complaints and Grievances Redressal
+router.get('/compliance/complaints', async (req, res) => {
+  try {
+    const complaints = await Complaint.find({}).sort({ createdAt: -1 });
+    res.json({ success: true, complaints });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch complaints list." });
+  }
+});
+
+router.put('/compliance/complaints/:id', async (req, res) => {
+  const { status, internalNotes } = req.body;
+  try {
+    const complaint = await Complaint.findOne({ id: req.params.id });
+    if (!complaint) return res.status(404).json({ error: "Complaint not found." });
+    
+    if (status !== undefined) complaint.status = status;
+    if (internalNotes !== undefined) complaint.internalNotes = sanitizeInput(internalNotes).trim();
+    
+    await complaint.save();
+    await logAdminAction(req.admin.username, 'complaint-redress', complaint.id, `Updated complaint status to ${complaint.status}`);
+    res.json({ success: true, complaint });
+  } catch (err) {
+    console.error("Redress complaint error:", err);
+    res.status(500).json({ error: "Failed to update complaint: " + err.message });
+  }
+});
+
+// Helper role-checking middleware for Safeguarding & Incident logs (Enforces Superadmin only)
+async function requireSuperAdmin(req, res, next) {
+  try {
+    const adminUser = await User.findOne({ username: req.admin.username });
+    if (!adminUser || adminUser.role !== 'superadmin') {
+      return res.status(403).json({ error: "Unauthorized access. This action requires superadmin privileges." });
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ error: "Database error during role validation." });
+  }
+}
+
+// 6. Safeguarding & Incidents (RBAC Superadmin restricted)
+router.get('/compliance/incidents', requireSuperAdmin, async (req, res) => {
+  try {
+    const incidents = await Incident.find({}).sort({ date: -1 });
+    res.json({ success: true, incidents });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch incident logs." });
+  }
+});
+
+router.post('/compliance/incidents', requireSuperAdmin, async (req, res) => {
+  const { type, date, description, involvedPeople, actionsTaken, status, confidentialNotes } = req.body;
+  if (!description || !date) {
+    return res.status(400).json({ error: "Incident date and description are required." });
+  }
+  
+  try {
+    const incId = `INC-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newIncident = new Incident({
+      id: incId,
+      type: type || 'other',
+      date: new Date(date),
+      description: sanitizeInput(description).trim(),
+      involvedPeople: involvedPeople ? sanitizeInput(involvedPeople).trim() : '',
+      actionsTaken: actionsTaken ? sanitizeInput(actionsTaken).trim() : '',
+      status: status || 'reported',
+      confidentialNotes: confidentialNotes ? sanitizeInput(confidentialNotes).trim() : ''
+    });
+    
+    await newIncident.save();
+    await logAdminAction(req.admin.username, 'incident-report', newIncident.id, `Logged safeguarding/incident report: ${newIncident.id}`);
+    res.status(201).json({ success: true, incident: newIncident });
+  } catch (err) {
+    console.error("Create incident error:", err);
+    res.status(500).json({ error: "Failed to record incident report: " + err.message });
+  }
+});
+
+// 7. Compliance Calendar Reminders
+router.get('/compliance/reminders', async (req, res) => {
+  try {
+    const reminders = await ComplianceReminder.find({}).sort({ dueDate: 1 });
+    res.json({ success: true, reminders });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch compliance reminders." });
+  }
+});
+
+router.post('/compliance/reminders', async (req, res) => {
+  const { title, description, type, dueDate } = req.body;
+  if (!title || !dueDate) {
+    return res.status(400).json({ error: "Reminder title and due date are required." });
+  }
+  
+  try {
+    const remId = `REM-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newReminder = new ComplianceReminder({
+      id: remId,
+      title: sanitizeInput(title).trim(),
+      description: description ? sanitizeInput(description).trim() : '',
+      type: type || 'other',
+      dueDate: new Date(dueDate),
+      status: 'pending'
+    });
+    
+    await newReminder.save();
+    await logAdminAction(req.admin.username, 'reminder-create', newReminder.id, `Created reminder: ${newReminder.title}`);
+    res.status(201).json({ success: true, reminder: newReminder });
+  } catch (err) {
+    console.error("Create reminder error:", err);
+    res.status(500).json({ error: "Failed to create compliance reminder." });
+  }
+});
+
+router.put('/compliance/reminders/:id/status', async (req, res) => {
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ error: "Status is required." });
+  
+  try {
+    const reminder = await ComplianceReminder.findOne({ id: req.params.id });
+    if (!reminder) return res.status(404).json({ error: "Reminder not found." });
+    
+    reminder.status = status;
+    await reminder.save();
+    await logAdminAction(req.admin.username, 'reminder-update', reminder.id, `Updated reminder status to ${reminder.status}`);
+    res.json({ success: true, reminder });
+  } catch (err) {
+    console.error("Update reminder status error:", err);
+    res.status(500).json({ error: "Failed to update compliance reminder." });
+  }
+});
+
+// 8. Audit Logs
+router.get('/compliance/audit-logs', async (req, res) => {
+  try {
+    const logs = await AuditLog.find({}).sort({ timestamp: -1 }).limit(100);
+    res.json({ success: true, logs });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch system audit logs." });
   }
 });
 

@@ -12,6 +12,7 @@ import { Blog } from './pages/Blog';
 import { Contact } from './pages/Contact';
 import { Donate } from './pages/Donate';
 import { AdminLayout } from './pages/AdminLayout';
+import { Compliance } from './pages/Compliance';
 
 function App() {
   const hash = useHash();
@@ -68,6 +69,15 @@ function App() {
 
     if (normalizedHash === '#/donate') {
       return <Donate />;
+    }
+
+    if (normalizedHash.startsWith('#/compliance/')) {
+      const sub = normalizedHash.replace('#/compliance/', '');
+      return <Compliance sub={sub} />;
+    }
+
+    if (normalizedHash === '#/compliance') {
+      return <Compliance sub="privacy-policy" />;
     }
 
     // Default Fallback

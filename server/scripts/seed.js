@@ -12,6 +12,8 @@ const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const TeamMember = require('../models/TeamMember');
 const SuccessStory = require('../models/SuccessStory');
+const Policy = require('../models/Policy');
+const ComplianceReminder = require('../models/ComplianceReminder');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://krishnasinghhaji26_db_user:UiXTvIEJs8l5ehjP@cluster0.3gnkbbd.mongodb.net/';
 
@@ -311,7 +313,25 @@ async function seed() {
 
   // 5. Seed Students
   await Student.deleteMany({});
-  await Student.insertMany(initialStudents);
+  const populatedStudents = initialStudents.map(student => {
+    const calculatedAge = student.age || 18;
+    const approxDOB = new Date();
+    approxDOB.setFullYear(approxDOB.getFullYear() - calculatedAge);
+    approxDOB.setMonth(5);
+    approxDOB.setDate(15);
+    return {
+      ...student,
+      studentId: student.id,
+      fullName: student.name,
+      dateOfBirth: approxDOB,
+      primarySport: student.sport.includes('&') ? student.sport.split('&')[0].trim() : student.sport || 'Football',
+      admissionDate: student.joined ? new Date(student.joined) : new Date(),
+      status: 'Active',
+      isDeleted: false,
+      showOnPublicWebsite: true
+    };
+  });
+  await Student.insertMany(populatedStudents);
   console.log("Students seeded.");
 
   // 6. Seed Enquiries
@@ -342,6 +362,118 @@ async function seed() {
   await SuccessStory.deleteMany({});
   await SuccessStory.insertMany(initialSuccessStories);
   console.log("Success stories seeded.");
+
+  // 10. Seed Compliance Policies
+  const policyCount = await Policy.countDocuments({});
+  if (policyCount === 0) {
+    const initialPolicies = [
+      {
+        id: 'privacy-policy',
+        title: 'Privacy Policy',
+        description: 'Describes how we handle your personal data and privacy settings.',
+        content: '<h2>1. Data Collection</h2><p>We collect student admission details, guardian contact info, and medical profiles to ensure proper care during residency.</p><h2>2. Data Usage</h2><p>Data is strictly utilized for academic performance analysis, medical emergencies, and tournament registries.</p><h2>3. Your Rights</h2><p>Guardians can request data exports or request profile deactivation at any time.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'terms-and-conditions',
+        title: 'Terms and Conditions',
+        description: 'The legal terms governing participation and usage of the academy.',
+        content: '<h2>1. Admission Eligibility</h2><p>Enrolled athletes must adhere to training schedules and comply with physical fitness standards.</p><h2>2. Facility Utilization</h2><p>Academy assets, hostels, and gear must be handled with appropriate responsibility.</p><h2>3. Liability Waiver</h2><p>RLBSA Foundation is not liable for accidents that occur during normal athletic play, subject to compliance protocols.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'student-conduct',
+        title: 'Student Code of Conduct',
+        description: 'Behavioral expectations, integrity, and anti-bullying policies.',
+        content: '<h2>1. Behavioral Discipline</h2><p>Respect coaches, fellow students, and staff. Anti-social behavior, substance use, or vandalism is strictly prohibited.</p><h2>2. Academic Engagement</h2><p>Day scholars and boarding athletes must maintain positive scholastic standing.</p><h2>3. Anti-Ragging Policy</h2><p>Zero tolerance policy against ragging or intimidation. Instant suspension applies to violations.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'child-protection',
+        title: 'Child Protection and Safeguarding Policy',
+        description: 'Safety guidelines and safeguarding frameworks for minor athletes.',
+        content: '<h2>1. Safeguarding Commitment</h2><p>Our academy enforces strict background checks for all training instructors and staff.</p><h2>2. Reporting Incidents</h2><p>If any minor is subjected to mental or physical abuse, the matter must be reported immediately to the Child Welfare Officer.</p><h2>3. Gender Equity</h2><p>Separate, secure dormitories are provided for boys and girls with trained wardens present 24/7.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'health-safety',
+        title: 'Health and Safety Policy',
+        description: 'Emergency protocols, medical services, and facility safety.',
+        content: '<h2>1. Medical Protocols</h2><p>Every student athlete receives a compulsory health screening. First-aid packs are available at every pitch during coaching hours.</p><h2>2. Emergency Evacuation</h2><p>Fire drills and evacuation routes are practiced biannually inside hostel buildings.</p><h2>3. Diet & Hygiene</h2><p>Hostel mess menus are mapped by certified sports nutritionists, emphasizing raw ingredient cleanliness.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'grievance-complaints',
+        title: 'Grievance and Complaints Policy',
+        description: 'Mechanism to file reports and complain about training or hostel issues.',
+        content: '<h2>1. Grievance Redressal</h2><p>Any student or parent can file a complaint online or submit one directly to the coordinator. All grievances are resolved within 7 working days.</p><h2>2. Anonymous Reporting</h2><p>Whistleblower safety is guaranteed. Internal review notes are confidential and protected by role authorization.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      },
+      {
+        id: 'cookie-policy',
+        title: 'Cookie Policy',
+        description: 'Cookie files policies.',
+        content: '<h2>1. Cookies Use</h2><p>Required session cookies are loaded for admin control systems.</p>',
+        status: 'published',
+        version: '1.0',
+        effectiveDate: new Date(),
+        lastUpdated: new Date()
+      }
+    ];
+    await Policy.insertMany(initialPolicies);
+    console.log("Compliance policies seeded.");
+  }
+
+  // 11. Seed Compliance Reminders
+  const reminderCount = await ComplianceReminder.countDocuments({});
+  if (reminderCount === 0) {
+    const initialReminders = [
+      {
+        id: 'rem-101',
+        title: 'Annual Safeguarding Policy Review',
+        description: 'Review Child Protection frameworks with child welfare authorities.',
+        type: 'policy-review',
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        status: 'pending'
+      },
+      {
+        id: 'rem-102',
+        title: 'Fire Safety Certificate Renewal',
+        description: 'Schedule inspection with fire department for hostel wings.',
+        type: 'document-expiry',
+        dueDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
+        status: 'pending'
+      },
+      {
+        id: 'rem-103',
+        title: 'Biannual Internal Medical Audit',
+        description: 'Verify first-aid inventories and student medical clearance files.',
+        type: 'audit',
+        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+        status: 'pending'
+      }
+    ];
+    await ComplianceReminder.insertMany(initialReminders);
+    console.log("Compliance reminders seeded.");
+  }
 
   console.log("Database seeding completed.");
   await mongoose.connection.close();

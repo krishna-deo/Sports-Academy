@@ -20,7 +20,8 @@ import {
   List,
   X,
   ArrowLeft,
-  Key
+  Key,
+  ShieldCheck
 } from '@phosphor-icons/react';
 import { AdminViews } from './AdminViews';
 
@@ -450,6 +451,7 @@ export const AdminLayout: React.FC = () => {
     { id: 'success-stories', label: 'Success Stories', icon: <ChatText size={20} /> },
     { id: 'announcements', label: 'Announcements', icon: <Megaphone size={20} /> },
     { id: 'documents', label: 'Documents', icon: <FileText size={20} /> },
+    { id: 'compliance', label: 'Compliance', icon: <ShieldCheck size={20} /> },
     { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
     { id: 'founders', label: 'Founders & Directors', icon: <Notebook size={20} /> },
     { id: 'users', label: 'Admin Users', icon: <UserGear size={20} /> },

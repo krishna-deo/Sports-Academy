@@ -29,6 +29,8 @@ import {
   DotsThreeVertical
 } from '@phosphor-icons/react';
 
+import { AdminCompliance } from '../components/AdminCompliance';
+
 interface AdminViewsProps {
   activeTab: string;
 }
@@ -3091,8 +3093,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         </div>
       )}
 
+      {/* COMPLIANCE CMS VIEW */}
+      {activeTab === 'compliance' && (
+        <AdminCompliance token={token} triggerSuccess={triggerSuccess} />
+      )}
+
       {/* OTHER PLACEHOLDER VIEWS */}
-      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories'].includes(activeTab) && (
+      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance'].includes(activeTab) && (
         <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left">
           <h3 className="text-base font-bold text-primary mb-2">Management Module</h3>
           <p className="text-text-light text-xs mb-6">Database configuration values for Category: <strong className="text-primary font-bold">{activeTab}</strong></p>

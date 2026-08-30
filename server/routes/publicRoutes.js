@@ -8,6 +8,9 @@ const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const TeamMember = require('../models/TeamMember');
 const SuccessStory = require('../models/SuccessStory');
+const Policy = require('../models/Policy');
+const Document = require('../models/Document');
+const Complaint = require('../models/Complaint');
 
 function sanitizeInput(str) {
   if (typeof str !== 'string') return str;
@@ -124,6 +127,78 @@ router.get('/team', async (req, res) => {
     res.json(team);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch founders and directors list." });
+  }
+});
+
+// --- Public Legal & Compliance Routes ---
+
+// Get all published policies (only metadata: id, title, description, version, effectiveDate, lastUpdated)
+router.get('/compliance/policies', async (req, res) => {
+  try {
+    const policies = await Policy.find({ status: 'published' }).select('id title description version effectiveDate lastUpdated');
+    res.json(policies);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch compliance policies." });
+  }
+});
+
+// Get a specific policy by its ID slug (full content & attachments)
+router.get('/compliance/policies/:id', async (req, res) => {
+  try {
+    const policy = await Policy.findOne({ id: req.params.id, status: 'published' });
+    if (!policy) {
+      return res.status(404).json({ error: "Policy not found or not published." });
+    }
+    res.json(policy);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch policy details." });
+  }
+});
+
+// Get all published public documents
+router.get('/compliance/documents', async (req, res) => {
+  try {
+    const documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+    res.json(documents);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch public documents." });
+  }
+});
+
+// Submit a public grievance complaint
+router.post('/compliance/complaints', async (req, res) => {
+  let { reporterName, reporterEmail, reporterPhone, subject, description } = req.body;
+  if (!reporterName || !reporterEmail || !subject || !description) {
+    return res.status(400).json({ error: "Required fields (reporterName, reporterEmail, subject, description) are missing." });
+  }
+
+  reporterName = sanitizeInput(reporterName).trim();
+  reporterEmail = sanitizeInput(reporterEmail).trim().toLowerCase();
+  reporterPhone = reporterPhone ? sanitizeInput(reporterPhone).trim() : '';
+  subject = sanitizeInput(subject).trim();
+  description = sanitizeInput(description).trim();
+
+  try {
+    const count = await Complaint.countDocuments({});
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const complaintId = `COMP-${count + 1}-${randomSuffix}`;
+
+    const newComplaint = new Complaint({
+      id: complaintId,
+      reporterName,
+      reporterEmail,
+      reporterPhone,
+      subject,
+      description,
+      status: 'pending',
+      internalNotes: ''
+    });
+
+    await newComplaint.save();
+    res.status(201).json({ success: true, message: "Grievance submitted successfully.", id: complaintId });
+  } catch (err) {
+    console.error("Complaint save error:", err);
+    res.status(500).json({ error: "Failed to submit grievance complaint." });
   }
 });
 

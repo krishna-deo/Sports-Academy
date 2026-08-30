@@ -105,10 +105,14 @@ export const Footer: React.FC = () => {
       <div className="bg-[#002D2D] py-6 text-xs text-white/50">
         <div className="max-w-[1380px] mx-auto px-5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p>&copy; 2026 Ranilaxmibai Sports Academy. All Rights Reserved.</p>
-          <div className="flex gap-5">
-            <a href="#" className="hover:text-accent">Privacy Policy</a>
-            <a href="#" className="hover:text-accent">Terms of Service</a>
-            <a href="#" className="hover:text-accent">Sitemap</a>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center md:justify-end">
+            <a href="#/compliance/privacy-policy" className="hover:text-accent">Privacy Policy</a>
+            <a href="#/compliance/terms-and-conditions" className="hover:text-accent">Terms & Conditions</a>
+            <a href="#/compliance/student-conduct" className="hover:text-accent">Code of Conduct</a>
+            <a href="#/compliance/child-protection" className="hover:text-accent">Safeguarding</a>
+            <a href="#/compliance/health-safety" className="hover:text-accent">Health & Safety</a>
+            <a href="#/compliance/grievance-complaints" className="hover:text-accent">Grievance & Complaints</a>
+            <a href="#/compliance/cookie-policy" className="hover:text-accent">Cookie Policy</a>
           </div>
         </div>
       </div>
