@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const storageService = require('../services/storageService');
 
 const tempDir = path.join(__dirname, '..', 'uploads', 'temp');
 if (!fs.existsSync(tempDir)) {
@@ -388,15 +389,31 @@ router.post('/students', studentUpload, async (req, res) => {
     let photoPath = '🎓';
     if (req.files && req.files.avatar && req.files.avatar[0]) {
       const uploadedFile = req.files.avatar[0];
-      const studentsPhotosDir = path.join(__dirname, '..', 'uploads', 'students');
-      if (!fs.existsSync(studentsPhotosDir)) {
-        fs.mkdirSync(studentsPhotosDir, { recursive: true });
+      if (storageService.isCloudinaryActive()) {
+        try {
+          photoPath = await storageService.uploadToCloud(uploadedFile.path, 'students');
+        } catch (err) {
+          console.error("Cloudinary upload for student avatar failed:", err);
+          const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
+          const newFileName = `${studentId}_avatar${fileExt}`;
+          const destPath = path.join(__dirname, '..', 'uploads', 'students', newFileName);
+          if (!fs.existsSync(path.dirname(destPath))) {
+            fs.mkdirSync(path.dirname(destPath), { recursive: true });
+          }
+          fs.renameSync(uploadedFile.path, destPath);
+          photoPath = `/uploads/students/${newFileName}`;
+        }
+      } else {
+        const studentsPhotosDir = path.join(__dirname, '..', 'uploads', 'students');
+        if (!fs.existsSync(studentsPhotosDir)) {
+          fs.mkdirSync(studentsPhotosDir, { recursive: true });
+        }
+        const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
+        const newFileName = `${studentId}_avatar${fileExt}`;
+        const destPath = path.join(studentsPhotosDir, newFileName);
+        fs.renameSync(uploadedFile.path, destPath);
+        photoPath = `/uploads/students/${newFileName}`;
       }
-      const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
-      const newFileName = `${studentId}_avatar${fileExt}`;
-      const destPath = path.join(studentsPhotosDir, newFileName);
-      fs.renameSync(uploadedFile.path, destPath);
-      photoPath = `/uploads/students/${newFileName}`;
     }
 
     // Handle documents upload
@@ -532,15 +549,31 @@ router.put('/students/:id', studentUpload, async (req, res) => {
 
     if (req.files && req.files.avatar && req.files.avatar[0]) {
       const uploadedFile = req.files.avatar[0];
-      const studentsPhotosDir = path.join(__dirname, '..', 'uploads', 'students');
-      if (!fs.existsSync(studentsPhotosDir)) {
-        fs.mkdirSync(studentsPhotosDir, { recursive: true });
+      if (storageService.isCloudinaryActive()) {
+        try {
+          student.avatar = await storageService.uploadToCloud(uploadedFile.path, 'students');
+        } catch (err) {
+          console.error("Cloudinary upload for student avatar failed:", err);
+          const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
+          const newFileName = `${student.id}_avatar_${Date.now()}${fileExt}`;
+          const destPath = path.join(__dirname, '..', 'uploads', 'students', newFileName);
+          if (!fs.existsSync(path.dirname(destPath))) {
+            fs.mkdirSync(path.dirname(destPath), { recursive: true });
+          }
+          fs.renameSync(uploadedFile.path, destPath);
+          student.avatar = `/uploads/students/${newFileName}`;
+        }
+      } else {
+        const studentsPhotosDir = path.join(__dirname, '..', 'uploads', 'students');
+        if (!fs.existsSync(studentsPhotosDir)) {
+          fs.mkdirSync(studentsPhotosDir, { recursive: true });
+        }
+        const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
+        const newFileName = `${student.id}_avatar_${Date.now()}${fileExt}`;
+        const destPath = path.join(studentsPhotosDir, newFileName);
+        fs.renameSync(uploadedFile.path, destPath);
+        student.avatar = `/uploads/students/${newFileName}`;
       }
-      const fileExt = path.extname(uploadedFile.originalname) || '.jpg';
-      const newFileName = `${student.id}_avatar_${Date.now()}${fileExt}`;
-      const destPath = path.join(studentsPhotosDir, newFileName);
-      fs.renameSync(uploadedFile.path, destPath);
-      student.avatar = `/uploads/students/${newFileName}`;
     }
 
     if (deletedDocPaths) {
@@ -896,6 +929,14 @@ router.post('/team', async (req, res) => {
   image = sanitizeInput(image).trim();
   objectPosition = objectPosition ? sanitizeInput(objectPosition).trim() : 'center';
 
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'team');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for team member:", err);
+    }
+  }
+
   try {
     const newMember = new TeamMember({
       id: 'TM-' + Math.floor(100 + Math.random() * 900),
@@ -924,6 +965,14 @@ router.put('/team/:id', async (req, res) => {
   bio = sanitizeInput(bio).trim();
   image = sanitizeInput(image).trim();
   objectPosition = objectPosition ? sanitizeInput(objectPosition).trim() : 'center';
+
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'team');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for team member:", err);
+    }
+  }
 
   try {
     const updatedMember = await TeamMember.findOneAndUpdate(
@@ -981,6 +1030,14 @@ router.post('/success-stories', async (req, res) => {
     return res.status(400).json({ error: "Invalid age limit." });
   }
 
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'success-stories');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for success story:", err);
+    }
+  }
+
   try {
     const newStory = new SuccessStory({
       id: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -1022,6 +1079,14 @@ router.put('/success-stories/:id', async (req, res) => {
 
   if (isNaN(parsedAge) || parsedAge < 4 || parsedAge > 40) {
     return res.status(400).json({ error: "Invalid age limit." });
+  }
+
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'success-stories');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for success story:", err);
+    }
   }
 
   try {

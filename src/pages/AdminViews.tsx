@@ -1000,6 +1000,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   };
 
   const handleSoftDelete = async (id: string) => {
+    if (!window.confirm("क्या आप इस फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move this media item to the Trash Bin?")) return;
     try {
       const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/soft`, {
         method: 'DELETE',
@@ -1036,19 +1037,19 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       alert("Cannot delete mock item. Only uploaded database items can be permanently deleted.");
       return;
     }
-    if (!window.confirm("Are you sure you want to permanently delete this event? This action is irreversible.")) return;
+    if (!window.confirm("क्या आप इस फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete this media item? This action is irreversible.")) return;
     try {
       const response = await fetch(`http://localhost:5000/api/admin/gallery/${id}/permanent`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
-        triggerSuccess('Event purged permanently.');
+        triggerSuccess('Media item permanently deleted.');
         fetchGallery();
         fetchGalleryStats();
       }
     } catch (err) {
-      alert("Error purging event.");
+      alert("Error permanently deleting media item.");
     }
   };
 
@@ -1128,6 +1129,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleBulkSoftDelete = async () => {
     if (selectedGalleryIds.length === 0) return;
+    if (!window.confirm(`क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को रद्दी (Trash Bin) में डालना चाहते हैं?\nAre you sure you want to move the selected ${selectedGalleryIds.length} media items to the Trash Bin?`)) return;
     try {
       const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-soft-delete', {
         method: 'POST',
@@ -1170,7 +1172,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   const handleBulkPermanentDelete = async () => {
     if (selectedGalleryIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to permanently delete the ${selectedGalleryIds.length} selected media files? This is irreversible.`)) return;
+    if (!window.confirm(`क्या आप चुने हुए ${selectedGalleryIds.length} फोटो/वीडियो को हमेशा के लिए हटाना चाहते हैं? यह वापस नहीं लाया जा सकता।\nAre you sure you want to permanently delete the ${selectedGalleryIds.length} selected media files? This is irreversible.`)) return;
     try {
       const response = await fetch('http://localhost:5000/api/admin/gallery/bulk-permanent-delete', {
         method: 'POST',
@@ -2453,7 +2455,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                       onClick={handleBulkPermanentDelete}
                       className="bg-rose-700 hover:bg-rose-900 text-white font-bold py-1.5 px-3 rounded text-[10px] uppercase cursor-pointer transition-all"
                     >
-                      Purge Permanently
+                      Permanently Delete
                     </button>
                   </>
                 )}

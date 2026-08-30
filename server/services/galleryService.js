@@ -277,7 +277,7 @@ class GalleryService {
     const uuid = uuidv4();
     const originalExt = path.extname(originalName).toLowerCase();
     
-    // Save original
+    // Save original locally first to do sharp optimization
     const originalUrl = await storageService.save(tempFilePath, 'original', `${uuid}-orig${originalExt}`);
     const fullOriginalPath = path.join(__dirname, '..', originalUrl.startsWith('/') ? originalUrl.substring(1) : originalUrl);
     
@@ -300,6 +300,26 @@ class GalleryService {
     await sharpInstance.webp({ quality: 80 }).toFile(fullOptimizedPath);
     const optimizedSize = fs.statSync(fullOptimizedPath).size;
     
+    if (storageService.isCloudinaryActive()) {
+      try {
+        const cloudUrl = await storageService.uploadToCloud(fullOptimizedPath, 'gallery');
+        // Clean up the original local file
+        if (fs.existsSync(fullOriginalPath)) {
+          fs.unlinkSync(fullOriginalPath);
+        }
+        return {
+          path: cloudUrl,
+          size: optimizedSize
+        };
+      } catch (err) {
+        console.error("Failed to upload optimized event photo to Cloudinary, falling back to local:", err);
+        return {
+          path: optimizedUrlPath,
+          size: optimizedSize
+        };
+      }
+    }
+
     return {
       path: optimizedUrlPath,
       size: optimizedSize

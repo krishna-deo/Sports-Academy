@@ -1,5 +1,37 @@
 const fs = require('fs');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
+
+const isCloudinaryConfigured = !!(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (isCloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  console.log("Cloudinary configuration loaded successfully.");
+} else {
+  console.warn("WARNING: Cloudinary environment variables are missing. Falling back to local storage.");
+}
+
+function extractCloudinaryPublicId(url) {
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    const pathAfterUpload = parts[1];
+    const pathWithoutVersion = pathAfterUpload.replace(/^v\d+\//, '');
+    const publicId = pathWithoutVersion.replace(/\.[^/.]+$/, "");
+    return publicId;
+  } catch (err) {
+    console.error("Failed to extract public ID from Cloudinary URL:", err);
+    return null;
+  }
+}
 
 class StorageService {
   constructor() {
@@ -18,6 +50,10 @@ class StorageService {
         fs.mkdirSync(dir, { recursive: true });
       }
     });
+  }
+
+  isCloudinaryActive() {
+    return isCloudinaryConfigured;
   }
 
   /**
@@ -44,11 +80,28 @@ class StorageService {
   }
 
   /**
-   * Deletes a file locally
-   * @param {string} relativePath File path relative to server root
+   * Deletes a file locally or from Cloudinary
+   * @param {string} relativePath File path relative to server root or Cloudinary URL
    */
   async delete(relativePath) {
     if (!relativePath) return;
+
+    if (relativePath.startsWith('http')) {
+      if (isCloudinaryConfigured) {
+        const publicId = extractCloudinaryPublicId(relativePath);
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(publicId);
+            console.log(`Successfully deleted Cloudinary asset: ${publicId}`);
+          } catch (err) {
+            console.error(`Failed to delete Cloudinary asset ${publicId}:`, err);
+          }
+        }
+      } else {
+        console.warn(`Cloudinary not configured. Cannot delete remote asset: ${relativePath}`);
+      }
+      return;
+    }
     
     // Handle leading slashes cleanly
     const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
@@ -64,13 +117,56 @@ class StorageService {
   }
 
   /**
-   * Cloud storage integration hooks (AWS S3, Cloudinary ready)
+   * Uploads a local file to Cloudinary and deletes the local file.
+   * @param {string} localFilePath Path to the local file
+   * @param {string} folder Target folder name on Cloudinary
+   * @returns {Promise<string>} Secure URL of the uploaded asset
    */
-  async uploadToCloud(localFilePath, destinationKey) {
-    // Future integration boilerplate:
-    // const s3 = new AWS.S3();
-    // return s3.upload({ Bucket, Key: destinationKey, Body: fs.createReadStream(localFilePath) }).promise();
-    throw new Error("Cloud Storage SDK integration is not active.");
+  async uploadToCloud(localFilePath, folder = 'general') {
+    if (!isCloudinaryConfigured) {
+      throw new Error("Cloudinary is not configured. Enable it in your .env file.");
+    }
+    try {
+      const result = await cloudinary.uploader.upload(localFilePath, {
+        folder: `sports-academy/${folder}`,
+        resource_type: 'auto'
+      });
+      // Delete local file after upload
+      if (fs.existsSync(localFilePath)) {
+        fs.unlinkSync(localFilePath);
+      }
+      return result.secure_url;
+    } catch (err) {
+      // Clean up local file even on failure
+      if (fs.existsSync(localFilePath)) {
+        fs.unlinkSync(localFilePath);
+      }
+      console.error("Cloudinary upload failed:", err);
+      throw err;
+    }
+  }
+
+  /**
+   * Uploads a Base64 encoded image string to Cloudinary.
+   * @param {string} base64Data Base64 representation of the image
+   * @param {string} folder Target folder name on Cloudinary
+   * @returns {Promise<string>} Secure URL of the uploaded asset
+   */
+  async uploadBase64(base64Data, folder = 'general') {
+    if (!isCloudinaryConfigured) {
+      console.warn("Cloudinary not configured. Storing image as Base64 in MongoDB.");
+      return base64Data;
+    }
+    try {
+      const result = await cloudinary.uploader.upload(base64Data, {
+        folder: `sports-academy/${folder}`,
+        resource_type: 'image'
+      });
+      return result.secure_url;
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed:", err);
+      throw err;
+    }
   }
 }
 
