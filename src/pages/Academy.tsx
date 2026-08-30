@@ -103,6 +103,52 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
     }
   }, [hash, sub]);
 
+  // Sync selectedStudent and selectedCoach with URL query parameters for back-button integration
+  useEffect(() => {
+    const hashParts = hash.split('?');
+    if (hashParts.length > 1) {
+      const params = new URLSearchParams(hashParts[1]);
+      const studentId = params.get('student');
+      const coachName = params.get('coach');
+
+      if (studentId) {
+        const found = students.find(s => String(s.studentId || s.id) === String(studentId));
+        if (found) {
+          setSelectedStudent(found);
+          setSelectedCoach(null);
+          return;
+        }
+      }
+      if (coachName) {
+        const found = coaches.find(c => c.name === decodeURIComponent(coachName));
+        if (found) {
+          setSelectedCoach(found);
+          setSelectedStudent(null);
+          return;
+        }
+      }
+    }
+    setSelectedStudent(null);
+    setSelectedCoach(null);
+  }, [hash, students, coaches]);
+
+  const handleStudentCardClick = (student: any) => {
+    const studentId = student.studentId || student.id;
+    window.location.hash = `#/academy/students?student=${studentId}`;
+  };
+
+  const handleCloseStudentModal = () => {
+    window.location.hash = `#/academy/students`;
+  };
+
+  const handleCoachCardClick = (coach: any) => {
+    window.location.hash = `#/academy/coaches?coach=${encodeURIComponent(coach.name)}`;
+  };
+
+  const handleCloseCoachModal = () => {
+    window.location.hash = `#/academy/coaches`;
+  };
+
   useEffect(() => {
     if (sub === 'coaches') {
       fetch('http://localhost:5000/api/public/coaches')
@@ -169,7 +215,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             {coaches.map((coach, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedCoach(coach)}
+                onClick={() => handleCoachCardClick(coach)}
                 className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300 cursor-pointer"
               >
                 <div className="h-[220px] bg-soft-light flex items-center justify-center text-7xl border-b border-border-gray relative">
@@ -370,7 +416,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                 {filteredStudents.map((student, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => setSelectedStudent(student)}
+                    onClick={() => handleStudentCardClick(student)}
                     className="bg-white rounded-2xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-6 text-center group relative cursor-pointer"
                   >
                     {/* top highlight gradient strip */}
@@ -622,7 +668,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
       {selectedStudent && (
         <div 
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 text-left animate-fade-in" 
-          onClick={() => setSelectedStudent(null)}
+          onClick={handleCloseStudentModal}
         >
           <div 
             className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
@@ -647,7 +693,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             <div className="w-full md:w-[62%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto h-full">
               {/* Close button */}
               <button 
-                onClick={() => setSelectedStudent(null)}
+                onClick={handleCloseStudentModal}
                 className="absolute top-4 right-4 text-text-light hover:text-primary hover:bg-soft-light transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
               >
                 <X size={20} />
@@ -714,7 +760,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
               {/* Footer */}
               <div className="mt-4 pt-3.5 border-t border-border-gray/50 flex justify-end">
                 <button
-                  onClick={() => setSelectedStudent(null)}
+                  onClick={handleCloseStudentModal}
                   className="px-6 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md uppercase tracking-wider"
                 >
                   Close Profile
@@ -729,7 +775,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
       {selectedCoach && (
         <div 
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 text-left animate-fade-in" 
-          onClick={() => setSelectedCoach(null)}
+          onClick={handleCloseCoachModal}
         >
           <div 
             className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
@@ -756,7 +802,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             <div className="w-full md:w-[62%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto h-full">
               {/* Close button */}
               <button 
-                onClick={() => setSelectedCoach(null)}
+                onClick={handleCloseCoachModal}
                 className="absolute top-4 right-4 text-text-light hover:text-primary hover:bg-soft-light transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
               >
                 <X size={20} />
@@ -810,7 +856,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
               {/* Footer */}
               <div className="mt-4 pt-3.5 border-t border-border-gray/50 flex justify-end">
                 <button
-                  onClick={() => setSelectedCoach(null)}
+                  onClick={handleCloseCoachModal}
                   className="px-6 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md uppercase tracking-wider"
                 >
                   Close Profile
