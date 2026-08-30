@@ -618,21 +618,20 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
 
     </section>
       
+    </section>
+      
       {/* Detailed Student Modal */}
       {selectedStudent && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 md:p-6 text-left animate-fade-in" 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 text-left animate-fade-in" 
           onClick={() => setSelectedStudent(null)}
         >
           <div 
-            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row max-h-[90vh] md:max-h-[80vh]" 
+            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left side: Photo */}
-            <div className="w-full md:w-[45%] h-56 md:h-auto relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
-              {/* Top color strip */}
-              <div className={`absolute top-0 left-0 right-0 h-1.5 ${(selectedStudent.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-              
+            {/* Left side: Photo - 38% width */}
+            <div className="w-full md:w-[38%] h-64 md:h-full relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
               {selectedStudent.avatar && (selectedStudent.avatar.startsWith('data:') || selectedStudent.avatar.includes('/') || selectedStudent.avatar.includes('.')) ? (
                 <img 
                   src={selectedStudent.avatar.startsWith('/') ? `http://localhost:5000${selectedStudent.avatar}` : selectedStudent.avatar} 
@@ -640,70 +639,85 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   className="w-full h-full object-cover" 
                 />
               ) : (
-                <span className="text-7xl">{selectedStudent.avatar || '🎓'}</span>
+                <span className="text-8xl">{selectedStudent.avatar || '🎓'}</span>
               )}
+              {/* Highlight strip overlay */}
+              <div className={`absolute top-0 left-0 right-0 h-2 ${(selectedStudent.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             </div>
 
-            {/* Right side: Details */}
-            <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+            {/* Right side: Details - 62% width */}
+            <div className="w-full md:w-[62%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto h-full">
               {/* Close button */}
               <button 
                 onClick={() => setSelectedStudent(null)}
-                className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none z-10"
+                className="absolute top-4 right-4 text-text-light hover:text-primary hover:bg-soft-light transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
+                {/* Header section with Name & Badges */}
                 <div>
-                  <h3 className="text-xl font-extrabold text-primary tracking-tight">{selectedStudent.name}</h3>
-                  <span className="inline-block bg-primary/5 text-primary text-[10px] font-bold py-0.5 px-2.5 rounded-md uppercase tracking-wider mt-1.5 mb-2">
-                    {selectedStudent.sport || 'Athlete'}
-                  </span>
-                  <div>
-                    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider py-1 px-3 rounded-full shadow-xs ${
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <h3 className="text-2xl font-black text-primary tracking-tight">{selectedStudent.name}</h3>
+                    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider py-0.5 px-2.5 rounded-full border ${
                       (selectedStudent.residency || 'resident') === 'resident'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
                     }`}>
-                      {(selectedStudent.residency || 'resident') === 'resident' ? '🏠 Boarding Athlete' : '🎒 Day Scholar'}
+                      {(selectedStudent.residency || 'resident') === 'resident' ? 'Boarding Resident' : 'Day Scholar'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-text-light">
+                    <span className="bg-primary/5 text-primary text-[10px] font-black py-0.5 px-2.5 rounded uppercase tracking-wider">
+                      {selectedStudent.sport || 'Athlete'}
+                    </span>
+                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold py-0.5 px-2.5 rounded uppercase">
+                      Age {selectedStudent.age} Yrs
+                    </span>
+                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold py-0.5 px-2.5 rounded uppercase">
+                      Gender: {selectedStudent.gender || 'Girl'}
                     </span>
                   </div>
                 </div>
 
-                {/* Profile Details List */}
-                <div className="grid grid-cols-2 gap-4 py-4 border-y border-border-gray/50 text-xs font-semibold text-text-body">
-                  <div>
-                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Age</span>
-                    <span className="text-primary font-bold">{selectedStudent.age || 'N/A'} Years</span>
+                {/* Metrics Stats Dashboard */}
+                <div className="grid grid-cols-2 gap-3.5 pt-3">
+                  <div className="bg-gradient-to-br from-amber-50/60 to-orange-50/60 border border-amber-150 p-3 rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-xl shrink-0">🏅</div>
+                    <div className="text-left">
+                      <span className="block text-[9px] font-bold text-amber-800 uppercase tracking-wider leading-none">Medals Won</span>
+                      <span className="text-lg font-black text-amber-700">{selectedStudent.medalNumber || 0} Medals</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Gender</span>
-                    <span className="text-primary font-bold capitalize">{selectedStudent.gender || 'Girl'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Medals Won</span>
-                    <span className="text-primary font-bold flex items-center gap-1.5"><span className="text-sm">🏅</span> {selectedStudent.medalNumber || 0} Medals</span>
-                  </div>
-                  <div>
-                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Joined Date</span>
-                    <span className="text-primary font-bold">{selectedStudent.joined || 'N/A'}</span>
+
+                  <div className="bg-blue-50/40 border border-blue-100 p-3 rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-xl shrink-0">📅</div>
+                    <div className="text-left">
+                      <span className="block text-[9px] font-bold text-blue-800 uppercase tracking-wider leading-none">Joined Academy</span>
+                      <span className="text-sm font-black text-blue-700">{selectedStudent.joined || 'N/A'}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Bio / Description or extra details */}
-                <div>
-                  <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-1.5">Bio & Achievements</span>
-                  <p className="text-xs text-text-body leading-relaxed bg-soft-light p-3.5 rounded-xl border border-border-gray/50 font-medium">
-                    {selectedStudent.name} is a highly dedicated student athlete specializing in {selectedStudent.sport || 'sports'}. They have shown exceptional performance, winning {selectedStudent.medalNumber || 0} medals and contributing significantly to the academy's successes.
-                  </p>
+                {/* Bio / Speech Bubble */}
+                <div className="pt-2">
+                  <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Athlete Profile & Achievements</span>
+                  <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl relative overflow-hidden">
+                    <span className="absolute -right-2 -bottom-4 text-primary/[0.04] text-8xl font-black italic select-none">RLS</span>
+                    <p className="text-xs text-text-body leading-relaxed font-semibold italic relative z-10">
+                      "{selectedStudent.name} is a highly dedicated student athlete specializing in {selectedStudent.sport || 'sports'}. They have shown exceptional performance, winning {selectedStudent.medalNumber || 0} medals and contributing significantly to the academy's successes."
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end">
+              {/* Footer */}
+              <div className="mt-4 pt-3.5 border-t border-border-gray/50 flex justify-end">
                 <button
                   onClick={() => setSelectedStudent(null)}
-                  className="px-5 py-2 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md"
+                  className="px-6 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md uppercase tracking-wider"
                 >
                   Close Profile
                 </button>
@@ -716,20 +730,15 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
       {/* Detailed Coach Modal */}
       {selectedCoach && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 md:p-6 text-left animate-fade-in" 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 text-left animate-fade-in" 
           onClick={() => setSelectedCoach(null)}
         >
           <div 
-            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row max-h-[90vh] md:max-h-[80vh]" 
+            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left side: Photo */}
-            <div className="w-full md:w-[45%] h-56 md:h-auto relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
-              {/* Experience badge */}
-              <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded shadow-xs z-10">
-                {selectedCoach.experience}
-              </span>
-
+            {/* Left side: Photo - 38% width */}
+            <div className="w-full md:w-[38%] h-64 md:h-full relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
               {selectedCoach.avatar && (selectedCoach.avatar.startsWith('http') || selectedCoach.avatar.startsWith('/') || selectedCoach.avatar.startsWith('data:')) ? (
                 <img 
                   src={selectedCoach.avatar} 
@@ -737,44 +746,74 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   className="w-full h-full object-cover" 
                 />
               ) : (
-                <span className="text-7xl">{selectedCoach.avatar || '👨‍🏫'}</span>
+                <span className="text-8xl">{selectedCoach.avatar || '👨‍🏫'}</span>
               )}
+              {/* Experience badge */}
+              <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-3 rounded shadow-md z-10">
+                {selectedCoach.experience}
+              </span>
             </div>
 
-            {/* Right side: Details */}
-            <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+            {/* Right side: Details - 62% width */}
+            <div className="w-full md:w-[62%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto h-full">
               {/* Close button */}
               <button 
                 onClick={() => setSelectedCoach(null)}
-                className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none z-10"
+                className="absolute top-4 right-4 text-text-light hover:text-primary hover:bg-soft-light transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
+                {/* Header section with Name & Badge */}
                 <div>
-                  <h3 className="text-xl font-extrabold text-primary tracking-tight">{selectedCoach.name}</h3>
-                  <p className="text-xs font-bold text-accent uppercase tracking-wider mt-1 mb-2">
-                    {selectedCoach.role}
-                  </p>
-                  <p className="text-xs text-text-light font-semibold italic">
-                    {selectedCoach.specialization}
-                  </p>
+                  <h3 className="text-2xl font-black text-primary tracking-tight mb-1.5">{selectedCoach.name}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="bg-accent text-primary text-[10px] font-black py-0.5 px-2.5 rounded uppercase tracking-wider">
+                      {selectedCoach.role}
+                    </span>
+                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold py-0.5 px-2.5 rounded uppercase">
+                      {selectedCoach.specialization}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Description */}
-                <div>
-                  <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-1.5">Coach Profile & Bio</span>
-                  <p className="text-xs text-text-body leading-relaxed bg-soft-light p-3.5 rounded-xl border border-border-gray/50 font-medium">
-                    {selectedCoach.bio}
-                  </p>
+                {/* Stats Dashboard for Coaches */}
+                <div className="grid grid-cols-2 gap-3.5 pt-3">
+                  <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xl shrink-0">🎓</div>
+                    <div className="text-left">
+                      <span className="block text-[9px] font-bold text-indigo-800 uppercase tracking-wider leading-none">Experience</span>
+                      <span className="text-sm font-black text-indigo-700">{selectedCoach.experience}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-50/40 border border-emerald-100 p-3 rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-xl shrink-0">🛡️</div>
+                    <div className="text-left">
+                      <span className="block text-[9px] font-bold text-emerald-800 uppercase tracking-wider leading-none">Certification Status</span>
+                      <span className="text-sm font-black text-emerald-700">SAI Certified / Elite License</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio / Speach box */}
+                <div className="pt-2">
+                  <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Coach Bio & Training Philosophy</span>
+                  <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl relative overflow-hidden">
+                    <span className="absolute -right-2 -bottom-4 text-primary/[0.04] text-8xl font-black italic select-none">RLS</span>
+                    <p className="text-xs text-text-body leading-relaxed font-semibold italic relative z-10">
+                      "{selectedCoach.bio}"
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end">
+              {/* Footer */}
+              <div className="mt-4 pt-3.5 border-t border-border-gray/50 flex justify-end">
                 <button
                   onClick={() => setSelectedCoach(null)}
-                  className="px-5 py-2 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md"
+                  className="px-6 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md uppercase tracking-wider"
                 >
                   Close Profile
                 </button>
