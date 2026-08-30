@@ -404,7 +404,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             </div>
 
             {filteredStudents.length === 0 ? (
-              <div className="text-center py-20 px-4 bg-soft-light rounded-3xl border border-dashed border-border-gray max-w-[480px] mx-auto animate-fade-in mb-12 shadow-xs">
+              <div className="text-center py-20 px-4 bg-soft-light rounded-xl border border-dashed border-border-gray max-w-[480px] mx-auto animate-fade-in mb-12 shadow-xs">
                 <span className="text-5xl block mb-4">🔍</span>
                 <h3 className="text-lg font-bold text-primary mb-1.5">No athletes found</h3>
                 <p className="text-xs text-text-light leading-relaxed max-w-[340px] mx-auto">
@@ -417,7 +417,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   <div 
                     key={idx} 
                     onClick={() => handleStudentCardClick(student)}
-                    className="bg-white rounded-2xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-6 text-center group relative cursor-pointer"
+                    className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-6 text-center group relative cursor-pointer"
                   >
                     {/* top highlight gradient strip */}
                     <div className={`absolute top-0 left-0 right-0 h-1.5 ${(student.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
@@ -671,7 +671,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
           onClick={handleCloseStudentModal}
         >
           <div 
-            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
+            className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left side: Photo - 38% width */}
@@ -778,7 +778,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
           onClick={handleCloseCoachModal}
         >
           <div 
-            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
+            className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left side: Photo - 38% width */}

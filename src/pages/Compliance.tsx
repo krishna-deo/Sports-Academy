@@ -172,7 +172,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
           </div>
 
           {/* Desktop Sidebar List */}
-          <div className="hidden lg:block bg-white rounded-2xl border border-border-gray p-4 shadow-sm space-y-1">
+          <div className="hidden lg:block bg-white rounded-xl border border-border-gray p-4 shadow-sm space-y-1">
             <span className="block text-[10px] font-black text-text-light uppercase tracking-widest px-4 py-2 mb-2">
               Compliance Index
             </span>
@@ -195,7 +195,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
             })}
           </div>
 
-          <div className="hidden lg:block mt-6 bg-accent/5 rounded-2xl border border-accent/20 p-5 text-left">
+          <div className="hidden lg:block mt-6 bg-accent/5 rounded-xl border border-accent/20 p-5 text-left">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck size={20} className="text-primary" />
               <h4 className="text-sm font-extrabold text-primary">Trust & Safety</h4>
@@ -209,12 +209,12 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
         {/* Right Side: Content Area */}
         <div className="lg:col-span-9">
           {loading ? (
-            <div className="bg-white rounded-2xl border border-border-gray p-16 text-center shadow-sm">
+            <div className="bg-white rounded-xl border border-border-gray p-16 text-center shadow-sm">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-text-light font-semibold text-sm">Loading policy details dynamically...</p>
             </div>
           ) : error ? (
-            <div className="bg-white rounded-2xl border border-border-gray p-16 text-center shadow-sm">
+            <div className="bg-white rounded-xl border border-border-gray p-16 text-center shadow-sm">
               <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 shadow-xs">
                 <Warning size={24} />
               </div>
@@ -232,7 +232,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
           ) : policy ? (
             <div className="space-y-6">
               {/* Policy Header Card */}
-              <div className="bg-white rounded-2xl border border-border-gray p-6 md:p-8 shadow-sm text-left relative overflow-hidden">
+              <div className="bg-white rounded-xl border border-border-gray p-6 md:p-8 shadow-sm text-left relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.02] rounded-full translate-x-6 -translate-y-6"></div>
                 
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-border-gray/50">
@@ -294,7 +294,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
 
               {/* Grievance Submission Form Panel */}
               {policy.id === 'grievance-complaints' && (
-                <div className="bg-white rounded-2xl border border-border-gray p-6 md:p-8 shadow-sm text-left relative">
+                <div className="bg-white rounded-xl border border-border-gray p-6 md:p-8 shadow-sm text-left relative">
                   <h3 className="text-lg font-black text-primary mb-1">Redressal Filing Form</h3>
                   <p className="text-xs text-text-light mb-6 font-semibold">
                     Submit your grievance directly to our Internal Complaints Committee. Fields marked * are required.

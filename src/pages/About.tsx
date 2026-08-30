@@ -842,7 +842,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             {team.length > 0 && (
               <RevealRow id={team[0].id} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
                     {/* Hero Left: Image */}
                     <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
                       <img 
@@ -885,7 +885,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               return (
                 <RevealRow key={member.id} id={member.id} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
                       {/* Image container */}
                       <div className="lg:w-[38%] relative h-[220px] lg:h-auto min-h-[220px] bg-primary">
                         <img 

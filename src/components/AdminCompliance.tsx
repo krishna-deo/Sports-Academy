@@ -1026,7 +1026,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 1: POLICY FORM */}
       {activeModal === 'policy' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col justify-between overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col justify-between overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">
                 {editingPolicy ? 'Edit Compliance Policy' : 'Create Compliance Policy'}
@@ -1196,7 +1196,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 2: DOCUMENT UPLOAD FORM */}
       {activeModal === 'document' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">Upload Document</h3>
               <button onClick={() => setActiveModal(null)} className="text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none">
@@ -1292,7 +1292,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 3: STUDENT CONSENT FORM */}
       {activeModal === 'consent' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">Record Student Consent</h3>
               <button onClick={() => setActiveModal(null)} className="text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none">
@@ -1405,7 +1405,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 4: COMPLAINT REDRESS VIEW */}
       {viewingComplaint && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">Redress Grievance Complaint</h3>
               <button onClick={() => setViewingComplaint(null)} className="text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none">
@@ -1482,7 +1482,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 5: LOG INCIDENT FORM */}
       {activeModal === 'incident' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">Log Incident (Superadmin Only)</h3>
               <button onClick={() => setActiveModal(null)} className="text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none">
@@ -1600,7 +1600,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* MODAL 6: COMPLIANCE REMINDER FORM */}
       {activeModal === 'reminder' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
-          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
+          <div className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
               <h3 className="text-base font-extrabold text-primary">Add Compliance Event / Deadline</h3>
               <button onClick={() => setActiveModal(null)} className="text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none">

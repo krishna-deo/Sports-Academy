@@ -229,7 +229,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             <ArrowLeft size={16} weight="bold" /> Back to Gallery
           </button>
           
-          <div className="bg-white p-6 md:p-8 rounded-2xl border border-border-gray/50 shadow-sm text-left space-y-4">
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray/50 shadow-sm text-left space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="bg-primary text-accent text-[9px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider">
                 {selectedEvent.category}
@@ -295,7 +295,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                   <div 
                     key={event._id}
                     onClick={() => setSelectedEvent(event)}
-                    className="flex flex-col bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group text-left"
+                    className="flex flex-col bg-white border border-border-gray/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group text-left"
                   >
                     {/* Cover image wrap */}
                     <div className="h-[200px] overflow-hidden relative bg-primary">
@@ -386,7 +386,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
       ) : (
         /* Render Detailed Event Gallery Content */
         selectedEvent.mediaType === 'video' ? (
-          <div className="max-w-4xl mx-auto bg-black rounded-2xl overflow-hidden shadow-2xl border border-border-gray/30 aspect-video animate-scale-up">
+          <div className="max-w-4xl mx-auto bg-black rounded-xl overflow-hidden shadow-2xl border border-border-gray/30 aspect-video animate-scale-up">
             {(() => {
               const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
               const match = selectedEvent.videoUrl ? selectedEvent.videoUrl.match(regExp) : null;
@@ -479,7 +479,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             <img 
               src={`http://localhost:5000${selectedEvent.photos[lightboxIndex].path}`} 
               alt={`${selectedEvent.name} photo ${lightboxIndex + 1}`} 
-              className="max-w-full max-h-[70vh] md:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 bg-black/40 block select-none"
+              className="max-w-full max-h-[70vh] md:max-h-[75vh] object-contain rounded-xl shadow-2xl border border-white/10 bg-black/40 block select-none"
             />
             
             {/* Elegant glassmorphic metadata bar */}

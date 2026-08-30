@@ -61,7 +61,7 @@ export const Programs: React.FC<ProgramsProps> = () => {
         {/* HERO CARD: Football */}
         <RevealRow id="football-hero" className="w-full">
           {(isVisible) => (
-            <div className={`bg-white border border-border-gray/70 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[450px]`}>
+            <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[450px]`}>
               {/* Hero Left: Image */}
               <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
                 <img 

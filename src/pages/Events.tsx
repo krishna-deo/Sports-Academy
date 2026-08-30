@@ -161,7 +161,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
     const layouts = [
       // 0: Large soft teal card (2 columns)
       {
-        container: 'lg:col-span-2 bg-[#e6f7f5] text-[#082142] border border-[#00a896]/20 p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.12)]',
+        container: 'lg:col-span-2 bg-[#e6f7f5] text-[#082142] border border-[#00a896]/20 p-8 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.12)]',
         badge: 'bg-[#00a896] text-white',
         accentText: 'text-[#00a896]',
         button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
@@ -169,7 +169,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       },
       // 1: Solid Navy card (1 column)
       {
-        container: 'bg-[#082142] text-white p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.2)]',
+        container: 'bg-[#082142] text-white p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.2)]',
         badge: 'bg-[#00a896] text-white',
         accentText: 'text-[#00a896]',
         button: 'bg-white text-[#082142] group-hover:bg-[#00a896] group-hover:text-white',
@@ -177,7 +177,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       },
       // 2: Solid Active Teal card (1 column)
       {
-        container: 'bg-[#00a896] text-white p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.2)]',
+        container: 'bg-[#00a896] text-white p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.2)]',
         badge: 'bg-[#082142] text-white',
         accentText: 'text-[#082142] font-black',
         button: 'bg-white text-[#00a896] group-hover:bg-[#082142] group-hover:text-white',
@@ -185,7 +185,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       },
       // 3: White card (1 column)
       {
-        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
+        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
         badge: 'bg-[#082142]/10 text-[#082142]',
         accentText: 'text-[#00a896]',
         button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
@@ -193,7 +193,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       },
       // 4: Large Navy Card (2 columns)
       {
-        container: 'lg:col-span-2 bg-[#082142] text-white p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.25)]',
+        container: 'lg:col-span-2 bg-[#082142] text-white p-8 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.25)]',
         badge: 'bg-[#00a896] text-white',
         accentText: 'text-[#00a896]',
         button: 'bg-white text-[#082142] group-hover:bg-[#00a896] group-hover:text-white',
@@ -201,7 +201,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       },
       // 5: White card (1 column)
       {
-        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
+        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
         badge: 'bg-[#082142]/10 text-[#082142]',
         accentText: 'text-[#00a896]',
         button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
@@ -226,7 +226,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
         <div className="max-w-[600px] mx-auto">
           {!confirmedTicket ? (
             /* Registration Form */
-            <div className="bg-white p-8 md:p-10 rounded-3xl border border-border-gray shadow-lg">
+            <div className="bg-white p-8 md:p-10 rounded-xl border border-border-gray shadow-lg">
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="reg-name" className="text-xs font-bold text-primary uppercase tracking-wider">
@@ -341,7 +341,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
             </div>
           ) : (
             /* Ticket Receipt */
-            <div className="bg-white border-2 border-dashed border-accent rounded-3xl p-8 shadow-lg animate-fade-in print:shadow-none print:border-solid">
+            <div className="bg-white border-2 border-dashed border-accent rounded-xl p-8 shadow-lg animate-fade-in print:shadow-none print:border-solid">
               <div className="text-center border-b border-border-gray pb-5 mb-6">
                 <div className="font-extrabold text-primary text-lg tracking-tight">
                   RANILAXMIBAI SPORTS ACADEMY
@@ -618,7 +618,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
       </div>
 
       {feedItems.length === 0 && (
-        <div className="text-center py-24 text-[#082142]/60 bg-slate-50 rounded-3xl border border-slate-100 mt-6 font-semibold">
+        <div className="text-center py-24 text-[#082142]/60 bg-slate-50 rounded-xl border border-slate-100 mt-6 font-semibold">
           <p>No active events or articles matching this tab at this time.</p>
         </div>
       )}
@@ -630,7 +630,7 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
           onClick={() => setViewingArticle(null)}
         >
           <div 
-            className="bg-white text-[#082142] rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-scale-up text-left"
+            className="bg-white text-[#082142] rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-scale-up text-left"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Area */}

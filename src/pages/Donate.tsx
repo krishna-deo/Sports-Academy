@@ -50,7 +50,7 @@ export const Donate: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Information & Impact Column */}
           <div className="lg:col-span-5 flex flex-col gap-6">
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+            <div className="bg-primary/5 p-6 rounded-xl border border-primary/10">
               <h3 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
                 <HandHeart size={22} className="text-accent" /> Why Donate?
               </h3>
@@ -73,7 +73,7 @@ export const Donate: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-soft-light p-6 rounded-2xl border border-border-gray">
+            <div className="bg-soft-light p-6 rounded-xl border border-border-gray">
               <h3 className="text-sm font-bold text-primary mb-3 uppercase tracking-wider">Our Transparency</h3>
               <p className="text-text-light text-xs leading-relaxed mb-4">
                 100% of your donation directly reaches the academy beneficiaries. We publish verified audit logs periodically.
@@ -86,7 +86,7 @@ export const Donate: React.FC = () => {
           </div>
 
           {/* Form Column */}
-          <div className="lg:col-span-7 bg-white p-8 md:p-10 rounded-2xl border border-border-gray shadow-xl text-left">
+          <div className="lg:col-span-7 bg-white p-8 md:p-10 rounded-xl border border-border-gray shadow-xl text-left">
             <form onSubmit={handleDonate} className="flex flex-col gap-6">
               
               {/* Step 1: Select Amount */}
@@ -270,7 +270,7 @@ export const Donate: React.FC = () => {
         </div>
       ) : (
         /* Thank You Confirmation Receipt */
-        <div className="max-w-[600px] mx-auto bg-white p-10 rounded-2xl border border-border-gray shadow-2xl text-center py-12">
+        <div className="max-w-[600px] mx-auto bg-white p-10 rounded-xl border border-border-gray shadow-2xl text-center py-12">
           <CheckCircle size={80} className="text-emerald-500 mx-auto mb-6" weight="fill" />
           <h3 className="text-2.5xl font-extrabold text-primary mb-3">Thank You for Your Support!</h3>
           <p className="text-text-light text-[15px] leading-relaxed mb-6">
