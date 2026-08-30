@@ -1,5 +1,4 @@
 import React from 'react';
-import { Eye, Target } from '@phosphor-icons/react';
 import { teamMembers } from '../data/teamData';
 import { useHash } from '../hooks/useHash';
 
@@ -350,22 +349,95 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-20">
-            <div className="bg-white p-10 rounded-xl shadow-md border-l-5 border-primary hover:-translate-y-1 transition-all duration-300">
-              <h3 className="text-xl font-bold text-primary mb-5 flex items-center gap-2.5">
-                <Eye size={28} className="text-primary" /> Our Vision
-              </h3>
-              <p className="text-text-body text-sm leading-relaxed">
-                To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.</p>
-            </div>
+          <div className="flex flex-col gap-24 mb-24 max-w-[1100px] mx-auto">
+            {/* ROW 1: MISSION */}
+            <RevealRow id="mission-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
+              {(isVisible) => (
+                <>
+                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+                    <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
+                      About Us
+                    </span>
+                    <h3 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
+                      Our Mission
+                    </h3>
+                    <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
+                      RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.
+                    </p>
+                    <a
+                      href="#/about/story"
+                      className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
+                    >
+                      Learn More
+                    </a>
+                  </div>
 
-            <div className="bg-white p-10 rounded-xl shadow-md border-l-5 border-accent hover:-translate-y-1 transition-all duration-300">
-              <h3 className="text-xl font-bold text-primary mb-5 flex items-center gap-2.5">
-                <Target size={28} className="text-accent" /> Our Mission
-              </h3>
-              <p className="text-text-body text-sm leading-relaxed">
-                RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.</p>
-            </div>
+                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+                    <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3] border border-slate-100 bg-[#082142]/5">
+                      {/* Top-left rounded compound shape like the mockup */}
+                      <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden">
+                        <img 
+                          src="/images/hero2.jpg" 
+                          alt="Our Mission Team" 
+                          className="w-full h-full object-cover rounded-tl-[5rem]" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </RevealRow>
+
+            {/* ROW 2: VISION */}
+            <RevealRow id="vision-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
+              {(isVisible) => (
+                <>
+                  {/* Left Side: Compound Images overlay block */}
+                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 lg:order-1`}>
+                    <div className="relative w-full aspect-[4/3] flex items-center justify-center">
+                      
+                      {/* Arch-shaped first image */}
+                      <div className="w-[45%] h-[85%] rounded-t-full overflow-hidden shadow-lg border-4 border-white bg-slate-100 shrink-0">
+                        <img 
+                          src="/images/about_rlbsa.jpeg" 
+                          alt="Our Vision Athlete" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                      
+                      {/* Standard round second image offset */}
+                      <div className="w-[45%] h-[80%] rounded-xl overflow-hidden shadow-lg border-4 border-white bg-slate-100 shrink-0 mt-16 -ml-8">
+                        <img 
+                          src="/images/hero1.jpeg" 
+                          alt="Youth Sports Training" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Right Side: Text details */}
+                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 lg:order-2`}>
+                    <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
+                      What We Do
+                    </span>
+                    <h3 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
+                      Our Vision
+                    </h3>
+                    <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
+                      To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.
+                    </p>
+                    <a
+                      href="#/about/what-we-do"
+                      className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
+                    >
+                      Our Programs
+                    </a>
+                  </div>
+                </>
+              )}
+            </RevealRow>
           </div>
 
           <div className="text-center">
