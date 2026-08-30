@@ -57,6 +57,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
   const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
   const [isResidencyDropdownOpen, setIsResidencyDropdownOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedCoach, setSelectedCoach] = useState<any | null>(null);
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -151,7 +152,8 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
   };
 
   return (
-    <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
+    <>
+      <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       {sub === 'coaches' && (
         <>
           <div className="text-center max-w-[700px] mx-auto mb-16">
@@ -167,7 +169,8 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             {coaches.map((coach, idx) => (
               <div 
                 key={idx} 
-                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+                onClick={() => setSelectedCoach(coach)}
+                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300 cursor-pointer"
               >
                 <div className="h-[220px] bg-soft-light flex items-center justify-center text-7xl border-b border-border-gray relative">
                   <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded">
@@ -613,44 +616,52 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
       )}
 
 
+    </section>
+      
       {/* Detailed Student Modal */}
       {selectedStudent && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-center justify-center p-5 animate-fade-in text-left" 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 md:p-6 text-left animate-fade-in" 
           onClick={() => setSelectedStudent(null)}
         >
           <div 
-            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-lg w-full overflow-hidden animate-scale-up relative" 
+            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row max-h-[90vh] md:max-h-[80vh]" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Top color strip */}
-            <div className={`h-3 ${(selectedStudent.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-            
-            {/* Close button */}
-            <button 
-              onClick={() => setSelectedStudent(null)}
-              className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none"
-            >
-              <X size={20} />
-            </button>
+            {/* Left side: Photo */}
+            <div className="w-full md:w-[45%] h-56 md:h-auto relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
+              {/* Top color strip */}
+              <div className={`absolute top-0 left-0 right-0 h-1.5 ${(selectedStudent.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              
+              {selectedStudent.avatar && (selectedStudent.avatar.startsWith('data:') || selectedStudent.avatar.includes('/') || selectedStudent.avatar.includes('.')) ? (
+                <img 
+                  src={selectedStudent.avatar.startsWith('/') ? `http://localhost:5000${selectedStudent.avatar}` : selectedStudent.avatar} 
+                  alt={selectedStudent.name} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <span className="text-7xl">{selectedStudent.avatar || '🎓'}</span>
+              )}
+            </div>
 
-            <div className="p-8">
-              {/* Profile header */}
-              <div className="flex items-center gap-5 pb-6 border-b border-border-gray/50">
-                <div className="w-20 h-20 rounded-full bg-soft-light border border-border-gray shadow-sm flex items-center justify-center text-4xl overflow-hidden shrink-0">
-                  {selectedStudent.avatar && (selectedStudent.avatar.startsWith('data:') || selectedStudent.avatar.includes('/') || selectedStudent.avatar.includes('.')) ? (
-                    <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-full h-full object-cover rounded-full" />
-                  ) : (
-                    <span>{selectedStudent.avatar || '🎓'}</span>
-                  )}
-                </div>
+            {/* Right side: Details */}
+            <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+              {/* Close button */}
+              <button 
+                onClick={() => setSelectedStudent(null)}
+                className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none z-10"
+              >
+                <X size={22} />
+              </button>
+
+              <div className="space-y-5">
                 <div>
-                  <h3 className="text-xl font-extrabold text-primary mb-1 tracking-tight">{selectedStudent.name}</h3>
-                  <span className="inline-block bg-primary/5 text-primary text-[10px] font-bold py-0.5 px-2.5 rounded-md uppercase tracking-wider mb-2">
+                  <h3 className="text-xl font-extrabold text-primary tracking-tight">{selectedStudent.name}</h3>
+                  <span className="inline-block bg-primary/5 text-primary text-[10px] font-bold py-0.5 px-2.5 rounded-md uppercase tracking-wider mt-1.5 mb-2">
                     {selectedStudent.sport || 'Athlete'}
                   </span>
                   <div>
-                    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-xs ${
+                    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider py-1 px-3 rounded-full shadow-xs ${
                       (selectedStudent.residency || 'resident') === 'resident'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -659,40 +670,40 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                     </span>
                   </div>
                 </div>
+
+                {/* Profile Details List */}
+                <div className="grid grid-cols-2 gap-4 py-4 border-y border-border-gray/50 text-xs font-semibold text-text-body">
+                  <div>
+                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Age</span>
+                    <span className="text-primary font-bold">{selectedStudent.age || 'N/A'} Years</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Gender</span>
+                    <span className="text-primary font-bold capitalize">{selectedStudent.gender || 'Girl'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Medals Won</span>
+                    <span className="text-primary font-bold flex items-center gap-1.5"><span className="text-sm">🏅</span> {selectedStudent.medalNumber || 0} Medals</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-0.5">Joined Date</span>
+                    <span className="text-primary font-bold">{selectedStudent.joined || 'N/A'}</span>
+                  </div>
+                </div>
+
+                {/* Bio / Description or extra details */}
+                <div>
+                  <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-1.5">Bio & Achievements</span>
+                  <p className="text-xs text-text-body leading-relaxed bg-soft-light p-3.5 rounded-xl border border-border-gray/50 font-medium">
+                    {selectedStudent.name} is a highly dedicated student athlete specializing in {selectedStudent.sport || 'sports'}. They have shown exceptional performance, winning {selectedStudent.medalNumber || 0} medals and contributing significantly to the academy's successes.
+                  </p>
+                </div>
               </div>
 
-              {/* Profile Details List */}
-              <div className="grid grid-cols-2 gap-4 py-6 border-b border-border-gray/50 text-xs font-semibold text-text-body">
-                <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-0.5">Age</span>
-                  <span className="text-primary font-bold">{selectedStudent.age || 'N/A'} Years</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-0.5">Gender</span>
-                  <span className="text-primary font-bold capitalize">{selectedStudent.gender || 'Girl'}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-0.5">Medals Won</span>
-                  <span className="text-primary font-bold flex items-center gap-1.5"><span className="text-sm">🏅</span> {selectedStudent.medalNumber || 0} Medals</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-0.5">Joined Date</span>
-                  <span className="text-primary font-bold">{selectedStudent.joined || 'N/A'}</span>
-                </div>
-              </div>
-
-              {/* Bio / Description or extra details */}
-              <div className="pt-6">
-                <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-2">Bio & Achievements</span>
-                <p className="text-xs text-text-body leading-relaxed bg-soft-light p-4 rounded-xl border border-border-gray/50 font-medium">
-                  {selectedStudent.name} is a highly dedicated student athlete specializing in {selectedStudent.sport || 'sports'}. They have shown exceptional performance, winning {selectedStudent.medalNumber || 0} medals and contributing significantly to the academy's successes.
-                </p>
-              </div>
-
-              <div className="mt-8 flex justify-end">
+              <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setSelectedStudent(null)}
-                  className="px-5 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md"
+                  className="px-5 py-2 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md"
                 >
                   Close Profile
                 </button>
@@ -702,6 +713,76 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
         </div>
       )}
 
-    </section>
+      {/* Detailed Coach Modal */}
+      {selectedCoach && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 md:p-6 text-left animate-fade-in" 
+          onClick={() => setSelectedCoach(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row max-h-[90vh] md:max-h-[80vh]" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left side: Photo */}
+            <div className="w-full md:w-[45%] h-56 md:h-auto relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
+              {/* Experience badge */}
+              <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded shadow-xs z-10">
+                {selectedCoach.experience}
+              </span>
+
+              {selectedCoach.avatar && (selectedCoach.avatar.startsWith('http') || selectedCoach.avatar.startsWith('/') || selectedCoach.avatar.startsWith('data:')) ? (
+                <img 
+                  src={selectedCoach.avatar} 
+                  alt={selectedCoach.name} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <span className="text-7xl">{selectedCoach.avatar || '👨‍🏫'}</span>
+              )}
+            </div>
+
+            {/* Right side: Details */}
+            <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+              {/* Close button */}
+              <button 
+                onClick={() => setSelectedCoach(null)}
+                className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent outline-none z-10"
+              >
+                <X size={22} />
+              </button>
+
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-xl font-extrabold text-primary tracking-tight">{selectedCoach.name}</h3>
+                  <p className="text-xs font-bold text-accent uppercase tracking-wider mt-1 mb-2">
+                    {selectedCoach.role}
+                  </p>
+                  <p className="text-xs text-text-light font-semibold italic">
+                    {selectedCoach.specialization}
+                  </p>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <span className="block text-[9px] font-bold text-text-light uppercase tracking-wider mb-1.5">Coach Profile & Bio</span>
+                  <p className="text-xs text-text-body leading-relaxed bg-soft-light p-3.5 rounded-xl border border-border-gray/50 font-medium">
+                    {selectedCoach.bio}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setSelectedCoach(null)}
+                  className="px-5 py-2 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md"
+                >
+                  Close Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
