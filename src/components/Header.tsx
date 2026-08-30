@@ -60,6 +60,7 @@ export const Header: React.FC = () => {
       ],
     },
     { label: '🖼️ Gallery', href: '#/gallery/all' },
+    { label: '📅 Events', href: '#/events/all' },
     { label: '📞 Contact Us', href: '#/contact' },
   ];
 
