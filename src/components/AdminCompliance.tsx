@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ShieldCheck, 
   FileText, 
@@ -1023,7 +1024,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       )}
 
       {/* MODAL 1: POLICY FORM */}
-      {activeModal === 'policy' && (
+      {activeModal === 'policy' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col justify-between overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1188,11 +1189,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 2: DOCUMENT UPLOAD FORM */}
-      {activeModal === 'document' && (
+      {activeModal === 'document' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1283,11 +1285,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 3: STUDENT CONSENT FORM */}
-      {activeModal === 'consent' && (
+      {activeModal === 'consent' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1395,11 +1398,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 4: COMPLAINT REDRESS VIEW */}
-      {viewingComplaint && (
+      {viewingComplaint && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1471,11 +1475,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 5: LOG INCIDENT FORM */}
-      {activeModal === 'incident' && (
+      {activeModal === 'incident' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1588,11 +1593,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 6: COMPLIANCE REMINDER FORM */}
-      {activeModal === 'reminder' && (
+      {activeModal === 'reminder' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 text-left animate-fade-in">
           <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
             <div className="p-6 border-b border-border-gray/50 flex justify-between items-center">
@@ -1669,7 +1675,8 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
