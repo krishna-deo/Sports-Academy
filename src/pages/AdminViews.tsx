@@ -25,7 +25,8 @@ import {
   Trophy,
   Pencil,
   ArrowClockwise,
-  ArrowCounterClockwise
+  ArrowCounterClockwise,
+  DotsThreeVertical
 } from '@phosphor-icons/react';
 
 interface AdminViewsProps {
@@ -225,6 +226,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [studentDocFiles, setStudentDocFiles] = useState<{ file: File; name: string }[]>([]);
   const [deletedDocuments, setDeletedDocuments] = useState<string[]>([]);
   const [coachForm, setCoachForm] = useState({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+  const [editingCoach, setEditingCoach] = useState<any | null>(null);
+  const [openCoachDropdown, setOpenCoachDropdown] = useState<string | null>(null);
   const [eventForm, setEventForm] = useState({ title: '', category: 'tournaments', date: '', time: '', venue: '', description: '' });
   const [profileForm, setProfileForm] = useState({ name: '', email: '', username: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -742,15 +745,41 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     }
   };
 
+  const closeCoachModal = () => {
+    setActiveModal(null);
+    setEditingCoach(null);
+    setCoachForm({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+  };
+
+  const handleEditCoachClick = (coach: any) => {
+    setEditingCoach(coach);
+    setCoachForm({
+      name: coach.name,
+      role: coach.role,
+      specialization: coach.specialization || '',
+      experience: coach.experience ? coach.experience.replace(' Years Coaching', '') : '',
+      bio: coach.bio,
+      avatar: coach.avatar
+    });
+    setActiveModal('coach');
+  };
+
   const handleAddCoach = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!coachForm.avatar || coachForm.avatar === '👨‍🏫') {
       alert("Please upload and crop a profile photo for the coach.");
       return;
     }
+
+    const isEdit = !!editingCoach;
+    const url = isEdit 
+      ? `http://localhost:5000/api/admin/coaches/${encodeURIComponent(editingCoach.name)}`
+      : 'http://localhost:5000/api/admin/coaches';
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-      const response = await fetch('http://localhost:5000/api/admin/coaches', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -763,12 +792,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       });
       const data = await response.json();
       if (response.ok && data.success) {
-        setCoaches([...coaches, data.coach]);
-        triggerSuccess('Coach added successfully.');
-        setActiveModal(null);
-        setCoachForm({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+        if (isEdit) {
+          setCoaches(coaches.map(c => c.name === editingCoach.name ? data.coach : c));
+          triggerSuccess('Coach profile updated successfully.');
+        } else {
+          setCoaches([...coaches, data.coach]);
+          triggerSuccess('Coach added successfully.');
+        }
+        closeCoachModal();
       } else {
-        alert(data.error || "Failed to add coach.");
+        alert(data.error || `Failed to ${isEdit ? 'update' : 'add'} coach.`);
       }
     } catch (err) {
       alert("Error contacting the backend server.");
@@ -2189,7 +2222,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                       </td>
 
                       {/* Photo */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 text-center cursor-pointer hover:opacity-80" onClick={() => setViewingStudentProfile(student)}>
                         <div className="w-8 h-8 rounded-full border border-border-gray flex items-center justify-center bg-slate-50 overflow-hidden mx-auto shadow-xs">
                           {student.avatar && (student.avatar.startsWith('data:') || student.avatar.includes('/') || student.avatar.includes('.')) ? (
                             <img 
@@ -2207,8 +2240,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                       <td className="py-3 px-4 text-[11px] font-bold text-text-light">{student.studentId || student.id}</td>
 
                       {/* Name */}
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-primary block truncate max-w-[180px]">{student.fullName || student.name}</span>
+                      <td className="py-3 px-4 cursor-pointer hover:text-accent" onClick={() => setViewingStudentProfile(student)}>
+                        <span className="font-bold text-primary block truncate max-w-[180px] hover:underline">{student.fullName || student.name}</span>
                         {student.showOnPublicWebsite && (
                           <span className="inline-block bg-emerald-50 text-emerald-600 text-[8px] font-extrabold px-1 rounded border border-emerald-100 uppercase tracking-wide mt-0.5">Public</span>
                         )}
@@ -2348,7 +2381,11 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               <p className="text-text-light text-xs mt-0.5">Manage coaching staff and sport specializations</p>
             </div>
             <button 
-              onClick={() => setActiveModal('coach')}
+              onClick={() => {
+                setEditingCoach(null);
+                setCoachForm({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+                setActiveModal('coach');
+              }}
               className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
             >
               <Plus size={16} /> Add Coach
@@ -2375,13 +2412,51 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                   <span className="block text-[11px] text-text-light font-semibold italic mt-1">{coach.specialization} &bull; {coach.experience}</span>
                   <p className="text-text-body text-xs mt-2.5 leading-relaxed">{coach.bio}</p>
                 </div>
-                <button
-                  onClick={() => deleteCoach(coach.name)}
-                  className="absolute top-4 right-4 text-text-light hover:text-rose-500 bg-transparent border-none p-1 cursor-pointer"
-                  title="Remove Coach"
-                >
-                  <Trash size={16} />
-                </button>
+                <div className="absolute top-4 right-4 z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenCoachDropdown(openCoachDropdown === coach.name ? null : coach.name);
+                    }}
+                    className="text-text-light hover:text-primary bg-transparent border-none p-1 cursor-pointer rounded-full hover:bg-soft-light transition-all outline-none"
+                    title="Coach Actions"
+                  >
+                    <DotsThreeVertical size={20} weight="bold" />
+                  </button>
+
+                  {openCoachDropdown === coach.name && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={(e) => { e.stopPropagation(); setOpenCoachDropdown(null); }} 
+                      />
+                      <div className="absolute right-0 mt-1 bg-white border border-border-gray rounded-xl shadow-xl z-20 py-1.5 w-28 animate-fade-in text-left">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCoachDropdown(null);
+                            handleEditCoachClick(coach);
+                          }}
+                          className="w-full text-left py-2 px-4.5 text-xs font-bold text-primary hover:bg-soft-light hover:text-accent transition-colors cursor-pointer border-none bg-transparent block flex items-center gap-2"
+                        >
+                          <Pencil size={14} /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCoachDropdown(null);
+                            deleteCoach(coach.name);
+                          }}
+                          className="w-full text-left py-2 px-4.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer border-none bg-transparent block flex items-center gap-2"
+                        >
+                          <Trash size={14} /> Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -4533,11 +4608,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
       {/* 2. Add Coach Modal */}
       {activeModal === 'coach' && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
+        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={closeCoachModal}>
           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={closeCoachModal}><X size={20} /></button>
             <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
-              <Plus size={20} className="text-accent" /> Add Coach
+              {editingCoach ? <Pencil size={20} className="text-accent" /> : <Plus size={20} className="text-accent" />}
+              {editingCoach ? 'Edit Coach Profile' : 'Add Coach'}
             </h3>
             <form onSubmit={handleAddCoach} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
@@ -4600,7 +4676,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                 )}
               </div>
               <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm">
-                Save Record
+                {editingCoach ? 'Update Profile' : 'Save Record'}
               </button>
             </form>
           </div>

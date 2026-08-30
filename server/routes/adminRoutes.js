@@ -798,6 +798,42 @@ router.post('/coaches', async (req, res) => {
   }
 });
 
+router.put('/coaches/:name', async (req, res) => {
+  let { name, role, specialization, experience, bio, avatar } = req.body;
+  if (!name || !role || !experience) {
+    return res.status(400).json({ error: "Required fields (name, role, experience) are missing." });
+  }
+
+  try {
+    const coach = await Coach.findOne({ name: req.params.name });
+    if (!coach) return res.status(404).json({ error: "Coach not found." });
+
+    coach.name = sanitizeInput(name).trim();
+    coach.role = sanitizeInput(role).trim();
+    coach.specialization = specialization ? sanitizeInput(specialization).trim() : role;
+    coach.experience = sanitizeInput(experience).trim();
+    coach.bio = bio ? sanitizeInput(bio).trim() : '';
+
+    if (avatar && avatar !== coach.avatar) {
+      avatar = sanitizeInput(avatar).trim();
+      if (avatar.startsWith('data:image/')) {
+        try {
+          avatar = await storageService.uploadBase64(avatar, 'coaches');
+        } catch (err) {
+          console.error("Cloudinary Base64 upload failed for coach avatar update:", err);
+        }
+      }
+      coach.avatar = avatar;
+    }
+
+    await coach.save();
+    res.json({ success: true, coach });
+  } catch (err) {
+    console.error("Error updating coach:", err);
+    res.status(500).json({ error: "Failed to update coach profile: " + err.message });
+  }
+});
+
 router.delete('/coaches/:name', async (req, res) => {
   try {
     const result = await Coach.findOneAndDelete({ name: req.params.name });
