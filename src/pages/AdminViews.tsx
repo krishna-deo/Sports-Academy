@@ -443,9 +443,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       }
     });
   };
-      alert("Error deleting success story.");
-    }
-  };
 
   const openEditStoryModal = (story: any) => {
     setEditingStory(story);
@@ -1244,25 +1241,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       }
     });
   };
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ids: selectedGalleryIds })
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        triggerSuccess(`${selectedGalleryIds.length} items permanently deleted.`);
-        setSelectedGalleryIds([]);
-        fetchGallery();
-      } else {
-        alert(data.error || "Failed to bulk delete permanently.");
-      }
-    } catch (err) {
-      alert("Error performing bulk permanent delete.");
-    }
-  };
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1490,22 +1468,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         }
       }
     });
-  };
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ids: selectedStudentIds })
-      });
-      if (response.ok) {
-        triggerSuccess(`Deactivated ${selectedStudentIds.length} student records.`);
-        setSelectedStudentIds([]);
-        fetchStudents();
-      }
-    } catch (err) {
-      alert("Error deactivating students in bulk.");
-    }
   };
 
   const handleBulkAssign = async (batchVal?: string, coachVal?: string) => {
@@ -5158,6 +5120,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
             </form>
           </div>
         </div>
+      )}
+
       {confirmationModal.show && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-center justify-center p-5 animate-fade-in" onClick={() => setConfirmationModal(prev => ({ ...prev, show: false }))}>
           <div className="bg-white rounded-xl border border-border-gray shadow-xl max-w-md w-full overflow-hidden animate-scale-up text-left" onClick={(e) => e.stopPropagation()}>
