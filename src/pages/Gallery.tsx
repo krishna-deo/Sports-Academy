@@ -348,8 +348,8 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                   
                   return currentItems.map((item) => {
                     const thumbUrl = item.type === 'video'
-                      ? (item.coverImage && item.coverImage.startsWith('http') ? item.coverImage : `http://localhost:5000${item.coverImage}`)
-                      : `http://localhost:5000${item.path}`;
+                      ? (item.coverImage && (item.coverImage.startsWith('http') || item.coverImage.startsWith('data:')) ? item.coverImage : `http://localhost:5000${item.coverImage}`)
+                      : (item.path && (item.path.startsWith('http') || item.path.startsWith('data:')) ? item.path : `http://localhost:5000${item.path}`);
 
                     return (
                       <div 
@@ -587,7 +587,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {selectedEvent.photos.map((photo: any, index: number) => {
-              const photoUrl = `http://localhost:5000${photo.path}`;
+              const photoUrl = photo.path && (photo.path.startsWith('http') || photo.path.startsWith('data:')) ? photo.path : `http://localhost:5000${photo.path}`;
               
               return (
                 <div 
@@ -642,11 +642,19 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             className="relative flex flex-col items-center max-w-[90vw] max-h-[85vh] animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <img 
-              src={`http://localhost:5000${selectedEvent.photos[lightboxIndex].path}`} 
-              alt={`${selectedEvent.name} photo ${lightboxIndex + 1}`} 
-              className="max-w-full max-h-[70vh] md:max-h-[75vh] object-contain rounded-xl shadow-2xl border border-white/10 bg-black/40 block select-none"
-            />
+            {(() => {
+              const currentPath = selectedEvent.photos[lightboxIndex]?.path || '';
+              const srcUrl = currentPath && (currentPath.startsWith('http') || currentPath.startsWith('data:'))
+                ? currentPath
+                : `http://localhost:5000${currentPath}`;
+              return (
+                <img 
+                  src={srcUrl} 
+                  alt={`${selectedEvent.name} photo ${lightboxIndex + 1}`} 
+                  className="max-w-full max-h-[70vh] md:max-h-[75vh] object-contain rounded-xl shadow-2xl border border-white/10 bg-black/40 block select-none"
+                />
+              );
+            })()}
             
             {/* Elegant glassmorphic metadata bar */}
             <div className="mt-5 w-full max-w-[90vw] md:max-w-xl bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl flex items-center justify-between gap-4 text-white shadow-xl">

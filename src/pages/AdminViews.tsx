@@ -7231,7 +7231,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 py-2 border-t border-border-gray/50 mt-2">
               {showQuickViewEvent.photos?.map((photo: any, idx: number) => (
                 <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-border-gray/40 relative group bg-soft-light">
-                  <img src={`http://localhost:5000${photo.path}`} alt="" className="w-full h-full object-cover" />
+                  <img src={photo.path && (photo.path.startsWith('http') || photo.path.startsWith('data:')) ? photo.path : `http://localhost:5000${photo.path}`} alt="" className="w-full h-full object-cover" />
                   {showQuickViewEvent.coverImage === photo.path && (
                     <span className="absolute top-2.5 right-2.5 bg-emerald-500 text-white text-[8px] px-2 py-0.5 rounded font-extrabold shadow-sm uppercase tracking-wider">Cover</span>
                   )}
@@ -7553,7 +7553,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       <span className="text-[9px] text-text-light font-bold uppercase tracking-wider block">Existing Album Photos (Click to set Cover):</span>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 border border-border-gray/50 p-3 rounded-lg bg-soft-light">
                         {existingPhotos.map((photo, idx) => {
-                          const photoUrl = `http://localhost:5000${photo.path}`;
+                          const photoUrl = photo.path && (photo.path.startsWith('http') || photo.path.startsWith('data:')) ? photo.path : `http://localhost:5000${photo.path}`;
                           const isDeleted = deletedExistingPhotos.includes(photo.path);
                           const isCover = !isDeleted && (editingEventGallery.coverImage === photo.path || (coverIndex === idx && deletedExistingPhotos.indexOf(photo.path) === -1));
                           
