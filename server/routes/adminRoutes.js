@@ -1564,8 +1564,8 @@ router.get('/team', async (req, res) => {
           id: 'TM-001',
           name: 'Mr. Sanjay Pathak',
           role: 'Founder & Director',
-          bio: 'Visionary founder dedicated to empowering youth through sports excellence and rural talent development.',
-          image: '/images/founder_sanjay_pathak.png',
+          bio: 'Sanjay Pathak is a transformative leader, educator, and the driving force behind a grassroots sports revolution in rural Bihar.\nA geography teacher by profession, he founded the Rani Laxmibai Sports Academy Foundation in 2009 with a powerful vision: to weaponise sports against deep-seated gender discrimination and generational poverty.',
+          image: '/images/Mr. Sanjay Pathak (Founder and Director).jpeg',
           objectPosition: 'center 15%'
         }
       ];

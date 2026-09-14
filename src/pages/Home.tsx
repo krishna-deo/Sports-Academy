@@ -3,6 +3,7 @@ import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calenda
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
 import { successStories as initialSuccessStories } from '../data/sportsData';
+import { getBioParagraphs } from '../utils/textUtils';
 
 export const Home: React.FC = () => {
   const [successPlayers, setSuccessPlayers] = React.useState<any[]>(initialSuccessStories);
@@ -573,9 +574,11 @@ export const Home: React.FC = () => {
                       <span className="text-[11px] md:text-[12.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-4 block leading-none">
                         {member.role}
                       </span>
-                      <p className="text-text-light text-sm sm:text-base md:text-lg leading-relaxed max-w-[580px]">
-                        {member.bio}
-                      </p>
+                      <div className="text-text-light text-sm sm:text-base md:text-lg leading-relaxed max-w-[580px] space-y-3 text-left font-normal">
+                        {getBioParagraphs(member.bio).map((paragraph, idx) => (
+                          <p key={idx}>{paragraph}</p>
+                        ))}
+                      </div>
                     </div>
                   </a>
                 );

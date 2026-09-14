@@ -1,6 +1,7 @@
 import React from 'react';
 import { teamMembers } from '../data/teamData';
 import { useHash } from '../hooks/useHash';
+import { getBioParagraphs } from '../utils/textUtils';
 
 interface AboutProps {
   sub: string;
@@ -866,9 +867,11 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                       <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
                         {team[0].name}
                       </h3>
-                      <p className="text-text-light text-sm md:text-base leading-relaxed">
-                        {team[0].bio}
-                      </p>
+                      <div className="text-text-light text-sm md:text-base leading-relaxed space-y-3.5 text-left font-normal">
+                        {getBioParagraphs(team[0].bio).map((paragraph, idx) => (
+                          <p key={idx}>{paragraph}</p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -909,9 +912,11 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                         <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-3 leading-tight">
                           {member.name}
                         </h3>
-                        <p className="text-text-light text-xs md:text-sm leading-relaxed">
-                          {member.bio}
-                        </p>
+                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2.5 text-left font-normal">
+                          {getBioParagraphs(member.bio).map((paragraph, idx) => (
+                            <p key={idx}>{paragraph}</p>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

@@ -31,6 +31,7 @@ import {
 } from '@phosphor-icons/react';
 
 import { AdminCompliance } from '../components/AdminCompliance';
+import { getBioParagraphs } from '../utils/textUtils';
 
 interface AdminViewsProps {
   activeTab: string;
@@ -5269,9 +5270,11 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       <div className="p-5 text-left">
                         <h3 className="text-sm font-extrabold text-primary mb-1">{member.name}</h3>
                         <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{member.role}</span>
-                        <p className="text-text-light text-[11px] leading-relaxed line-clamp-3">
-                          {member.bio}
-                        </p>
+                        <div className="text-text-light text-[11px] leading-relaxed space-y-1 line-clamp-4 font-normal">
+                          {getBioParagraphs(member.bio).map((paragraph, idx) => (
+                            <p key={idx}>{paragraph}</p>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
@@ -5527,15 +5530,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Bio/Description</label>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Bio / Description</label>
                 <textarea 
                   required
-                  rows={4}
-                  placeholder="Brief biography or background information..."
+                  rows={5}
+                  placeholder="Enter biography or description (each sentence will start on a new line)..."
                   value={teamForm.bio} 
                   onChange={(e) => setTeamForm({ ...teamForm, bio: e.target.value })}
-                  className="w-full py-2.5 px-4 border border-border-gray rounded-lg bg-soft-light text-xs text-dark placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none"
+                  className="w-full py-2.5 px-4 border border-border-gray rounded-lg bg-soft-light text-xs text-dark placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-medium whitespace-pre-line leading-relaxed"
                 />
+                <p className="text-[10px] text-text-light/70 mt-1">Each sentence or new line will start cleanly on a new line on the website.</p>
               </div>
               <button 
                 type="submit" 
