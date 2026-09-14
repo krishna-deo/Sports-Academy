@@ -1,9 +1,29 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const storageService = require('../services/storageService');
+
+// Safe Mongoose document lookup helper supporting both custom string id and ObjectId _id
+async function findDoc(Model, idParam) {
+  if (!idParam) return null;
+  let doc = null;
+  try {
+    doc = await Model.findOne({ id: idParam });
+  } catch (e) {
+    doc = null;
+  }
+  if (!doc && mongoose.Types.ObjectId.isValid(idParam)) {
+    try {
+      doc = await Model.findById(idParam);
+    } catch (e) {
+      doc = null;
+    }
+  }
+  return doc;
+}
 
 const tempDir = path.join(__dirname, '..', 'uploads', 'temp');
 if (!fs.existsSync(tempDir)) {
@@ -19,6 +39,7 @@ const Student = require('../models/Student');
 const Coach = require('../models/Coach');
 const Gallery = require('../models/Gallery');
 const Event = require('../models/Event');
+const Update = require('../models/Update');
 const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const User = require('../models/User');
@@ -31,12 +52,61 @@ const Complaint = require('../models/Complaint');
 const Incident = require('../models/Incident');
 const ComplianceReminder = require('../models/ComplianceReminder');
 const AuditLog = require('../models/AuditLog');
+const StoryMilestone = require('../models/StoryMilestone');
+const Facility = require('../models/Facility');
+const EdgeCard = require('../models/EdgeCard');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
 function sanitizeInput(str) {
   if (typeof str !== 'string') return str;
   return str.replace(/[<>]/g, '');
+}
+
+async function saveBase64File(base64Data, folder) {
+  if (!base64Data || !base64Data.startsWith('data:')) {
+    return base64Data;
+  }
+
+  const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error('Invalid Base64 string');
+  }
+
+  const mimeType = matches[1];
+  const buffer = Buffer.from(matches[2], 'base64');
+
+  if (storageService.isCloudinaryActive()) {
+    const tempFileName = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const tempFilePath = path.join(__dirname, '..', 'uploads', 'temp', tempFileName);
+    fs.writeFileSync(tempFilePath, buffer);
+    
+    try {
+      const url = await storageService.uploadToCloud(tempFilePath, folder);
+      return url;
+    } catch (err) {
+      if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+      throw err;
+    }
+  } else {
+    const extMap = {
+      'application/pdf': '.pdf',
+      'application/msword': '.doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif'
+    };
+    const ext = extMap[mimeType] || '.bin';
+    const fileName = `${Date.now()}_${Math.floor(100 + Math.random() * 900)}${ext}`;
+    const destDir = path.join(__dirname, '..', 'uploads', folder);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    const destPath = path.join(destDir, fileName);
+    fs.writeFileSync(destPath, buffer);
+    return `/uploads/${folder}/${fileName}`;
+  }
 }
 
 // Profile CRUD endpoints
@@ -876,46 +946,571 @@ router.post('/gallery/bulk-soft-delete', (req, res) => galleryController.bulkSof
 router.post('/gallery/bulk-restore', (req, res) => galleryController.bulkRestore(req, res));
 router.post('/gallery/bulk-permanent-delete', (req, res) => galleryController.bulkDeletePermanently(req, res));
 
-// Events CRUD
+// --- Events & Updates Admin Admin Dashboard Stats ---
+router.get('/events-updates/stats', async (req, res) => {
+  try {
+    const totalEvents = await Event.countDocuments({});
+    const draftEvents = await Event.countDocuments({ status: 'Draft' });
+    
+    const totalUpdates = await Update.countDocuments({});
+    const publishedUpdates = await Update.countDocuments({ status: 'Published' });
+    const draftUpdates = await Update.countDocuments({ status: 'Draft' });
+
+    const now = new Date();
+    const allPubEvents = await Event.find({ status: 'Published', visibility: 'Public' });
+    
+    const upcomingEvents = allPubEvents.filter(e => new Date(e.startDate) >= now.setHours(0,0,0,0)).length;
+    const ongoingEvents = allPubEvents.filter(e => {
+      const start = new Date(e.startDate);
+      const end = e.endDate ? new Date(e.endDate) : new Date(start.getTime() + 24*60*60*1000);
+      return start <= now && end >= now;
+    }).length;
+    const completedEvents = allPubEvents.filter(e => {
+      const end = e.endDate ? new Date(e.endDate) : new Date(e.startDate);
+      return end < now;
+    }).length;
+
+    const upcomingEventsList = await Event.find({ 
+      status: 'Published', 
+      visibility: 'Public', 
+      startDate: { $gte: new Date().setHours(0,0,0,0) } 
+    }).sort({ startDate: 1 }).limit(5);
+
+    const recentUpdatesList = await Update.find({
+      status: 'Published',
+      visibility: 'Public'
+    }).sort({ publishedAt: -1, createdAt: -1 }).limit(5);
+
+    const draftEventsList = await Event.find({ status: 'Draft' }).sort({ updatedAt: -1 }).limit(5);
+    const draftUpdatesList = await Update.find({ status: 'Draft' }).sort({ updatedAt: -1 }).limit(5);
+
+    res.json({
+      success: true,
+      stats: {
+        totalEvents,
+        upcomingEvents,
+        ongoingEvents,
+        completedEvents,
+        draftEvents,
+        totalUpdates,
+        publishedUpdates,
+        draftUpdates
+      },
+      upcomingEventsList,
+      recentUpdatesList,
+      draftContentList: [
+        ...draftEventsList.map(e => ({ _id: e._id, title: e.title, type: 'Event', updatedAt: e.updatedAt })),
+        ...draftUpdatesList.map(u => ({ _id: u._id, title: u.title, type: 'Update', updatedAt: u.updatedAt }))
+      ]
+    });
+  } catch (err) {
+    console.error("Fetch events-updates stats error:", err);
+    res.status(500).json({ error: "Failed to fetch dashboard statistics." });
+  }
+});
+
+// --- Events CRUD admin endpoints ---
+router.get('/events', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search;
+    const category = req.query.category;
+    const status = req.query.status;
+    const visibility = req.query.visibility;
+
+    const query = {};
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+    if (category) {
+      query.category = category;
+    }
+    if (status) {
+      query.status = status;
+    }
+    if (visibility) {
+      query.visibility = visibility;
+    }
+
+    const total = await Event.countDocuments(query);
+    const events = await Event.find(query)
+      .sort({ startDate: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      events,
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    console.error("Admin fetch events error:", err);
+    res.status(500).json({ error: "Failed to fetch events." });
+  }
+});
+
+router.get('/events/:id', async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found." });
+    res.json({ success: true, event });
+  } catch (err) {
+    console.error("Admin fetch single event error:", err);
+    res.status(500).json({ error: "Failed to fetch event." });
+  }
+});
+
 router.post('/events', async (req, res) => {
-  let { title, category, date, time, venue, description } = req.body;
-  if (!title || !category || !date || !time || !venue) {
+  let {
+    title,
+    slug,
+    category,
+    shortDescription,
+    content,
+    coverMedia,
+    galleryMedia,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    location,
+    registrationRequired,
+    registrationUrl,
+    status,
+    visibility,
+    isFeatured
+  } = req.body;
+
+  if (!title || !slug || !category || !shortDescription || !content || !startDate || !location) {
     return res.status(400).json({ error: "Required fields are missing." });
   }
 
+  // Sanitize
   title = sanitizeInput(title).trim();
+  slug = sanitizeInput(slug).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
   category = sanitizeInput(category).trim();
-  date = sanitizeInput(date).trim();
-  time = sanitizeInput(time).trim();
-  venue = sanitizeInput(venue).trim();
-  description = description ? sanitizeInput(description).trim() : '';
+  shortDescription = sanitizeInput(shortDescription).trim();
+  location = sanitizeInput(location).trim();
+  if (registrationUrl) registrationUrl = sanitizeInput(registrationUrl).trim();
+
+  // Validate unique slug
+  const existing = await Event.findOne({ slug });
+  if (existing) {
+    return res.status(400).json({ error: "Event URL slug already exists. Please choose a unique title." });
+  }
+
+  // Upload cover Base64 if any
+  if (coverMedia && coverMedia.startsWith('data:image/')) {
+    try {
+      coverMedia = await storageService.uploadBase64(coverMedia, 'events/covers');
+    } catch (err) {
+      console.error("Base64 cover upload failed:", err);
+    }
+  }
+
+  // Upload gallery Base64 images if any
+  let uploadedGallery = [];
+  if (Array.isArray(galleryMedia)) {
+    for (let img of galleryMedia) {
+      if (img.startsWith('data:image/')) {
+        try {
+          const url = await storageService.uploadBase64(img, 'events/gallery');
+          uploadedGallery.push(url);
+        } catch (err) {
+          console.error("Base64 gallery photo upload failed:", err);
+        }
+      } else {
+        uploadedGallery.push(img);
+      }
+    }
+  }
 
   try {
-    const count = await Event.countDocuments({});
+    const eventId = 'evt-' + Date.now();
     const newEvent = new Event({
-      id: 'evt-' + (count + 1),
+      id: eventId,
       title,
+      slug,
       category,
-      date,
-      time,
-      venue,
-      description,
-      status: 'open'
+      shortDescription,
+      content,
+      coverMedia: coverMedia || '/images/hero1.jpeg',
+      galleryMedia: uploadedGallery,
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : null,
+      startTime: startTime || '',
+      endTime: endTime || '',
+      location,
+      registrationRequired: !!registrationRequired,
+      registrationUrl: registrationRequired ? registrationUrl : '',
+      status: status || 'Draft',
+      visibility: visibility || 'Public',
+      isFeatured: !!isFeatured,
+      publishedAt: status === 'Published' ? new Date() : null,
+      createdBy: req.admin.username,
+      // legacy fields mapping
+      date: new Date(startDate).toISOString().split('T')[0],
+      time: startTime || 'All Day',
+      venue: location
     });
+
     await newEvent.save();
+    await logAdminAction(req.admin.username, 'event-create', newEvent.id, `Created event: ${newEvent.title}`);
     res.status(201).json({ success: true, event: newEvent });
   } catch (err) {
-    res.status(500).json({ error: "Failed to schedule event." });
+    console.error("Admin save event error:", err);
+    res.status(500).json({ error: "Failed to create event." });
+  }
+});
+
+router.put('/events/:id', async (req, res) => {
+  let {
+    title,
+    slug,
+    category,
+    shortDescription,
+    content,
+    coverMedia,
+    galleryMedia,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    location,
+    registrationRequired,
+    registrationUrl,
+    status,
+    visibility,
+    isFeatured
+  } = req.body;
+
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found." });
+
+    if (slug) {
+      slug = sanitizeInput(slug).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      // check unique slug if changed
+      if (slug !== event.slug) {
+        const existing = await Event.findOne({ slug });
+        if (existing) {
+          return res.status(400).json({ error: "Event URL slug already exists. Please choose a unique title." });
+        }
+        event.slug = slug;
+      }
+    }
+
+    if (title) event.title = sanitizeInput(title).trim();
+    if (category) event.category = sanitizeInput(category).trim();
+    if (shortDescription) event.shortDescription = sanitizeInput(shortDescription).trim();
+    if (content) event.content = content;
+    if (location) event.location = sanitizeInput(location).trim();
+    if (startDate) event.startDate = new Date(startDate);
+    if (endDate !== undefined) event.endDate = endDate ? new Date(endDate) : null;
+    if (startTime !== undefined) event.startTime = startTime || '';
+    if (endTime !== undefined) event.endTime = endTime || '';
+    if (registrationRequired !== undefined) event.registrationRequired = !!registrationRequired;
+    if (registrationUrl !== undefined) event.registrationUrl = registrationRequired ? sanitizeInput(registrationUrl).trim() : '';
+    if (visibility) event.visibility = visibility;
+    if (isFeatured !== undefined) event.isFeatured = !!isFeatured;
+
+    // Check status transition
+    if (status && status !== event.status) {
+      event.status = status;
+      if (status === 'Published' && !event.publishedAt) {
+        event.publishedAt = new Date();
+      }
+    }
+
+    // Cover upload Base64
+    if (coverMedia && coverMedia.startsWith('data:image/')) {
+      try {
+        event.coverMedia = await storageService.uploadBase64(coverMedia, 'events/covers');
+      } catch (err) {
+        console.error("Base64 cover upload failed:", err);
+      }
+    } else if (coverMedia !== undefined) {
+      event.coverMedia = coverMedia;
+    }
+
+    // Gallery upload Base64
+    if (Array.isArray(galleryMedia)) {
+      let uploadedGallery = [];
+      for (let img of galleryMedia) {
+        if (img.startsWith('data:image/')) {
+          try {
+            const url = await storageService.uploadBase64(img, 'events/gallery');
+            uploadedGallery.push(url);
+          } catch (err) {
+            console.error("Base64 gallery photo upload failed:", err);
+          }
+        } else {
+          uploadedGallery.push(img);
+        }
+      }
+      event.galleryMedia = uploadedGallery;
+    }
+
+    // legacy fields update
+    if (startDate) event.date = new Date(startDate).toISOString().split('T')[0];
+    event.time = event.startTime || 'All Day';
+    event.venue = event.location;
+    event.updatedBy = req.admin.username;
+
+    await event.save();
+    await logAdminAction(req.admin.username, 'event-update', event.id, `Updated event: ${event.title}`);
+    res.json({ success: true, event });
+  } catch (err) {
+    console.error("Admin update event error:", err);
+    res.status(500).json({ error: "Failed to update event." });
   }
 });
 
 router.delete('/events/:id', async (req, res) => {
   try {
-    const result = await Event.findOneAndDelete({ id: req.params.id });
-    if (!result) return res.status(404).json({ error: "Event schedule not found." });
-    res.json({ success: true });
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found." });
+
+    // Clean up cover image and gallery images from storage service
+    if (event.coverMedia) {
+      await storageService.delete(event.coverMedia);
+    }
+    if (event.galleryMedia && event.galleryMedia.length > 0) {
+      for (let img of event.galleryMedia) {
+        await storageService.delete(img);
+      }
+    }
+
+    await Event.findByIdAndDelete(req.params.id);
+    await logAdminAction(req.admin.username, 'event-delete', event.id, `Deleted event: ${event.title}`);
+    res.json({ success: true, message: "Event deleted successfully." });
   } catch (err) {
+    console.error("Admin delete event error:", err);
     res.status(500).json({ error: "Failed to delete event." });
+  }
+});
+
+// --- Updates CRUD admin endpoints ---
+router.get('/updates', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search;
+    const category = req.query.category;
+    const status = req.query.status;
+    const visibility = req.query.visibility;
+
+    const query = {};
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+    if (category) {
+      query.category = category;
+    }
+    if (status) {
+      query.status = status;
+    }
+    if (visibility) {
+      query.visibility = visibility;
+    }
+
+    const total = await Update.countDocuments(query);
+    const updates = await Update.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      updates,
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    console.error("Admin fetch updates error:", err);
+    res.status(500).json({ error: "Failed to fetch updates." });
+  }
+});
+
+router.get('/updates/:id', async (req, res) => {
+  try {
+    const update = await Update.findById(req.params.id);
+    if (!update) return res.status(404).json({ error: "Update not found." });
+    res.json({ success: true, update });
+  } catch (err) {
+    console.error("Admin fetch single update error:", err);
+    res.status(500).json({ error: "Failed to fetch update." });
+  }
+});
+
+router.post('/updates', async (req, res) => {
+  let {
+    title,
+    slug,
+    category,
+    summary,
+    content,
+    coverMedia,
+    attachments,
+    status,
+    visibility,
+    isFeatured
+  } = req.body;
+
+  if (!title || !slug || !category || !summary || !content) {
+    return res.status(400).json({ error: "Required fields are missing." });
+  }
+
+  title = sanitizeInput(title).trim();
+  slug = sanitizeInput(slug).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  category = sanitizeInput(category).trim();
+  summary = sanitizeInput(summary).trim();
+
+  const existing = await Update.findOne({ slug });
+  if (existing) {
+    return res.status(400).json({ error: "Update URL slug already exists. Please choose a unique title." });
+  }
+
+  // Cover image Base64
+  if (coverMedia && coverMedia.startsWith('data:image/')) {
+    try {
+      coverMedia = await saveBase64File(coverMedia, 'updates/covers');
+    } catch (err) {
+      console.error("Base64 cover upload failed:", err);
+    }
+  }
+
+  // Attachments upload Base64
+  let uploadedAttachments = [];
+  if (Array.isArray(attachments)) {
+    for (let att of attachments) {
+      if (att.startsWith('data:')) {
+        try {
+          const url = await saveBase64File(att, 'updates/attachments');
+          uploadedAttachments.push(url);
+        } catch (err) {
+          console.error("Attachment upload failed:", err);
+        }
+      } else {
+        uploadedAttachments.push(att);
+      }
+    }
+  }
+
+  try {
+    const updateId = 'upd-' + Date.now();
+    const newUpdate = new Update({
+      id: updateId,
+      title,
+      slug,
+      category,
+      summary,
+      content,
+      coverMedia: coverMedia || '',
+      attachments: uploadedAttachments,
+      status: status || 'Draft',
+      visibility: visibility || 'Public',
+      isFeatured: !!isFeatured,
+      publishedAt: status === 'Published' ? new Date() : null,
+      createdBy: req.admin.username
+    });
+
+    await newUpdate.save();
+    await logAdminAction(req.admin.username, 'update-create', newUpdate.id, `Created update: ${newUpdate.title}`);
+    res.status(201).json({ success: true, update: newUpdate });
+  } catch (err) {
+    console.error("Admin save update error:", err);
+    res.status(500).json({ error: "Failed to create update." });
+  }
+});
+
+router.put('/updates/:id', async (req, res) => {
+  let {
+    title,
+    slug,
+    category,
+    summary,
+    content,
+    coverMedia,
+    attachments,
+    status,
+    visibility,
+    isFeatured
+  } = req.body;
+
+  try {
+    const update = await Update.findById(req.params.id);
+    if (!update) return res.status(404).json({ error: "Update not found." });
+
+    if (slug) {
+      slug = sanitizeInput(slug).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      if (slug !== update.slug) {
+        const existing = await Update.findOne({ slug });
+        if (existing) {
+          return res.status(400).json({ error: "Update URL slug already exists. Please choose a unique title." });
+        }
+        update.slug = slug;
+      }
+    }
+
+    if (title) update.title = sanitizeInput(title).trim();
+    if (category) update.category = sanitizeInput(category).trim();
+    if (summary) update.summary = sanitizeInput(summary).trim();
+    if (content) update.content = content;
+    if (attachments !== undefined) {
+      let uploadedAttachments = [];
+      if (Array.isArray(attachments)) {
+        for (let att of attachments) {
+          if (att.startsWith('data:')) {
+            try {
+              const url = await saveBase64File(att, 'updates/attachments');
+              uploadedAttachments.push(url);
+            } catch (err) {
+              console.error("Attachment upload failed:", err);
+            }
+          } else {
+            uploadedAttachments.push(att);
+          }
+        }
+      }
+      update.attachments = uploadedAttachments;
+    }
+    if (visibility) update.visibility = visibility;
+    if (isFeatured !== undefined) update.isFeatured = !!isFeatured;
+
+    // Check status transition
+    if (status && status !== update.status) {
+      update.status = status;
+      if (status === 'Published' && !update.publishedAt) {
+        update.publishedAt = new Date();
+      }
+    }
+
+    // Cover upload Base64
+    if (coverMedia && coverMedia.startsWith('data:image/')) {
+      try {
+        update.coverMedia = await saveBase64File(coverMedia, 'updates/covers');
+      } catch (err) {
+        console.error("Base64 cover upload failed:", err);
+      }
+    } else if (coverMedia !== undefined) {
+      update.coverMedia = coverMedia;
+    }
+
+    update.updatedBy = req.admin.username;
+
+    await update.save();
+    await logAdminAction(req.admin.username, 'update-update', update.id, `Updated update: ${update.title}`);
+    res.json({ success: true, update });
+  } catch (err) {
+    console.error("Admin update update error:", err);
+    res.status(500).json({ error: "Failed to update update." });
   }
 });
 
@@ -962,7 +1557,21 @@ router.post('/milestones', async (req, res) => {
 // Team Members CRUD
 router.get('/team', async (req, res) => {
   try {
-    const team = await TeamMember.find({}).sort({ createdAt: 1 });
+    let team = await TeamMember.find({}).sort({ createdAt: 1 });
+    if (team.length === 0) {
+      const defaultTeam = [
+        {
+          id: 'TM-001',
+          name: 'Mr. Sanjay Pathak',
+          role: 'Founder & Director',
+          bio: 'Visionary founder dedicated to empowering youth through sports excellence and rural talent development.',
+          image: '/images/founder_sanjay_pathak.png',
+          objectPosition: 'center 15%'
+        }
+      ];
+      await TeamMember.insertMany(defaultTeam);
+      team = await TeamMember.find({}).sort({ createdAt: 1 });
+    }
     res.json(team);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch founders and directors list." });
@@ -1027,13 +1636,15 @@ router.put('/team/:id', async (req, res) => {
   }
 
   try {
-    const updatedMember = await TeamMember.findOneAndUpdate(
-      { id: req.params.id },
-      { $set: { name, role, bio, image, objectPosition } },
-      { new: true }
-    );
-    if (!updatedMember) return res.status(404).json({ error: "Team member not found." });
-    res.json({ success: true, member: updatedMember });
+    const member = await findDoc(TeamMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Team member not found." });
+    member.name = name;
+    member.role = role;
+    member.bio = bio;
+    member.image = image;
+    member.objectPosition = objectPosition;
+    await member.save();
+    res.json({ success: true, member });
   } catch (err) {
     console.error("Error updating team member:", err);
     res.status(500).json({ error: "Failed to update team member: " + err.message });
@@ -1042,19 +1653,64 @@ router.put('/team/:id', async (req, res) => {
 
 router.delete('/team/:id', async (req, res) => {
   try {
-    const result = await TeamMember.findOneAndDelete({ id: req.params.id });
-    if (!result) return res.status(404).json({ error: "Team member not found." });
-    res.json({ success: true });
+    const isPermanent = req.query.permanent === 'true';
+    const member = await findDoc(TeamMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Team member not found." });
+
+    if (isPermanent) {
+      await TeamMember.deleteOne({ _id: member._id });
+      await logAdminAction(req.admin.username, 'team-permanent-delete', req.params.id, `Permanently deleted team member: ${member.name}`);
+      return res.json({ success: true, message: "Team member permanently deleted." });
+    } else {
+      member.isDeleted = true;
+      await member.save();
+      await logAdminAction(req.admin.username, 'team-soft-delete', req.params.id, `Moved team member to trash: ${member.name}`);
+      return res.json({ success: true, message: "Team member moved to trash." });
+    }
   } catch (err) {
     console.error("Error deleting team member:", err);
     res.status(500).json({ error: "Failed to delete team member." });
   }
 });
 
+router.put('/team/:id/restore', async (req, res) => {
+  try {
+    const member = await findDoc(TeamMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Team member not found." });
+
+    member.isDeleted = false;
+    await member.save();
+    await logAdminAction(req.admin.username, 'team-restore', req.params.id, `Restored team member: ${member.name}`);
+    res.json({ success: true, member });
+  } catch (err) {
+    console.error("Error restoring team member:", err);
+    res.status(500).json({ error: "Failed to restore team member." });
+  }
+});
+
 // Success Stories CRUD
 router.get('/success-stories', async (req, res) => {
   try {
-    const stories = await SuccessStory.find({}).sort({ createdAt: -1 });
+    let stories = await SuccessStory.find({}).sort({ createdAt: -1 });
+    if (stories.length === 0) {
+      const defaultStories = [
+        {
+          id: 'amrit-kumari',
+          name: 'Amrit Kumari',
+          sport: 'Football',
+          achievement: 'National U-17 Player',
+          description: 'Trained at RLBSA and went on to represent the state and national youth teams.',
+          quote: 'RLBSA gave me the wings to pursue my dreams when no one else believed.',
+          image: '/images/success_story_1.png',
+          joined: '2018',
+          age: 17,
+          medals: 3,
+          objectPosition: 'center'
+        }
+      ];
+      await SuccessStory.insertMany(defaultStories);
+      stories = await SuccessStory.find({}).sort({ createdAt: -1 });
+    }
     res.json(stories);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch success stories." });
@@ -1165,6 +1821,43 @@ router.put('/success-stories/:id', async (req, res) => {
   } catch (err) {
     console.error("Error updating success story:", err);
     res.status(500).json({ error: "Failed to update success story: " + err.message });
+  }
+});
+
+router.delete('/success-stories/:id', async (req, res) => {
+  try {
+    const isPermanent = req.query.permanent === 'true';
+    const story = await findDoc(SuccessStory, req.params.id);
+    if (!story) return res.status(404).json({ error: "Success story not found." });
+
+    if (isPermanent) {
+      await SuccessStory.deleteOne({ _id: story._id });
+      await logAdminAction(req.admin.username, 'success-story-permanent-delete', req.params.id, `Permanently deleted success story: ${story.name}`);
+      return res.json({ success: true, message: "Success story permanently deleted." });
+    } else {
+      story.isDeleted = true;
+      await story.save();
+      await logAdminAction(req.admin.username, 'success-story-soft-delete', req.params.id, `Moved success story to trash: ${story.name}`);
+      return res.json({ success: true, message: "Success story moved to trash." });
+    }
+  } catch (err) {
+    console.error("Error deleting success story:", err);
+    res.status(500).json({ error: "Failed to delete success story." });
+  }
+});
+
+router.put('/success-stories/:id/restore', async (req, res) => {
+  try {
+    const story = await findDoc(SuccessStory, req.params.id);
+    if (!story) return res.status(404).json({ error: "Success story not found." });
+
+    story.isDeleted = false;
+    await story.save();
+    await logAdminAction(req.admin.username, 'success-story-restore', req.params.id, `Restored success story: ${story.name}`);
+    res.json({ success: true, story });
+  } catch (err) {
+    console.error("Error restoring success story:", err);
+    res.status(500).json({ error: "Failed to restore success story." });
   }
 });
 
@@ -1568,6 +2261,570 @@ router.get('/compliance/audit-logs', async (req, res) => {
     res.json({ success: true, logs });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch system audit logs." });
+  }
+});
+
+// --- Story Milestone CRUD ---
+router.post('/story-milestones/import-defaults', async (req, res) => {
+  try {
+    const count = await StoryMilestone.countDocuments({});
+    if (count > 0) {
+      return res.status(400).json({ error: "Milestones already exist in the database." });
+    }
+    
+    const defaultStories = [
+      {
+        year: '2009',
+        title: 'The Beginning',
+        subtitle: 'Milestone Year',
+        description: 'Rani Laxmibai Sports Academy (RLBSA) was established in Laxmipur, Siwan, Bihar with a vision to identify and nurture rural talent, especially girls, through sports and education.',
+        image: '/images/hero1.jpeg',
+        order: 1
+      },
+      {
+        year: '2010',
+        title: 'First Batch',
+        subtitle: 'First Cohort',
+        description: 'Our first cohort of 15 girls began training in athletics and handball, defying local societal norms to pursue active sports leadership careers.',
+        image: '/images/player_rahul.png',
+        order: 2
+      },
+      {
+        year: '2016',
+        title: 'National Recognition',
+        subtitle: 'National Stage',
+        description: 'Several academy athletes earned opportunities to represent India and their respective states in national and international competitions, bringing recognition to rural Bihar.',
+        image: '/images/about_rlbsa.jpeg',
+        order: 3
+      },
+      {
+        year: '2020',
+        title: 'Campus Completed',
+        subtitle: 'Campus Completed',
+        description: 'A major milestone was achieved with the completion of a residential hostel facility accommodating approximately 50 children, while another 50 non-residential students continued receiving support.',
+        image: '/images/hero1.jpeg',
+        order: 4
+      },
+      {
+        year: '2021',
+        title: 'Holistic Athlete Development',
+        subtitle: 'Growth Beyond Sports',
+        description: 'Beyond sports coaching, the academy expanded focus to formal education, English communication, public speaking, personality development, and life skills training.',
+        image: '/images/player_rahul.png',
+        order: 5
+      },
+      {
+        year: '2022',
+        title: 'Growing Partnerships',
+        subtitle: 'Community Partners',
+        description: 'Support from organizations such as the National Foundation for India, Garnet Foundation, Nalanda Charitable Foundation, and IMA Siwan enabled the academy to strengthen facilities.',
+        image: '/images/about_rlbsa.jpeg',
+        order: 6
+      },
+      {
+        year: 'Today',
+        title: 'Transforming Rural Talent',
+        subtitle: 'Empowering Bihar',
+        description: 'Today, RLBSA supports over 100 young athletes through free coaching, accommodation, meals, education, and tournament exposure, empowering rural youth, especially girls.',
+        image: '/images/hero2.jpg',
+        order: 7
+      }
+    ];
+    
+    await StoryMilestone.insertMany(defaultStories);
+    await logAdminAction(req.admin.username, 'story-milestones-import-defaults', 'all', 'Imported 7 default story milestones');
+    res.status(201).json({ success: true, message: "Default milestones imported successfully." });
+  } catch (err) {
+    console.error("Import default milestones error:", err);
+    res.status(500).json({ error: "Failed to import default milestones." });
+  }
+});
+
+router.get('/story-milestones', async (req, res) => {
+  try {
+    let milestones = await StoryMilestone.find({}).sort({ order: 1 });
+    if (milestones.length === 0) {
+      const defaultMilestones = [
+        {
+          year: '2009',
+          title: 'The Beginning',
+          subtitle: 'Milestone Year',
+          description: 'Rani Laxmibai Sports Academy (RLBSA) was established in Laxmipur, Siwan, Bihar with a vision to identify and nurture rural talent, especially girls, through sports and education.',
+          image: '/images/hero1.jpeg',
+          order: 1
+        },
+        {
+          year: '2010',
+          title: 'First Batch',
+          subtitle: 'First Cohort',
+          description: 'Our first cohort of 15 girls began training in athletics and handball, defying local societal norms to pursue active sports leadership careers.',
+          image: '/images/player_rahul.png',
+          order: 2
+        },
+        {
+          year: '2016',
+          title: 'National Recognition',
+          subtitle: 'National Stage',
+          description: 'Several academy athletes earned opportunities to represent India and their respective states in national and international competitions, bringing recognition to rural Bihar.',
+          image: '/images/about_rlbsa.jpeg',
+          order: 3
+        },
+        {
+          year: '2020',
+          title: 'Campus Completed',
+          subtitle: 'Campus Completed',
+          description: 'A major milestone was achieved with the completion of a residential hostel facility accommodating approximately 50 children, while another 50 non-residential students continued receiving support.',
+          image: '/images/hero1.jpeg',
+          order: 4
+        },
+        {
+          year: '2021',
+          title: 'Holistic Athlete Development',
+          subtitle: 'Growth Beyond Sports',
+          description: 'Beyond sports coaching, the academy expanded focus to formal education, English communication, public speaking, personality development, and life skills training.',
+          image: '/images/player_rahul.png',
+          order: 5
+        },
+        {
+          year: '2022',
+          title: 'Growing Partnerships',
+          subtitle: 'Community Partners',
+          description: 'Support from organizations such as the National Foundation for India, Garnet Foundation, Nalanda Charitable Foundation, and IMA Siwan enabled the academy to strengthen facilities.',
+          image: '/images/about_rlbsa.jpeg',
+          order: 6
+        },
+        {
+          year: 'Today',
+          title: 'Transforming Rural Talent',
+          subtitle: 'Empowering Bihar',
+          description: 'Today, RLBSA supports over 100 young athletes through free coaching, accommodation, meals, education, and tournament exposure, empowering rural youth, especially girls.',
+          image: '/images/hero2.jpg',
+          order: 7
+        }
+      ];
+      await StoryMilestone.insertMany(defaultMilestones);
+      milestones = await StoryMilestone.find({}).sort({ order: 1 });
+    }
+    res.json({ success: true, milestones });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch milestones." });
+  }
+});
+
+router.post('/story-milestones', async (req, res) => {
+  let { year, title, subtitle, description, image, order } = req.body;
+  if (!year || !title || !subtitle || !description) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'story-milestones');
+    } catch (err) {
+      console.error("Base64 upload failed for story milestone:", err);
+    }
+  }
+  
+  try {
+    const milestone = new StoryMilestone({
+      year: sanitizeInput(year).trim(),
+      title: sanitizeInput(title).trim(),
+      subtitle: sanitizeInput(subtitle).trim(),
+      description: sanitizeInput(description).trim(),
+      image: image || '/images/hero1.jpeg',
+      order: Number(order) || 0
+    });
+    await milestone.save();
+    await logAdminAction(req.admin.username, 'story-milestone-create', milestone.id, `Created story milestone ${milestone.year}: ${milestone.title}`);
+    res.status(201).json({ success: true, milestone });
+  } catch (err) {
+    console.error("Create milestone error:", err);
+    res.status(500).json({ error: "Failed to create milestone." });
+  }
+});
+
+router.put('/story-milestones/:id', async (req, res) => {
+  let { year, title, subtitle, description, image, order } = req.body;
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'story-milestones');
+    } catch (err) {
+      console.error("Base64 upload failed for story milestone:", err);
+    }
+  }
+  
+  try {
+    const milestone = await findDoc(StoryMilestone, req.params.id);
+    if (!milestone) return res.status(404).json({ error: "Milestone not found." });
+    
+    if (year) milestone.year = sanitizeInput(year).trim();
+    if (title) milestone.title = sanitizeInput(title).trim();
+    if (subtitle) milestone.subtitle = sanitizeInput(subtitle).trim();
+    if (description) milestone.description = sanitizeInput(description).trim();
+    if (image) milestone.image = image;
+    if (order !== undefined) milestone.order = Number(order) || 0;
+    
+    await milestone.save();
+    await logAdminAction(req.admin.username, 'story-milestone-update', milestone.id, `Updated story milestone ${milestone.year}: ${milestone.title}`);
+    res.json({ success: true, milestone });
+  } catch (err) {
+    console.error("Update milestone error:", err);
+    res.status(500).json({ error: "Failed to update milestone." });
+  }
+});
+
+router.delete('/story-milestones/:id', async (req, res) => {
+  try {
+    const isPermanent = req.query.permanent === 'true';
+    const milestone = await findDoc(StoryMilestone, req.params.id);
+    if (!milestone) return res.status(404).json({ error: "Milestone not found." });
+
+    if (isPermanent) {
+      await StoryMilestone.deleteOne({ _id: milestone._id });
+      await logAdminAction(req.admin.username, 'story-milestone-permanent-delete', req.params.id, `Permanently deleted story milestone ${milestone.year}: ${milestone.title}`);
+      return res.json({ success: true, message: "Milestone permanently deleted." });
+    } else {
+      milestone.isDeleted = true;
+      await milestone.save();
+      await logAdminAction(req.admin.username, 'story-milestone-soft-delete', req.params.id, `Moved story milestone to trash: ${milestone.title}`);
+      return res.json({ success: true, message: "Milestone moved to trash." });
+    }
+  } catch (err) {
+    console.error("Delete milestone error:", err);
+    res.status(500).json({ error: "Failed to delete milestone." });
+  }
+});
+
+router.put('/story-milestones/:id/restore', async (req, res) => {
+  try {
+    const milestone = await findDoc(StoryMilestone, req.params.id);
+    if (!milestone) return res.status(404).json({ error: "Milestone not found." });
+
+    milestone.isDeleted = false;
+    await milestone.save();
+    await logAdminAction(req.admin.username, 'story-milestone-restore', req.params.id, `Restored story milestone: ${milestone.title}`);
+    res.json({ success: true, milestone });
+  } catch (err) {
+    console.error("Restore milestone error:", err);
+    res.status(500).json({ error: "Failed to restore milestone." });
+  }
+});
+
+// FACILITIES MANAGEMENT ENDPOINTS
+router.get('/facilities', async (req, res) => {
+  try {
+    let facilities = await Facility.find({}).sort({ order: 1 });
+    if (facilities.length === 0) {
+      const defaultFacilities = [
+        { id: 'fac-1', title: 'Sports Infrastructure', tag: 'Olympic Standard', image: '/images/sports_training_card.jpg', description: 'Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.', order: 1, status: 'Active' },
+        { id: 'fac-2', title: 'Gym & Fitness Center', tag: 'Advanced Gear', image: '/images/gym_card.png', description: 'State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.', order: 2, status: 'Active' },
+        { id: 'fac-3', title: 'Hostel & Accommodation', tag: 'Residential', image: '/images/hostel_card.png', description: 'Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.', order: 3, status: 'Active' },
+        { id: 'fac-4', title: 'Mess & Dining', tag: 'Nutritional Diet', image: '/images/nutrition_card.jpg', description: 'Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.', order: 4, status: 'Active' },
+        { id: 'fac-5', title: 'Education & Study Facilities', tag: 'Modern Learning', image: '/images/education_card.jpg', description: 'Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.', order: 5, status: 'Active' },
+        { id: 'fac-6', title: 'Medical & Physiotherapy', tag: '24/7 Care', image: '/images/medical_card.png', description: 'On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.', order: 6, status: 'Active' },
+        { id: 'fac-7', title: 'Safety & Security', tag: 'Secure Campus', image: '/images/security_card.png', description: '24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.', order: 7, status: 'Active' },
+        { id: 'fac-8', title: 'Recreation & Common Areas', tag: 'Lounge Zone', image: '/images/recreation_card.png', description: 'Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.', order: 8, status: 'Active' },
+        { id: 'fac-9', title: 'Wi-Fi & Technology', tag: 'High-Speed', image: '/images/wifi_card.png', description: 'High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.', order: 9, status: 'Active' }
+      ];
+      await Facility.insertMany(defaultFacilities);
+      facilities = await Facility.find({}).sort({ order: 1 });
+    }
+    res.json({ success: true, facilities });
+  } catch (err) {
+    console.error("Fetch facilities error:", err);
+    res.status(500).json({ error: "Failed to fetch facilities." });
+  }
+});
+
+router.post('/facilities', async (req, res) => {
+  let { title, tag, description, image, order, status } = req.body;
+  if (!title || !tag || !description) {
+    return res.status(400).json({ error: "Title, tag badge, and description are required." });
+  }
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'facilities');
+    } catch (err) {
+      console.error("Base64 upload failed for facility:", err);
+    }
+  }
+  
+  try {
+    const newFacility = new Facility({
+      id: `fac-${Date.now()}`,
+      title: sanitizeInput(title).trim(),
+      tag: sanitizeInput(tag).trim(),
+      description: sanitizeInput(description).trim(),
+      image: image || '/images/sports_training_card.jpg',
+      order: Number(order) || 0,
+      status: status === 'Hidden' ? 'Hidden' : 'Active'
+    });
+    await newFacility.save();
+    await logAdminAction(req.admin.username, 'facility-create', newFacility.id, `Created facility: ${newFacility.title}`);
+    res.status(201).json({ success: true, facility: newFacility });
+  } catch (err) {
+    console.error("Create facility error:", err);
+    res.status(500).json({ error: "Failed to create facility." });
+  }
+});
+
+router.put('/facilities/:id', async (req, res) => {
+  let { title, tag, description, image, order, status } = req.body;
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'facilities');
+    } catch (err) {
+      console.error("Base64 upload failed for facility:", err);
+    }
+  }
+  
+  try {
+    const facility = await findDoc(Facility, req.params.id);
+    if (!facility) return res.status(404).json({ error: "Facility not found." });
+    
+    if (title) facility.title = sanitizeInput(title).trim();
+    if (tag) facility.tag = sanitizeInput(tag).trim();
+    if (description) facility.description = sanitizeInput(description).trim();
+    if (image) facility.image = image;
+    if (order !== undefined) facility.order = Number(order) || 0;
+    if (status) facility.status = status;
+    
+    await facility.save();
+    await logAdminAction(req.admin.username, 'facility-update', facility.id, `Updated facility: ${facility.title}`);
+    res.json({ success: true, facility });
+  } catch (err) {
+    console.error("Update facility error:", err);
+    res.status(500).json({ error: "Failed to update facility." });
+  }
+});
+
+router.delete('/facilities/:id', async (req, res) => {
+  try {
+    const isPermanent = req.query.permanent === 'true';
+    const facility = await findDoc(Facility, req.params.id);
+    if (!facility) return res.status(404).json({ error: "Facility not found." });
+    
+    if (isPermanent) {
+      await Facility.deleteOne({ _id: facility._id });
+      await logAdminAction(req.admin.username, 'facility-permanent-delete', req.params.id, `Permanently deleted facility: ${facility.title}`);
+      return res.json({ success: true, message: "Facility card permanently deleted." });
+    } else {
+      facility.isDeleted = true;
+      await facility.save();
+      await logAdminAction(req.admin.username, 'facility-soft-delete', req.params.id, `Moved facility to trash: ${facility.title}`);
+      return res.json({ success: true, message: "Facility card moved to trash." });
+    }
+  } catch (err) {
+    console.error("Delete facility error:", err);
+    res.status(500).json({ error: "Failed to delete facility." });
+  }
+});
+
+router.put('/facilities/:id/restore', async (req, res) => {
+  try {
+    const facility = await findDoc(Facility, req.params.id);
+    if (!facility) return res.status(404).json({ error: "Facility not found." });
+
+    facility.isDeleted = false;
+    await facility.save();
+    await logAdminAction(req.admin.username, 'facility-restore', req.params.id, `Restored facility: ${facility.title}`);
+    res.json({ success: true, facility });
+  } catch (err) {
+    console.error("Restore facility error:", err);
+    res.status(500).json({ error: "Failed to restore facility." });
+  }
+});
+
+// RLBSA EDGE CARDS MANAGEMENT ENDPOINTS
+router.get('/edge-cards', async (req, res) => {
+  try {
+    let cards = await EdgeCard.find({}).sort({ order: 1 });
+    
+    // Reset old generic test cards if present
+    const hasOldGenericCards = cards.some(c => c.title && c.title.includes('WHY CHOOSE RLBSA?'));
+    if (cards.length === 0 || hasOldGenericCards) {
+      if (hasOldGenericCards) {
+        await EdgeCard.deleteMany({});
+      }
+      const defaultEdgeCards = [
+        {
+          id: 'edge-1',
+          tag: 'ROLE MODELS',
+          title: '“Our athletes inspire future generations of rural sports champions.”',
+          description: 'RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.',
+          image: '/images/role_models_card.png',
+          link: '#/academy/success-stories',
+          linkText: 'MEET CHAMPIONS →',
+          isFeatured: true,
+          order: 1,
+          status: 'Active'
+        },
+        {
+          id: 'edge-2',
+          tag: 'CURRICULUM',
+          title: 'Structured Multi-Sport Development Pathways',
+          description: 'Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.',
+          image: '/images/sports_training_card.jpg',
+          link: '#/about/what-we-do',
+          linkText: 'LEARN MORE →',
+          isFeatured: false,
+          order: 2,
+          status: 'Active'
+        },
+        {
+          id: 'edge-3',
+          tag: 'INFRASTRUCTURE',
+          title: 'Vast Olympic-Level Sports Facilities & Arenas',
+          description: 'Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.',
+          image: '/images/hero2.jpg',
+          link: '#/about/facilities',
+          linkText: 'EXPLORE FACILITIES →',
+          isFeatured: false,
+          order: 3,
+          status: 'Active'
+        },
+        {
+          id: 'edge-4',
+          tag: 'SPORTS SCIENCE',
+          title: 'Calorie-Mapped Nutrition & Rehab Metrics',
+          description: 'Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.',
+          image: '/images/nutrition_card.jpg',
+          link: '#/about/what-we-do',
+          linkText: 'LEARN MORE →',
+          isFeatured: false,
+          order: 4,
+          status: 'Active'
+        },
+        {
+          id: 'edge-5',
+          tag: 'RESIDENTIAL SCHOLARSHIP',
+          title: 'Grassroots Potential to National Champions',
+          description: 'Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.',
+          image: '/images/about_rlbsa.jpeg',
+          link: '#/about/what-we-do',
+          linkText: 'LEARN MORE →',
+          isFeatured: false,
+          order: 5,
+          status: 'Active'
+        }
+      ];
+      await EdgeCard.insertMany(defaultEdgeCards);
+      cards = await EdgeCard.find({}).sort({ order: 1 });
+    }
+    res.json({ success: true, cards, edgeCards: cards });
+  } catch (err) {
+    console.error("Fetch edge cards error:", err);
+    res.status(500).json({ error: "Failed to fetch RLBSA edge cards." });
+  }
+});
+
+router.post('/edge-cards', async (req, res) => {
+  let { tag, title, description, image, link, linkText, isFeatured, order, status } = req.body;
+  if (!tag || !title || !description) {
+    return res.status(400).json({ error: "Tag badge, title, and description are required." });
+  }
+
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'edge-cards');
+    } catch (err) {
+      console.error("Base64 upload failed for edge card:", err);
+    }
+  }
+
+  try {
+    const newCard = new EdgeCard({
+      id: `edge-${Date.now()}`,
+      tag: sanitizeInput(tag).trim(),
+      title: sanitizeInput(title).trim(),
+      description: sanitizeInput(description).trim(),
+      image: image || '/images/sports_training_card.jpg',
+      link: link ? sanitizeInput(link).trim() : '#/about/what-we-do',
+      linkText: linkText ? sanitizeInput(linkText).trim() : 'LEARN MORE →',
+      isFeatured: Boolean(isFeatured),
+      order: Number(order) || 0,
+      status: status === 'Hidden' ? 'Hidden' : 'Active'
+    });
+    await newCard.save();
+    await logAdminAction(req.admin.username, 'edge-card-create', newCard.id, `Created RLBSA edge card: ${newCard.title}`);
+    res.status(201).json({ success: true, card: newCard });
+  } catch (err) {
+    console.error("Create edge card error:", err);
+    res.status(500).json({ error: "Failed to create RLBSA edge card." });
+  }
+});
+
+router.put('/edge-cards/:id', async (req, res) => {
+  let { tag, title, description, image, link, linkText, isFeatured, order, status } = req.body;
+
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'edge-cards');
+    } catch (err) {
+      console.error("Base64 upload failed for edge card:", err);
+    }
+  }
+
+  try {
+    const card = await findDoc(EdgeCard, req.params.id);
+    if (!card) return res.status(404).json({ error: "RLBSA edge card not found." });
+
+    if (tag) card.tag = sanitizeInput(tag).trim();
+    if (title) card.title = sanitizeInput(title).trim();
+    if (description) card.description = sanitizeInput(description).trim();
+    if (image) card.image = image;
+    if (link) card.link = sanitizeInput(link).trim();
+    if (linkText) card.linkText = sanitizeInput(linkText).trim();
+    if (isFeatured !== undefined) card.isFeatured = Boolean(isFeatured);
+    if (order !== undefined) card.order = Number(order) || 0;
+    if (status) card.status = status;
+
+    await card.save();
+    await logAdminAction(req.admin.username, 'edge-card-update', card.id, `Updated RLBSA edge card: ${card.title}`);
+    res.json({ success: true, card });
+  } catch (err) {
+    console.error("Update edge card error:", err);
+    res.status(500).json({ error: "Failed to update RLBSA edge card." });
+  }
+});
+
+router.delete('/edge-cards/:id', async (req, res) => {
+  try {
+    const isPermanent = req.query.permanent === 'true';
+    const card = await findDoc(EdgeCard, req.params.id);
+    if (!card) return res.status(404).json({ error: "RLBSA edge card not found." });
+
+    if (isPermanent) {
+      await EdgeCard.deleteOne({ _id: card._id });
+      await logAdminAction(req.admin.username, 'edge-card-permanent-delete', req.params.id, `Permanently deleted edge card: ${card.title}`);
+      return res.json({ success: true, message: "RLBSA edge card permanently deleted." });
+    } else {
+      card.isDeleted = true;
+      await card.save();
+      await logAdminAction(req.admin.username, 'edge-card-soft-delete', req.params.id, `Moved edge card to trash: ${card.title}`);
+      return res.json({ success: true, message: "RLBSA edge card moved to trash." });
+    }
+  } catch (err) {
+    console.error("Delete edge card error:", err);
+    res.status(500).json({ error: "Failed to delete edge card." });
+  }
+});
+
+router.put('/edge-cards/:id/restore', async (req, res) => {
+  try {
+    const card = await findDoc(EdgeCard, req.params.id);
+    if (!card) return res.status(404).json({ error: "RLBSA edge card not found." });
+
+    card.isDeleted = false;
+    await card.save();
+    await logAdminAction(req.admin.username, 'edge-card-restore', req.params.id, `Restored edge card: ${card.title}`);
+    res.json({ success: true, card });
+  } catch (err) {
+    console.error("Restore edge card error:", err);
+    res.status(500).json({ error: "Failed to restore edge card." });
   }
 });
 

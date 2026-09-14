@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar, Newspaper } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
 import { successStories as initialSuccessStories } from '../data/sportsData';
@@ -7,6 +7,9 @@ import { successStories as initialSuccessStories } from '../data/sportsData';
 export const Home: React.FC = () => {
   const [successPlayers, setSuccessPlayers] = React.useState<any[]>(initialSuccessStories);
   const [team, setTeam] = React.useState<any[]>(teamMembers);
+  const [homeEvents, setHomeEvents] = React.useState<any[]>([]);
+  const [homeUpdates, setHomeUpdates] = React.useState<any[]>([]);
+  const [edgeCards, setEdgeCards] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     fetch('http://localhost:5000/api/public/team')
@@ -26,6 +29,33 @@ export const Home: React.FC = () => {
         }
       })
       .catch(err => console.error("Error loading success stories database values:", err));
+
+    fetch('http://localhost:5000/api/public/events/upcoming')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHomeEvents(data.slice(0, 2));
+        }
+      })
+      .catch(err => console.error("Error loading home page events:", err));
+
+    fetch('http://localhost:5000/api/public/updates?limit=2')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.updates)) {
+          setHomeUpdates(data.updates);
+        }
+      })
+      .catch(err => console.error("Error loading home page updates:", err));
+
+    fetch('http://localhost:5000/api/public/edge-cards')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setEdgeCards(data);
+        }
+      })
+      .catch(err => console.error("Error loading edge cards database values:", err));
   }, []);
 
   const whatWeDoRef = React.useRef<HTMLDivElement>(null);
@@ -601,164 +631,241 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Grid Layout inspired by Reliance Foundation */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            
-             {/* Column 1: Large Featured Card (Spans full height on desktop) */}
-             <div className="lg:col-span-1 flex">
-               <a
-                 href="#/academy/success-stories"
-                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
-                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                 }`}
-               >
-                 <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
-                   <img
-                     src="/images/role_models_card.png"
-                     alt="RLBSA Role Models"
-                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                   />
-                 </div>
-                 <div className="p-8 flex flex-col justify-between flex-grow text-left">
-                   <div>
-                     <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
-                       ROLE MODELS
-                     </span>
-                     <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
-                       “Our athletes inspire future generations of rural sports champions.”
-                     </h3>
-                     <p className="text-text-light text-sm leading-relaxed mb-6">
-                       RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
-                     </p>
-                   </div>
-                   <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
-                     MEET CHAMPIONS &rarr;
-                   </span>
-                 </div>
-               </a>
-             </div>
- 
-             {/* Columns 2 & 3: 2x2 Grid of Smaller Cards */}
-             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
-               
-               {/* Card 2: Certified Curriculum */}
-               <a
-                 href="#/about/what-we-do"
-                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-150 group cursor-pointer ${
-                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                 }`}
-               >
-                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                   <img
-                     src="/images/sports_training_card.jpg"
-                     alt="Certified Curriculum"
-                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                   />
-                 </div>
-                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                   <div>
-                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                       CURRICULUM
-                     </span>
-                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                       Structured Multi-Sport Development Pathways
-                     </h3>
-                     <p className="text-text-light text-xs leading-relaxed">
-                       Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
-                     </p>
-                   </div>
-                 </div>
-               </a>
- 
-               {/* Card 3: Modern Infrastructure */}
-               <a
-                 href="#/about/facilities"
-                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-300 group cursor-pointer ${
-                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                 }`}
-               >
-                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                   <img
-                     src="/images/hero2.jpg"
-                     alt="Modern Infrastructure"
-                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                   />
-                 </div>
-                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                   <div>
-                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                       INFRASTRUCTURE
-                     </span>
-                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                       Vast Olympic-Level Sports Facilities & Arenas
-                     </h3>
-                     <p className="text-text-light text-xs leading-relaxed">
-                       Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
-                     </p>
-                   </div>
-                 </div>
-               </a>
- 
-               {/* Card 4: Sports Science & Diet */}
-               <a
-                 href="#/about/what-we-do"
-                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-450 group cursor-pointer ${
-                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                 }`}
-               >
-                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                   <img
-                     src="/images/nutrition_card.jpg"
-                     alt="Sports Science & Diet"
-                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                   />
-                 </div>
-                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                   <div>
-                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                       SPORTS SCIENCE
-                     </span>
-                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                       Calorie-Mapped Nutrition & Rehab Metrics
-                     </h3>
-                     <p className="text-text-light text-xs leading-relaxed">
-                       Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
-                     </p>
-                   </div>
-                 </div>
-               </a>
- 
-               {/* Card 5: Residential Scholarship (Moved & Shrunk) */}
-               <a
-                 href="#/about/what-we-do"
-                 className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-600 group cursor-pointer ${
-                   isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
-                 }`}
-               >
-                 <div className="h-[160px] overflow-hidden relative bg-soft-light">
-                   <img
-                     src="/images/about_rlbsa.jpeg"
-                     alt="Residential Scholarship"
-                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                   />
-                 </div>
-                 <div className="p-6 flex flex-col justify-between flex-grow text-left">
-                   <div>
-                     <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
-                       RESIDENTIAL SCHOLARSHIP
-                     </span>
-                     <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-                       Grassroots Potential to National Champions
-                     </h3>
-                     <p className="text-text-light text-xs leading-relaxed">
-                       Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
-                     </p>
-                   </div>
-                 </div>
-               </a>
+          {edgeCards.length > 0 ? (() => {
+            const featured = edgeCards.find(c => c.isFeatured) || edgeCards[0];
+            const regularCards = edgeCards.filter(c => (c.id || c._id) !== (featured?.id || featured?._id));
 
+            const formatImg = (img?: string) => {
+              if (!img) return '/images/role_models_card.png';
+              if (img.startsWith('http') || img.startsWith('/images') || img.startsWith('/uploads') || img.startsWith('data:')) return img;
+              return `http://localhost:5000${img}`;
+            };
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+                {/* Column 1: Large Featured Card */}
+                {featured && (
+                  <div className="lg:col-span-1 flex">
+                    <a
+                      href={featured.link || "#/about"}
+                      className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
+                        isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                      }`}
+                    >
+                      <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
+                        <img
+                          src={formatImg(featured.image)}
+                          alt={featured.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                        />
+                      </div>
+                      <div className="p-8 flex flex-col justify-between flex-grow text-left">
+                        <div>
+                          <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
+                            {featured.tag || 'THE EDGE'}
+                          </span>
+                          <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
+                            {featured.title}
+                          </h3>
+                          <p className="text-text-light text-sm leading-relaxed mb-6">
+                            {featured.description}
+                          </p>
+                        </div>
+                        <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto uppercase">
+                          {featured.linkText || 'LEARN MORE'} &rarr;
+                        </span>
+                      </div>
+                    </a>
+                  </div>
+                )}
+
+                {/* Columns 2 & 3: Grid of Cards */}
+                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  {regularCards.map((card, idx) => (
+                    <a
+                      key={card.id || card._id || idx}
+                      href={card.link || "#/about"}
+                      className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform group cursor-pointer ${
+                        isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                      }`}
+                      style={{ transitionDelay: `${(idx + 1) * 150}ms` }}
+                    >
+                      <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                        <img
+                          src={formatImg(card.image)}
+                          alt={card.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                        />
+                      </div>
+                      <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                        <div>
+                          <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                            {card.tag}
+                          </span>
+                          <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                            {card.title}
+                          </h3>
+                          <p className="text-text-light text-xs leading-relaxed">
+                            {card.description}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })() : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+              <div className="lg:col-span-1 flex">
+                <a
+                  href="#/academy/success-stories"
+                  className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-[1000ms] ease-out transform w-full group cursor-pointer ${
+                    isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  <div className="h-[240px] sm:h-[300px] lg:h-[280px] overflow-hidden relative bg-soft-light flex-shrink-0">
+                    <img
+                      src="/images/role_models_card.png"
+                      alt="RLBSA Role Models"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="p-8 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-3 block">
+                        ROLE MODELS
+                      </span>
+                      <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
+                        “Our athletes inspire future generations of rural sports champions.”
+                      </h3>
+                      <p className="text-text-light text-sm leading-relaxed mb-6">
+                        RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
+                      MEET CHAMPIONS &rarr;
+                    </span>
+                  </div>
+                </a>
+              </div>
+
+              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <a
+                  href="#/about/what-we-do"
+                  className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-150 group cursor-pointer ${
+                    isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                    <img
+                      src="/images/sports_training_card.jpg"
+                      alt="Certified Curriculum"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                        CURRICULUM
+                      </span>
+                      <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                        Structured Multi-Sport Development Pathways
+                      </h3>
+                      <p className="text-text-light text-xs leading-relaxed">
+                        Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
+                      </p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="#/about/facilities"
+                  className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-300 group cursor-pointer ${
+                    isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                    <img
+                      src="/images/hero2.jpg"
+                      alt="Modern Infrastructure"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                        INFRASTRUCTURE
+                      </span>
+                      <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                        Vast Olympic-Level Sports Facilities & Arenas
+                      </h3>
+                      <p className="text-text-light text-xs leading-relaxed">
+                        Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
+                      </p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="#/about/what-we-do"
+                  className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-450 group cursor-pointer ${
+                    isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                    <img
+                      src="/images/nutrition_card.jpg"
+                      alt="Sports Science & Diet"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                        SPORTS SCIENCE
+                      </span>
+                      <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                        Calorie-Mapped Nutrition & Rehab Metrics
+                      </h3>
+                      <p className="text-text-light text-xs leading-relaxed">
+                        Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
+                      </p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="#/about/what-we-do"
+                  className={`flex flex-col bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-[1000ms] ease-out transform delay-600 group cursor-pointer ${
+                    isEdgeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
+                  }`}
+                >
+                  <div className="h-[160px] overflow-hidden relative bg-soft-light">
+                    <img
+                      src="/images/about_rlbsa.jpeg"
+                      alt="Residential Scholarship"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col justify-between flex-grow text-left">
+                    <div>
+                      <span className="text-[9px] font-extrabold text-accent uppercase tracking-wider mb-2 block">
+                        RESIDENTIAL SCHOLARSHIP
+                      </span>
+                      <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
+                        Grassroots Potential to National Champions
+                      </h3>
+                      <p className="text-text-light text-xs leading-relaxed">
+                        Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
+                      </p>
+                    </div>
+                  </div>
+                </a>
+              </div>
             </div>
+          )}
 
-          </div>
         </div>
       </section>
 
@@ -784,7 +891,7 @@ export const Home: React.FC = () => {
               const delayClass = delays[idx % 4] || 'delay-0';
               return (
                 <a
-                  href={`#/academy/featured-players?player=${player.id}`}
+                  href={`#/academy/success-stories?player=${player.id}`}
                   key={idx}
                   className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
@@ -830,6 +937,181 @@ export const Home: React.FC = () => {
               </>
             )}
           </button>
+        </div>
+      </section>
+
+      {/* Dynamic Events & Updates Section */}
+      <section className="py-20 bg-white border-t border-border-gray/30 w-full overflow-hidden text-left">
+        <div className="max-w-[1380px] mx-auto px-5">
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] bg-[#e6f7f5] px-3.5 py-1.5 rounded-full inline-block mb-3.5">
+              Live updates
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+              Events & Announcements
+            </h2>
+            <p className="text-text-light text-base md:text-lg">
+              Check out scheduled tournaments and official announcements fresh from the academy dashboard.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            
+            {/* Column 1: Upcoming Events */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center border-b border-border-gray/60 pb-3">
+                <h3 className="text-lg font-black text-primary flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#00a896] inline-block animate-ping"></span>
+                  Upcoming Events
+                </h3>
+                <a 
+                  href="#/events/upcoming" 
+                  className="text-xs font-bold text-accent hover:underline uppercase tracking-wider"
+                >
+                  View Upcoming &rarr;
+                </a>
+              </div>
+
+              {homeEvents.length === 0 ? (
+                <div className="py-12 px-6 border border-dashed border-border-gray rounded-lg text-center bg-soft-light/20 text-text-light text-xs">
+                  No upcoming events scheduled. Check back later.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {homeEvents.map((evt) => {
+                    const evtCover = evt.coverMedia 
+                      ? (evt.coverMedia.startsWith('http') || evt.coverMedia.startsWith('/images') || evt.coverMedia.startsWith('/uploads') ? evt.coverMedia : `http://localhost:5000${evt.coverMedia}`)
+                      : '/images/hero1.jpeg';
+
+                    return (
+                      <div 
+                        key={evt._id}
+                        className="bg-white border border-border-gray/50 rounded-lg p-4 flex gap-4 hover:shadow-md transition-shadow group"
+                      >
+                        <div className="w-24 h-24 rounded-md overflow-hidden shrink-0 bg-soft-light">
+                          <img src={evtCover} alt={evt.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[9px] font-black uppercase text-[#00a896] tracking-wider block mb-1">
+                              {evt.category}
+                            </span>
+                            <h4 className="text-sm font-bold text-primary leading-snug line-clamp-1 group-hover:text-accent transition-colors">
+                              {evt.title}
+                            </h4>
+                            <p className="text-xs text-text-light line-clamp-1 mt-1 leading-relaxed">
+                              {evt.shortDescription}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mt-2">
+                            <span className="flex items-center gap-1">
+                              <Calendar size={13} className="text-accent" />
+                              {new Date(evt.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                            </span>
+                            <a 
+                              href={`#/events/${evt.slug}`}
+                              className="text-primary hover:text-accent font-bold"
+                            >
+                              Details &rarr;
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              <div className="pt-2">
+                <a 
+                  href="#/events/all"
+                  className="inline-block bg-primary hover:bg-accent text-white hover:text-primary transition-all text-xs font-bold py-2.5 px-6 rounded-md shadow-sm border-none cursor-pointer"
+                >
+                  View All Events
+                </a>
+              </div>
+            </div>
+
+            {/* Column 2: Latest Announcements / Updates */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center border-b border-border-gray/60 pb-3">
+                <h3 className="text-lg font-black text-primary flex items-center gap-2">
+                  <Newspaper size={20} className="text-[#00a896]" />
+                  Latest Updates
+                </h3>
+                <a 
+                  href="#/updates" 
+                  className="text-xs font-bold text-accent hover:underline uppercase tracking-wider"
+                >
+                  All Updates &rarr;
+                </a>
+              </div>
+
+              {homeUpdates.length === 0 ? (
+                <div className="py-12 px-6 border border-dashed border-border-gray rounded-lg text-center bg-soft-light/20 text-text-light text-xs">
+                  No announcements published recently.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {homeUpdates.map((upd) => {
+                    const updCover = upd.coverMedia 
+                      ? (upd.coverMedia.startsWith('http') || upd.coverMedia.startsWith('/images') || upd.coverMedia.startsWith('/uploads') ? upd.coverMedia : `http://localhost:5000${upd.coverMedia}`)
+                      : null;
+
+                    return (
+                      <div 
+                        key={upd._id}
+                        className="bg-white border border-border-gray/50 rounded-lg p-4 flex gap-4 hover:shadow-md transition-shadow group"
+                      >
+                        {updCover && (
+                          <div className="w-24 h-24 rounded-md overflow-hidden shrink-0 bg-soft-light">
+                            <img src={updCover} alt={upd.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          </div>
+                        )}
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[9px] font-black uppercase text-[#00a896] tracking-wider block mb-1">
+                              {upd.category}
+                            </span>
+                            <h4 className="text-sm font-bold text-primary leading-snug line-clamp-1 group-hover:text-accent transition-colors">
+                              {upd.title}
+                            </h4>
+                            <p className="text-xs text-text-light line-clamp-1 mt-1 leading-relaxed">
+                              {upd.summary}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mt-2">
+                            <span className="flex items-center gap-1">
+                              <Calendar size={13} className="text-accent" />
+                              {new Date(upd.publishedAt || upd.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                            </span>
+                            <a 
+                              href={`#/updates/${upd.slug}`}
+                              className="text-primary hover:text-accent font-bold"
+                            >
+                              Read More &rarr;
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <a 
+                  href="#/updates"
+                  className="inline-block bg-white hover:bg-soft-light border border-border-gray text-primary transition-all text-xs font-bold py-2.5 px-6 rounded-md shadow-sm cursor-pointer"
+                >
+                  View All Updates
+                </a>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
     </div>

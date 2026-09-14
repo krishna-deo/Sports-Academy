@@ -8,12 +8,15 @@ const Student = require('../models/Student');
 const Coach = require('../models/Coach');
 const Gallery = require('../models/Gallery');
 const Event = require('../models/Event');
+const Update = require('../models/Update');
 const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const TeamMember = require('../models/TeamMember');
 const SuccessStory = require('../models/SuccessStory');
 const Policy = require('../models/Policy');
 const ComplianceReminder = require('../models/ComplianceReminder');
+const StoryMilestone = require('../models/StoryMilestone');
+const Facility = require('../models/Facility');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://krishnasinghhaji26_db_user:UiXTvIEJs8l5ehjP@cluster0.3gnkbbd.mongodb.net/';
 
@@ -87,32 +90,103 @@ const initialEvents = [
   {
     id: "evt-1",
     title: "RLBSA Inter-District Girls Football Championship",
-    category: "tournaments",
-    date: "2026-08-10",
+    slug: "rlbsa-inter-district-girls-football-championship",
+    category: "Tournament",
+    shortDescription: "An elite youth tournament featuring top school teams from Bihar.",
+    content: "An elite youth tournament featuring top school teams from Bihar. Local selectors and scouts will be present to scout for state-level coaching pools.",
+    coverMedia: "/images/hero1.jpeg",
+    galleryMedia: ["/images/about_rlbsa.jpeg"],
+    startDate: new Date("2026-09-10"),
+    endDate: new Date("2026-09-12"),
+    startTime: "09:00 AM",
+    endTime: "05:00 PM",
+    location: "RLBSA Main Ground",
+    registrationRequired: true,
+    registrationUrl: "#/events/registration",
+    status: "Published",
+    visibility: "Public",
+    isFeatured: true,
+    publishedAt: new Date(),
+    date: "2026-09-10",
     time: "09:00 AM onwards",
-    venue: "RLBSA Main Ground",
-    description: "An elite youth tournament featuring top school teams from Bihar. Local selectors and scouts will be present.",
-    status: "open"
+    venue: "RLBSA Main Ground"
   },
   {
     id: "evt-2",
     title: "Specialized Athletics Speed & Hurdle Clinic",
-    category: "workshops",
-    date: "2026-08-22",
+    slug: "specialized-athletics-speed-hurdle-clinic",
+    category: "Workshop",
+    shortDescription: "Led by Senior Athletics Director Coach Vikram Rathore.",
+    content: "Led by Senior Athletics Director Coach Vikram Rathore. Learn sprint acceleration protocols, block starts, and biomechanical form checks.",
+    coverMedia: "/images/hero2.jpg",
+    galleryMedia: [],
+    startDate: new Date("2026-09-22"),
+    startTime: "08:00 AM",
+    endTime: "11:30 AM",
+    location: "Athletics Track",
+    registrationRequired: false,
+    status: "Published",
+    visibility: "Public",
+    isFeatured: false,
+    publishedAt: new Date(),
+    date: "2026-09-22",
     time: "08:00 AM - 11:30 AM",
-    venue: "Athletics Track",
-    description: "Led by Senior Athletics Director Coach Vikram Rathore. Learn sprint acceleration protocols and biomechanical form.",
-    status: "open"
+    venue: "Athletics Track"
   },
   {
     id: "evt-3",
     title: "Annual State Handball Selections Camp",
-    category: "camps",
+    slug: "annual-state-handball-selections-camp",
+    category: "Camp",
+    shortDescription: "State-level selection camp hosted at the academy.",
+    content: "State-level selection camp hosted at the academy for under-17 boys and girls categories, targeting state league teams.",
+    coverMedia: "/images/about_rlbsa.jpeg",
+    galleryMedia: [],
+    startDate: new Date("2026-10-15"),
+    endDate: new Date("2026-10-20"),
+    startTime: "07:30 AM",
+    endTime: "12:00 PM",
+    location: "Handball Court Area",
+    registrationRequired: true,
+    registrationUrl: "#/events/registration",
+    status: "Published",
+    visibility: "Public",
+    isFeatured: true,
+    publishedAt: new Date(),
     date: "2026-10-15",
     time: "Daily 07:30 AM - 12:00 PM",
-    venue: "Handball Court Area",
-    description: "State-level selection camp hosted at the academy for under-17 boys and girls categories.",
-    status: "upcoming"
+    venue: "Handball Court Area"
+  }
+];
+
+const initialUpdates = [
+  {
+    id: "upd-1",
+    title: "RLBSA Academy Admission Open for 2026-27 Session",
+    slug: "rlbsa-admission-open-2026-27",
+    category: "Admission Update",
+    summary: "Applications are invited for residential sports scholarships for the upcoming session.",
+    content: "<p>We are excited to announce that admission trials for the 2026-27 residential batch are officially open. Girls and boys aged 11-16 with exceptional talent in football, handball, rugby, or athletics are encouraged to apply.</p><p>Selected student-athletes will receive a 100% scholarship covering high-performance coaching, residential boarding, nutrition-calibrated meals, school education, and competition exposure.</p>",
+    coverMedia: "/images/hero1.jpeg",
+    attachments: [],
+    status: "Published",
+    visibility: "Public",
+    isFeatured: true,
+    publishedAt: new Date()
+  },
+  {
+    id: "upd-2",
+    title: "Academy Athletes Triumph at National Athletics Meet",
+    slug: "academy-athletes-triumph-national-athletics",
+    category: "Achievement",
+    summary: "Our student-athletes bagged 3 gold and 2 silver medals at the Youth National Athletics Championship.",
+    content: "<p>Rani Laxmibai Sports Academy is proud to share that our athletics squad delivered a stellar performance at the recent Youth National Athletics Championship held in Pune.</p><p>Aarti Kumari clinched gold in the 400m hurdles, while Rahul Kumar secured gold in the javelin throw. The handball girls squad also reached the semi-finals.</p>",
+    coverMedia: "/images/about_rlbsa.jpeg",
+    attachments: [],
+    status: "Published",
+    visibility: "Public",
+    isFeatured: true,
+    publishedAt: new Date()
   }
 ];
 
@@ -304,12 +378,14 @@ async function seed() {
   await Gallery.insertMany(initialGallery);
   console.log("Gallery items seeded.");
 
-  // 4. Seed Events
-  const eventCount = await Event.countDocuments({});
-  if (eventCount === 0) {
-    await Event.insertMany(initialEvents);
-    console.log("Events seeded.");
-  }
+  // 4. Seed Events & Updates
+  await Event.deleteMany({});
+  await Event.insertMany(initialEvents);
+  console.log("Events seeded successfully.");
+
+  await Update.deleteMany({});
+  await Update.insertMany(initialUpdates);
+  console.log("Updates seeded successfully.");
 
   // 5. Seed Students
   await Student.deleteMany({});
@@ -474,6 +550,160 @@ async function seed() {
     await ComplianceReminder.insertMany(initialReminders);
     console.log("Compliance reminders seeded.");
   }
+
+  // 12. Seed Story Milestones
+  const storyCount = await StoryMilestone.countDocuments({});
+  if (storyCount === 0) {
+    const initialStories = [
+      {
+        year: '2009',
+        title: 'The Beginning',
+        subtitle: 'Milestone Year',
+        description: 'Rani Laxmibai Sports Academy (RLBSA) was established in Laxmipur, Siwan, Bihar with a vision to identify and nurture rural talent, especially girls, through sports and education.',
+        image: '/images/hero1.jpeg',
+        order: 1
+      },
+      {
+        year: '2010',
+        title: 'First Batch',
+        subtitle: 'First Cohort',
+        description: 'Our first cohort of 15 girls began training in athletics and handball, defying local societal norms to pursue active sports leadership careers.',
+        image: '/images/player_rahul.png',
+        order: 2
+      },
+      {
+        year: '2016',
+        title: 'National Recognition',
+        subtitle: 'National Stage',
+        description: 'Several academy athletes earned opportunities to represent India and their respective states in national and international competitions, bringing recognition to rural Bihar.',
+        image: '/images/about_rlbsa.jpeg',
+        order: 3
+      },
+      {
+        year: '2020',
+        title: 'Campus Completed',
+        subtitle: 'Campus Completed',
+        description: 'A major milestone was achieved with the completion of a residential hostel facility accommodating approximately 50 children, while another 50 non-residential students continued receiving support.',
+        image: '/images/hero1.jpeg',
+        order: 4
+      },
+      {
+        year: '2021',
+        title: 'Holistic Athlete Development',
+        subtitle: 'Growth Beyond Sports',
+        description: 'Beyond sports coaching, the academy expanded focus to formal education, English communication, public speaking, personality development, and life skills training.',
+        image: '/images/player_rahul.png',
+        order: 5
+      },
+      {
+        year: '2022',
+        title: 'Growing Partnerships',
+        subtitle: 'Community Partners',
+        description: 'Support from organizations such as the National Foundation for India, Garnet Foundation, Nalanda Charitable Foundation, and IMA Siwan enabled the academy to strengthen facilities.',
+        image: '/images/about_rlbsa.jpeg',
+        order: 6
+      },
+      {
+        year: 'Today',
+        title: 'Transforming Rural Talent',
+        subtitle: 'Empowering Bihar',
+        description: 'Today, RLBSA supports over 100 young athletes through free coaching, accommodation, meals, education, and tournament exposure, empowering rural youth, especially girls.',
+        image: '/images/hero2.jpg',
+        order: 7
+      }
+    ];
+    await StoryMilestone.insertMany(initialStories);
+    console.log("Story milestones seeded.");
+  }
+
+  const initialFacilities = [
+    {
+      id: 'fac-1',
+      title: 'Sports Infrastructure',
+      tag: 'Olympic Standard',
+      image: '/images/sports_training_card.jpg',
+      description: 'Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.',
+      order: 1,
+      status: 'Active'
+    },
+    {
+      id: 'fac-2',
+      title: 'Gym & Fitness Center',
+      tag: 'Advanced Gear',
+      image: '/images/gym_card.png',
+      description: 'State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.',
+      order: 2,
+      status: 'Active'
+    },
+    {
+      id: 'fac-3',
+      title: 'Hostel & Accommodation',
+      tag: 'Residential',
+      image: '/images/hostel_card.png',
+      description: 'Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.',
+      order: 3,
+      status: 'Active'
+    },
+    {
+      id: 'fac-4',
+      title: 'Mess & Dining',
+      tag: 'Nutritional Diet',
+      image: '/images/nutrition_card.jpg',
+      description: 'Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.',
+      order: 4,
+      status: 'Active'
+    },
+    {
+      id: 'fac-5',
+      title: 'Education & Study Facilities',
+      tag: 'Modern Learning',
+      image: '/images/education_card.jpg',
+      description: 'Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.',
+      order: 5,
+      status: 'Active'
+    },
+    {
+      id: 'fac-6',
+      title: 'Medical & Physiotherapy',
+      tag: '24/7 Care',
+      image: '/images/medical_card.png',
+      description: 'On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.',
+      order: 6,
+      status: 'Active'
+    },
+    {
+      id: 'fac-7',
+      title: 'Safety & Security',
+      tag: 'Secure Campus',
+      image: '/images/security_card.png',
+      description: '24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.',
+      order: 7,
+      status: 'Active'
+    },
+    {
+      id: 'fac-8',
+      title: 'Recreation & Common Areas',
+      tag: 'Lounge Zone',
+      image: '/images/recreation_card.png',
+      description: 'Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.',
+      order: 8,
+      status: 'Active'
+    },
+    {
+      id: 'fac-9',
+      title: 'Wi-Fi & Technology',
+      tag: 'High-Speed',
+      image: '/images/wifi_card.png',
+      description: 'High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.',
+      order: 9,
+      status: 'Active'
+    }
+  ];
+
+  for (const fac of initialFacilities) {
+    await Facility.updateOne({ id: fac.id }, { $setOnInsert: fac }, { upsert: true });
+  }
+  console.log("All 9 facility cards populated/verified.");
 
   console.log("Database seeding completed.");
   await mongoose.connection.close();

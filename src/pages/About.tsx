@@ -46,8 +46,146 @@ const RevealRow: React.FC<RevealRowProps> = ({ id, className, children }) => {
   );
 };
 
+const defaultMilestones = [
+  {
+    _id: 't2009',
+    year: '2009',
+    title: 'The Beginning',
+    subtitle: 'Milestone Year',
+    description: 'Rani Laxmibai Sports Academy (RLBSA) was established in Laxmipur, Siwan, Bihar with a vision to identify and nurture rural talent, especially girls, through sports and education.',
+    image: '/images/hero1.jpeg'
+  },
+  {
+    _id: 't2010',
+    year: '2010',
+    title: 'First Batch',
+    subtitle: 'First Cohort',
+    description: 'Our first cohort of 15 girls began training in athletics and handball, defying local societal norms to pursue active sports leadership careers.',
+    image: '/images/player_rahul.png'
+  },
+  {
+    _id: 't2016',
+    year: '2016',
+    title: 'National Recognition',
+    subtitle: 'National Stage',
+    description: 'Several academy athletes earned opportunities to represent India and their respective states in national and international competitions, bringing recognition to rural Bihar.',
+    image: '/images/about_rlbsa.jpeg'
+  },
+  {
+    _id: 't2020',
+    year: '2020',
+    title: 'Campus Completed',
+    subtitle: 'Campus Completed',
+    description: 'A major milestone was achieved with the completion of a residential hostel facility accommodating approximately 50 children, while another 50 non-residential students continued receiving support.',
+    image: '/images/hero1.jpeg'
+  },
+  {
+    _id: 't2021',
+    year: '2021',
+    title: 'Growth Beyond Sports',
+    subtitle: 'Growth Beyond Sports',
+    description: 'Beyond sports coaching, the academy expanded focus to formal education, English communication, public speaking, personality development, and life skills training.',
+    image: '/images/player_rahul.png'
+  },
+  {
+    _id: 't2022',
+    year: '2022',
+    title: 'Community Partners',
+    subtitle: 'Community Partners',
+    description: 'Support from organizations such as the National Foundation for India, Garnet Foundation, Nalanda Charitable Foundation, and IMA Siwan enabled the academy to strengthen facilities.',
+    image: '/images/about_rlbsa.jpeg'
+  },
+  {
+    _id: 'tToday',
+    year: 'Today',
+    title: 'Transforming Rural Talent',
+    subtitle: 'Empowering Bihar',
+    description: 'Today, RLBSA supports over 100 young athletes through free coaching, accommodation, meals, education, and tournament exposure, empowering rural youth, especially girls.',
+    image: '/images/hero2.jpg'
+  }
+];
+
+const defaultFacilities = [
+  {
+    id: 'fac-1',
+    title: 'Sports Infrastructure',
+    tag: 'Olympic Standard',
+    image: '/images/sports_training_card.jpg',
+    description: 'Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.'
+  },
+  {
+    id: 'fac-2',
+    title: 'Gym & Fitness Center',
+    tag: 'Advanced Gear',
+    image: '/images/gym_card.png',
+    description: 'State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.'
+  },
+  {
+    id: 'fac-3',
+    title: 'Hostel & Accommodation',
+    tag: 'Residential',
+    image: '/images/hostel_card.png',
+    description: 'Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.'
+  },
+  {
+    id: 'fac-4',
+    title: 'Mess & Dining',
+    tag: 'Nutritional Diet',
+    image: '/images/nutrition_card.jpg',
+    description: 'Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.'
+  },
+  {
+    id: 'fac-5',
+    title: 'Education & Study Facilities',
+    tag: 'Modern Learning',
+    image: '/images/education_card.jpg',
+    description: 'Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.'
+  },
+  {
+    id: 'fac-6',
+    title: 'Medical & Physiotherapy',
+    tag: '24/7 Care',
+    image: '/images/medical_card.png',
+    description: 'On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.'
+  },
+  {
+    id: 'fac-7',
+    title: 'Safety & Security',
+    tag: 'Secure Campus',
+    image: '/images/security_card.png',
+    description: '24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.'
+  },
+  {
+    id: 'fac-8',
+    title: 'Recreation & Common Areas',
+    tag: 'Lounge Zone',
+    image: '/images/recreation_card.png',
+    description: 'Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.'
+  },
+  {
+    id: 'fac-9',
+    title: 'Wi-Fi & Technology',
+    tag: 'High-Speed',
+    image: '/images/wifi_card.png',
+    description: 'High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.'
+  }
+];
+
 export const About: React.FC<AboutProps> = ({ sub }) => {
   const [team, setTeam] = React.useState<any[]>(teamMembers);
+  const [milestones, setMilestones] = React.useState<any[]>(defaultMilestones);
+  const [facilities, setFacilities] = React.useState<any[]>(defaultFacilities);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/story-milestones')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setMilestones(data);
+        }
+      })
+      .catch(err => console.error("Error loading story milestones:", err));
+  }, []);
 
   React.useEffect(() => {
     fetch('http://localhost:5000/api/public/team')
@@ -58,6 +196,17 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
         }
       })
       .catch(err => console.error("Error loading team database values:", err));
+  }, []);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/facilities')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFacilities(data);
+        }
+      })
+      .catch(err => console.error("Error loading facilities:", err));
   }, []);
 
   const hash = useHash();
@@ -100,240 +249,138 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
     <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       {sub === 'story' && (
         <>
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Our Story
-            </h2>
-            <p className="text-text-light text-base md:text-lg">
-              How we started as a small grassroots coaching academy and expanded into the region's elite sports school.
-            </p>
+          {/* Hero Banner Section */}
+          <div className="max-w-[1100px] mx-auto relative h-[250px] md:h-[380px] rounded-xl overflow-hidden mb-16 shadow-lg border border-slate-100 select-none">
+            <img 
+              src="/images/hero2.jpg" 
+              alt="RLBSA Our Story Banner" 
+              className="w-full h-full object-cover" 
+            />
+            {/* Dark gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#082142]/85 via-[#082142]/35 to-transparent"></div>
+            
+            {/* Title Lockup in the center */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6">
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-wider uppercase italic drop-shadow-md">
+                Our Story
+              </h2>
+              <div className="w-16 h-1 bg-[#00a896] mt-4 rounded-full shadow"></div>
+            </div>
           </div>
 
-          {/* Timeline */}
-          <div className="relative max-w-[960px] mx-auto py-10 after:absolute after:w-[3px] after:bg-border-gray after:top-0 after:bottom-0 after:left-1/2 after:-ml-[1.5px] after:hidden md:after:block select-none overflow-hidden">
-            {/* Item 1: 2009 (Details Left, Image Right) */}
-            <RevealRow id="t2009" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
+          {/* Intro & Collage Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-24 max-w-[1100px] mx-auto text-left">
+            {/* Left side info: width 5 columns */}
+            <div className="lg:col-span-5 space-y-6">
+              <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] bg-[#e6f7f5] px-3.5 py-1.5 rounded-full inline-block">
+                Grassroots Legacy
+              </span>
+              <p className="text-[#082142] text-xl md:text-[23px] font-black leading-snug">
+                At Rani Laxmibai Sports Academy, we are passionate about identifying and nurturing rural sports talent, empowering youth athletes to achieve national glory and transform their communities.
+              </p>
+              <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                We believe that every child in rural India, regardless of gender or economic background, deserves a platform to showcase their potential. What started as a modest coaching program in Siwan has grown into a regional center of athletic excellence, giving underprivileged youth a pathway to state, national, and professional success.
+              </p>
+            </div>
 
-                  {/* Left Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 md:order-1`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2009</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">The Beginning</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        Rani Laxmibai Sports Academy (RLBSA) was established in Laxmipur, Siwan, Bihar with a vision to identify and nurture rural talent, especially girls, through sports and education.
-                      </p>
-                    </div>
+            {/* Right side collage: width 7 columns */}
+            <div className="lg:col-span-7">
+              <div className="grid grid-cols-3 gap-3 relative h-[380px] md:h-[450px]">
+                {/* Column 1 */}
+                <div className="w-full space-y-3 flex flex-col justify-between h-full">
+                  <div className="w-full h-[55%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
+                    <img src="/images/hero1.jpeg" alt="Story collage 1" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                   </div>
-
-                  {/* Right Side: Image */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/hero1.jpeg" alt="The Beginning" className="w-full h-full object-cover" />
-                    </div>
+                  <div className="w-full h-[41%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
+                    <img src="/images/player_rahul.png" alt="Story collage 2" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                   </div>
-                </>
-              )}
-            </RevealRow>
+                </div>
 
-            {/* Item 2: 2010 (Image Left, Details Right) */}
-            <RevealRow id="t2010" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Image */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/education_card.jpg" alt="Free Sports & Education" className="w-full h-full object-cover" />
-                    </div>
+                {/* Column 2 (Offset/Centered column) */}
+                <div className="w-full space-y-3 flex flex-col justify-center h-full">
+                  <div className="w-full h-[80%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
+                    <img src="/images/about_rlbsa.jpeg" alt="Story collage 3" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                   </div>
+                </div>
 
-                  {/* Right Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2010</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Free Sports & Education</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        RLBSA introduced completely free boarding, coaching, kits, nutritious meals, and educational support, ensuring that children from underprivileged backgrounds could pursue sports.
-                      </p>
-                    </div>
+                {/* Column 3 */}
+                <div className="w-full space-y-3 flex flex-col justify-between h-full">
+                  <div className="w-full h-[43%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
+                    <img src="/images/hero2.jpg" alt="Story collage 4" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                   </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* Item 3: 2013 (Details Left, Image Right) */}
-            <RevealRow id="t2013" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 md:order-1`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2013</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Producing State Athletes</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        The academy started producing talented players who represented Bihar in Football, Handball, and Athletics, proving that rural athletes could compete successfully at higher levels.
-                      </p>
-                    </div>
+                  <div className="w-full h-[53%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
+                    <img src="/images/hero1.jpeg" alt="Story collage 5" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  {/* Right Side: Image */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/sports_training_card.jpg" alt="State-Level Athletes" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+          {/* Alternating Story Rows */}
+          <div className="space-y-24 max-w-[1100px] mx-auto mb-20">
+            {milestones.map((item, idx) => {
+              const isEven = idx % 2 === 1; // Alternating layout
+              const yearColor = isEven ? 'text-[#082142]' : 'text-[#00a896]';
+              const titleColor = isEven ? 'text-[#00a896]' : 'text-[#082142]';
+              
+              return (
+                <RevealRow 
+                  key={item._id || item.year} 
+                  id={`row-${item.year}`} 
+                  className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16 text-left"
+                >
+                  {(isVisible) => {
+                    const detailsBlock = (
+                      <div className={`w-full md:w-1/2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 translate-x-12' : 'opacity-0 -translate-x-12'} order-2 md:order-none`}>
+                        <div className={`text-4xl font-black ${yearColor} mb-3`}>{item.year}</div>
+                        <h3 className={`text-2.5xl font-black ${titleColor} mb-4`}>{item.title}</h3>
+                        <p className="text-slate-500 text-sm leading-relaxed font-semibold">
+                          {item.description}
+                        </p>
+                        {item.year.toLowerCase() === 'today' && (
+                          <div className="mt-6">
+                            <a 
+                              href="#/donate" 
+                              className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider transition-colors duration-300 border-none shadow-md"
+                            >
+                              Support Our Mission
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
 
-            {/* Item 4: 2016 (Image Left, Details Right) */}
-            <RevealRow id="t2016" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
+                    const imageBlock = (
+                      <div className={`w-full md:w-1/2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 -translate-x-12' : 'opacity-0 translate-x-12'} order-1 md:order-none`}>
+                        <div className="rounded-xl overflow-hidden shadow-md aspect-[16/10] border border-slate-100 bg-[#082142]/5">
+                          <img 
+                            src={item.image.startsWith('http') || item.image.startsWith('/images') || item.image.startsWith('/uploads') ? item.image : `http://localhost:5000${item.image}`} 
+                            alt={`${item.year} - RLBSA ${item.title}`} 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      </div>
+                    );
 
-                  {/* Left Side: Image */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/player_aarti.png" alt="National Recognition" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2016</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">National Recognition</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        Several academy athletes earned opportunities to represent India and their respective states in national and international competitions, bringing recognition to rural Bihar.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* Item 5: 2020 (Details Left, Image Right) */}
-            <RevealRow id="t2020" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 md:order-1`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2020</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Campus Completed</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        A major milestone was achieved with the completion of a residential hostel facility accommodating approximately 50 children, while another 50 non-residential students continued receiving support.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right Side: Image */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/hostel_card.png" alt="Residential Campus" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* Item 6: 2021 (Image Left, Details Right) */}
-            <RevealRow id="t2021" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Image */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/player_rahul.png" alt="Holistic Development" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2021</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Holistic Athlete Development</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        Beyond sports coaching, the academy expanded focus to formal education, English communication, public speaking, personality development, and life skills training.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* Item 7: 2022 (Details Left, Image Right) */}
-            <RevealRow id="t2022" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 md:order-1`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">2022</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Growing Partnerships</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        Support from organizations such as the National Foundation for India, Garnet Foundation, Nalanda Charitable Foundation, and IMA Siwan enabled the academy to strengthen facilities.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right Side: Image */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 md:order-2 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/about_rlbsa.jpeg" alt="Growing Partnerships" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* Item 8: Today (Image Left, Details Right) */}
-            <RevealRow id="tToday" className="relative flex flex-col md:flex-row items-center w-full mb-16 last:mb-0">
-              {(isVisible) => (
-                <>
-                  {/* Timeline Dot */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white border-4 border-accent rounded-full z-10 hidden md:block"></div>
-
-                  {/* Left Side: Image */}
-                  <div className={`w-full md:w-1/2 pr-0 md:pr-10 text-left md:text-right flex justify-end transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-1 mb-6 md:mb-0`}>
-                    <div className="relative rounded-md overflow-hidden shadow-md aspect-[16/10] w-full max-w-[400px] border border-border-gray/30 bg-soft-light">
-                      <img src="/images/hero2.jpg" alt="Transforming Talent Today" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Side: Details Card */}
-                  <div className={`w-full md:w-1/2 pl-0 md:pl-10 text-left flex justify-start transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-2`}>
-                    <div className="p-7 bg-soft-light rounded-xl hover:bg-white hover:shadow-lg border border-border-gray/30 transition-all duration-300 w-full max-w-[400px]">
-                      <div className="text-2xl font-extrabold text-accent mb-2">Today</div>
-                      <h3 className="text-lg font-bold text-primary mb-2">Transforming Rural Talent</h3>
-                      <p className="text-text-light text-sm leading-relaxed">
-                        Today, RLBSA supports over 100 young athletes through free coaching, accommodation, meals, education, and tournament exposure, empowering rural youth, especially girls.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+                    return (
+                      <>
+                        {isEven ? (
+                          <>
+                            {imageBlock}
+                            {detailsBlock}
+                          </>
+                        ) : (
+                          <>
+                            {detailsBlock}
+                            {imageBlock}
+                          </>
+                        )}
+                      </>
+                    );
+                  }}
+                </RevealRow>
+              );
+            })}
           </div>
         </>
       )}
@@ -704,149 +751,30 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Facility Card 1 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/sports_training_card.jpg" alt="Sports Infrastructure" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Olympic Standard
-                </span>
+            {facilities.map((fac, idx) => (
+              <div key={fac.id || fac._id || idx} className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="h-[200px] relative overflow-hidden bg-primary">
+                    <img 
+                      src={fac.image ? (fac.image.startsWith('http') || fac.image.startsWith('/images') || fac.image.startsWith('/uploads') ? fac.image : `http://localhost:5000${fac.image}`) : '/images/sports_training_card.jpg'} 
+                      alt={fac.title} 
+                      className="w-full h-full object-cover" 
+                    />
+                    {fac.tag && (
+                      <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
+                        {fac.tag}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-lg font-bold text-primary mb-2">{fac.title}</h3>
+                    <p className="text-text-light text-sm leading-relaxed">
+                      {fac.description}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Sports Infrastructure</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 2 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/gym_card.png" alt="Gym & Fitness Center" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Advanced Gear
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Gym & Fitness Center</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 3 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/hostel_card.png" alt="Hostel & Accommodation" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Residential
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Hostel & Accommodation</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 4 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/nutrition_card.jpg" alt="Mess & Dining" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Nutritional Diet
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Mess & Dining</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 5 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/education_card.jpg" alt="Education & Study Facilities" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Modern Learning
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Education & Study Facilities</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 6 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/medical_card.png" alt="Medical & Physiotherapy" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  24/7 Care
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Medical & Physiotherapy</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 7 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/security_card.png" alt="Safety & Security" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Secure Campus
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Safety & Security</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 8 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/recreation_card.png" alt="Recreation & Common Areas" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  Lounge Zone
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Recreation & Common Areas</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.
-                </p>
-              </div>
-            </div>
-
-            {/* Facility Card 9 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-border-gray hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-              <div className="h-[200px] relative overflow-hidden bg-primary">
-                <img src="/images/wifi_card.png" alt="Wi-Fi & Technology" className="w-full h-full object-cover" />
-                <span className="absolute bottom-3 right-3 bg-primary/85 text-white py-1 px-2.5 rounded text-xs font-semibold">
-                  High-Speed
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-primary mb-2">Wi-Fi & Technology</h3>
-                <p className="text-text-light text-sm leading-relaxed">
-                  High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </>
       )}

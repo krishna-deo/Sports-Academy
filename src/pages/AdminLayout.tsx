@@ -10,7 +10,6 @@ import {
   Trophy,
   Buildings,
   ChatText,
-  Megaphone,
   FileText,
   EnvelopeOpen,
   Notebook,
@@ -442,18 +441,19 @@ export const AdminLayout: React.FC = () => {
   // Sidebar Menu Items Definition
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <House size={20} /> },
-    { id: 'students', label: 'Students', icon: <GraduationCap size={20} /> },
-    { id: 'coaches', label: 'Coaches', icon: <Users size={20} /> },
-    { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={20} /> },
-    { id: 'events', label: 'Events', icon: <Calendar size={20} /> },
-    { id: 'achievements', label: 'Achievements', icon: <Trophy size={20} /> },
-    { id: 'facilities', label: 'Facilities', icon: <Buildings size={20} /> },
+    { id: 'story', label: 'Our Story', icon: <Notebook size={20} /> },
     { id: 'success-stories', label: 'Success Stories', icon: <ChatText size={20} /> },
-    { id: 'announcements', label: 'Announcements', icon: <Megaphone size={20} /> },
+    { id: 'founders', label: 'Founders & Directors', icon: <UserIcon size={20} /> },
+    { id: 'coaches', label: 'Coaches', icon: <Users size={20} /> },
+    { id: 'students', label: 'Students', icon: <GraduationCap size={20} /> },
+    { id: 'facilities', label: 'Facilities', icon: <Buildings size={20} /> },
+    { id: 'rlbsa-edge', label: 'RLBSA Edge', icon: <Trophy size={20} /> },
+    { id: 'events-updates', label: 'Events & Updates', icon: <Calendar size={20} /> },
+    { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={20} /> },
+    { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
     { id: 'documents', label: 'Documents', icon: <FileText size={20} /> },
     { id: 'compliance', label: 'Compliance', icon: <ShieldCheck size={20} /> },
-    { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
-    { id: 'founders', label: 'Founders & Directors', icon: <Notebook size={20} /> },
+    { id: 'achievements', label: 'Achievements', icon: <Trophy size={20} /> },
     { id: 'users', label: 'Admin Users', icon: <UserGear size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Gear size={20} /> },
   ];
@@ -541,8 +541,8 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Dashboard Active Category Viewport */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-soft-light">
-          <AdminViews activeTab={activeTab} />
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-soft-light relative z-20">
+          <AdminViews activeTab={activeTab} setActiveTab={setActiveTab} />
         </main>
       </div>
     </div>

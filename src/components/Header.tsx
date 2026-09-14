@@ -60,7 +60,17 @@ export const Header: React.FC = () => {
       ],
     },
     { label: '🖼️ Gallery', href: '#/gallery/all' },
-    { label: '📅 Events', href: '#/events/all' },
+    {
+      label: '📅 Events & Updates',
+      href: '#/events/all',
+      dropdown: [
+        { label: 'All Events', href: '#/events/all' },
+        { label: 'Upcoming Events', href: '#/events/upcoming' },
+        { label: 'Tournaments', href: '#/events/tournaments' },
+        { label: 'Camps & Workshops', href: '#/events/camps-workshops' },
+        { label: 'Latest Updates', href: '#/updates' },
+      ],
+    },
     { label: '📞 Contact Us', href: '#/contact' },
   ];
 

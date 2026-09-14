@@ -7,7 +7,8 @@ import { About } from './pages/About';
 import { Programs } from './pages/Programs';
 import { Academy } from './pages/Academy';
 import { Gallery } from './pages/Gallery';
-import { Events } from './pages/Events';
+import { Events, EventDetail } from './pages/Events';
+import { UpdatesList, UpdateDetail } from './pages/Updates';
 import { Blog } from './pages/Blog';
 import { Contact } from './pages/Contact';
 import { Donate } from './pages/Donate';
@@ -53,9 +54,25 @@ function App() {
       return <Gallery activeTag={sub} />;
     }
 
+    if (normalizedHash === '#/events') {
+      return <Events sub="all" />;
+    }
+
     if (normalizedHash.startsWith('#/events/')) {
       const sub = normalizedHash.replace('#/events/', '');
-      return <Events sub={sub} />;
+      if (['all', 'upcoming', 'tournaments', 'camps-workshops', 'registration'].includes(sub)) {
+        return <Events sub={sub} />;
+      }
+      return <EventDetail slug={sub} />;
+    }
+
+    if (normalizedHash === '#/updates') {
+      return <UpdatesList />;
+    }
+
+    if (normalizedHash.startsWith('#/updates/')) {
+      const slug = normalizedHash.replace('#/updates/', '');
+      return <UpdateDetail slug={slug} />;
     }
 
     if (normalizedHash.startsWith('#/blog/')) {

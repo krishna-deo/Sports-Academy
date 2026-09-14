@@ -15,6 +15,8 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [unifiedMedia, setUnifiedMedia] = useState<any[]>([]);
+  const [mediaPage, setMediaPage] = useState<number>(1);
 
   // Sync category slugs with slugs mapping
   const categoryMap: { [key: string]: string } = {
@@ -30,16 +32,16 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
     setLoading(true);
     let category = '';
     
-    if (activeTag !== 'all' && categoryMap[activeTag]) {
+    if (activeTag !== 'all' && activeTag !== 'media' && categoryMap[activeTag]) {
       category = categoryMap[activeTag];
-    } else if (activeTag !== 'all' && activeTag !== 'photos' && activeTag !== 'videos') {
+    } else if (activeTag !== 'all' && activeTag !== 'media' && activeTag !== 'photos' && activeTag !== 'videos') {
       // Direct string slug match fallback
       category = activeTag;
     }
 
     const queryParams = new URLSearchParams({
-      page: String(page),
-      limit: '8', // 8 events per page
+      page: activeTag === 'media' ? '1' : String(page),
+      limit: activeTag === 'media' ? '100' : '8', // fetch up to 100 events to map out all media
       status: 'published'
     });
 
@@ -55,15 +57,54 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data.items)) {
-          setEvents(data.items);
-          setTotalPages(data.totalPages || 1);
+          if (activeTag === 'media') {
+            const items: any[] = [];
+            data.items.forEach((event: any) => {
+              if (event.mediaType === 'video') {
+                items.push({
+                  id: `video-${event._id}`,
+                  type: 'video',
+                  coverImage: event.coverImage,
+                  videoUrl: event.videoUrl,
+                  name: event.name,
+                  category: event.category,
+                  date: event.date,
+                  location: event.location,
+                  description: event.description,
+                  event: event
+                });
+              } else if (event.photos && event.photos.length > 0) {
+                event.photos.forEach((photo: any, index: number) => {
+                  items.push({
+                    id: `photo-${event._id}-${index}`,
+                    type: 'photo',
+                    path: photo.path,
+                    name: `${event.name} - Photo ${index + 1}`,
+                    eventName: event.name,
+                    category: event.category,
+                    date: event.date,
+                    location: event.location,
+                    description: event.description,
+                    photoIndex: index,
+                    event: event
+                  });
+                });
+              }
+            });
+            setUnifiedMedia(items);
+          } else {
+            setEvents(data.items);
+            setTotalPages(data.totalPages || 1);
+          }
         } else {
           setEvents([]);
+          setUnifiedMedia([]);
         }
       })
       .catch(err => {
         console.error("Failed to query public gallery events:", err);
         setEvents([]);
+        setUnifiedMedia([]);
       })
       .finally(() => {
         setLoading(false);
@@ -73,6 +114,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
   // Reset states when category tag changes
   useEffect(() => {
     setPage(1);
+    setMediaPage(1);
     setSelectedEvent(null);
     setLightboxIndex(null);
   }, [activeTag]);
@@ -164,6 +206,18 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
           
           {/* Top Right Filters */}
           <div className="flex items-center gap-3 self-start md:self-auto flex-wrap sm:flex-nowrap">
+            {/* "All Media" button */}
+            <a
+              href="#/gallery/media"
+              className={`py-2.5 px-5 rounded-lg font-bold text-xs transition-all tracking-wide shadow-sm flex items-center justify-center cursor-pointer border ${
+                activeTag === 'media'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-text-body border-border-gray hover:bg-soft-light'
+              }`}
+            >
+              All Media
+            </a>
+
             {/* "All Events" button */}
             <a
               href="#/gallery/all"
@@ -179,18 +233,19 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             {/* Custom Dropdown Filter */}
             {(() => {
               const activeCategory = categories.find(cat => cat.slug === activeTag);
-              const dropdownLabel = activeCategory && activeTag !== 'all' ? activeCategory.name : 'Filter by Category';
+              const dropdownLabel = activeCategory && activeTag !== 'all' && activeTag !== 'media' ? activeCategory.name : 'Filter by Category';
+              const isDropdownActive = activeTag !== 'all' && activeTag !== 'media';
               return (
                 <div className="relative inline-block text-left" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className={`py-2.5 px-4 font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 cursor-pointer transition-all border ${
-                      activeTag !== 'all'
+                      isDropdownActive
                         ? 'bg-primary text-white border-primary'
                         : 'bg-white text-text-body border-border-gray hover:bg-soft-light'
                     }`}
                   >
-                    <Funnel size={14} weight={activeTag !== 'all' ? 'fill' : 'bold'} />
+                    <Funnel size={14} weight={isDropdownActive ? 'fill' : 'bold'} />
                     {dropdownLabel}
                     <CaretDown size={12} className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -278,110 +333,221 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
           <p className="text-text-light text-xs font-semibold">Loading media gallery...</p>
         </div>
       ) : !selectedEvent ? (
-        /* Render Events Grid List */
-        events.length === 0 ? (
-          <div className="text-center py-20 text-text-light text-sm border border-dashed border-border-gray rounded-xl">
-            <p>No events found in this category.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {events.map((event) => {
-                const coverUrl = event.coverImage 
-                  ? (event.coverImage.startsWith('http') ? event.coverImage : `http://localhost:5000${event.coverImage}`) 
-                  : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
-                
-                return (
-                  <div 
-                    key={event._id}
-                    onClick={() => setSelectedEvent(event)}
-                    className="flex flex-col bg-white border border-border-gray/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group text-left"
-                  >
-                    {/* Cover image wrap */}
-                    <div className="h-[200px] overflow-hidden relative bg-primary">
-                      <img 
-                        src={coverUrl} 
-                        alt={event.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+        activeTag === 'media' ? (
+          unifiedMedia.length === 0 ? (
+            <div className="text-center py-20 text-text-light text-sm border border-dashed border-border-gray rounded-xl">
+              <p>No media files found.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {(() => {
+                  const mediaPerPage = 20;
+                  const startIndex = (mediaPage - 1) * mediaPerPage;
+                  const currentItems = unifiedMedia.slice(startIndex, startIndex + mediaPerPage);
+                  
+                  return currentItems.map((item) => {
+                    const thumbUrl = item.type === 'video'
+                      ? (item.coverImage && item.coverImage.startsWith('http') ? item.coverImage : `http://localhost:5000${item.coverImage}`)
+                      : `http://localhost:5000${item.path}`;
+
+                    return (
+                      <div 
+                        key={item.id}
+                        onClick={() => {
+                          if (item.type === 'video') {
+                            setSelectedEvent(item.event);
+                          } else {
+                            const allPhotos = unifiedMedia.filter(m => m.type === 'photo');
+                            const photoIdx = allPhotos.findIndex(p => p.id === item.id);
+                            
+                            setSelectedEvent({
+                              name: item.eventName,
+                              category: item.category,
+                              date: item.date,
+                              isUnifiedGallery: true,
+                              photos: allPhotos
+                            });
+                            setLightboxIndex(photoIdx);
+                          }
                         }}
-                      />
-                      
-                      {event.mediaType === 'video' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
-                          <div className="w-12 h-12 rounded-full bg-accent/90 text-primary flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
-                            <svg className="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+                        className="relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md group bg-soft-light border border-border-gray/30 transition-all duration-300"
+                      >
+                        <img 
+                          src={thumbUrl} 
+                          alt={item.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+                          }}
+                        />
+                        
+                        {/* Overlay with info on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3.5 text-left">
+                          <span className="text-[8px] font-extrabold uppercase text-accent tracking-wider">
+                            {item.category}
+                          </span>
+                          <h5 className="text-[10px] font-extrabold text-white leading-tight truncate mt-0.5">
+                            {item.type === 'video' ? item.name : item.eventName}
+                          </h5>
+                          <span className="text-[8px] text-white/70 font-bold mt-1 flex items-center gap-1">
+                            <Calendar size={10} /> {formatDate(item.date)}
+                          </span>
+                        </div>
+
+                        {/* Media type indicator badge */}
+                        <div className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white p-1.5 rounded-lg shadow border border-white/10 group-hover:scale-110 transition-transform">
+                          {item.type === 'video' ? (
+                            <svg className="w-3.5 h-3.5 fill-accent" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z" />
                             </svg>
-                          </div>
-                        </div>
-                      )}
-
-                      <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[8px] font-extrabold px-2.5 py-1 rounded uppercase tracking-wider">
-                        {event.category}
-                      </span>
-                    </div>
- 
-                    {/* Meta information */}
-                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="font-extrabold text-[15px] text-primary group-hover:text-accent leading-snug line-clamp-2 transition-colors">
-                          {event.name}
-                        </h4>
-                        {event.description && (
-                          <p className="text-[11px] text-text-light line-clamp-2 leading-relaxed">
-                            {event.description}
-                          </p>
-                        )}
-                      </div>
- 
-                      <div className="flex items-center justify-between pt-3 border-t border-border-gray/50 text-[10px] text-text-light font-bold">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={13} /> {formatDate(event.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          {event.mediaType === 'video' ? (
-                            <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[8px] uppercase tracking-wider font-extrabold flex items-center gap-1">
-                              🎥 Video
-                            </span>
                           ) : (
-                            <>
-                              <ImageSquare size={13} /> {event.photos?.length || 0} Photos
-                            </>
+                            <ImageSquare size={14} className="text-white" weight="bold" />
                           )}
-                        </span>
+                        </div>
                       </div>
-                    </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Media Pagination controls */}
+              {(() => {
+                const mediaPerPage = 20;
+                const totalMediaPages = Math.ceil(unifiedMedia.length / mediaPerPage);
+                if (totalMediaPages <= 1) return null;
+                
+                return (
+                  <div className="flex items-center justify-center gap-3 pt-12">
+                    <button
+                      disabled={mediaPage <= 1}
+                      onClick={() => setMediaPage(mediaPage - 1)}
+                      className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs font-semibold text-text-light">
+                      Page {mediaPage} of {totalMediaPages}
+                    </span>
+                    <button
+                      disabled={mediaPage >= totalMediaPages}
+                      onClick={() => setMediaPage(mediaPage + 1)}
+                      className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
                   </div>
                 );
-              })}
+              })()}
+            </>
+          )
+        ) : (
+          /* Render Events Grid List */
+          events.length === 0 ? (
+            <div className="text-center py-20 text-text-light text-sm border border-dashed border-border-gray rounded-xl">
+              <p>No events found in this category.</p>
             </div>
-
-            {/* Pagination controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-3 pt-12">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="text-xs font-semibold text-text-light">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                  className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {events.map((event) => {
+                  const coverUrl = event.coverImage 
+                    ? (event.coverImage.startsWith('http') ? event.coverImage : `http://localhost:5000${event.coverImage}`) 
+                    : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+                  
+                  return (
+                    <div 
+                      key={event._id}
+                      onClick={() => setSelectedEvent(event)}
+                      className="flex flex-col bg-white border border-border-gray/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group text-left"
+                    >
+                      {/* Cover image wrap */}
+                      <div className="h-[200px] overflow-hidden relative bg-primary">
+                        <img 
+                          src={coverUrl} 
+                          alt={event.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+                          }}
+                        />
+                        
+                        {event.mediaType === 'video' && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-accent/90 text-primary flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
+                              <svg className="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+  
+                        <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[8px] font-extrabold px-2.5 py-1 rounded uppercase tracking-wider">
+                          {event.category}
+                        </span>
+                      </div>
+   
+                      {/* Meta information */}
+                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-extrabold text-[15px] text-primary group-hover:text-accent leading-snug line-clamp-2 transition-colors">
+                            {event.name}
+                          </h4>
+                          {event.description && (
+                            <p className="text-[11px] text-text-light line-clamp-2 leading-relaxed">
+                              {event.description}
+                            </p>
+                          )}
+                        </div>
+   
+                        <div className="flex items-center justify-between pt-3 border-t border-border-gray/50 text-[10px] text-text-light font-bold">
+                          <span className="flex items-center gap-1">
+                            <Calendar size={13} /> {formatDate(event.date)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {event.mediaType === 'video' ? (
+                              <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[8px] uppercase tracking-wider font-extrabold flex items-center gap-1">
+                                🎥 Video
+                              </span>
+                            ) : (
+                              <>
+                                <ImageSquare size={13} /> {event.photos?.length || 0} Photos
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </>
+  
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 pt-12">
+                  <button
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                    className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs font-semibold text-text-light">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(page + 1)}
+                    className="px-4 py-2 border border-border-gray rounded bg-white text-xs font-bold text-primary hover:bg-soft-light transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )
         )
       ) : (
         /* Render Detailed Event Gallery Content */
@@ -486,10 +652,16 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             <div className="mt-5 w-full max-w-[90vw] md:max-w-xl bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl flex items-center justify-between gap-4 text-white shadow-xl">
               <div className="flex flex-col text-left min-w-0">
                 <span className="text-[10px] uppercase tracking-wider text-accent font-extrabold">
-                  {selectedEvent.category} • {formatDate(selectedEvent.date)}
+                  {selectedEvent.isUnifiedGallery 
+                    ? `${selectedEvent.photos[lightboxIndex].category} • ${formatDate(selectedEvent.photos[lightboxIndex].date)}`
+                    : `${selectedEvent.category} • ${formatDate(selectedEvent.date)}`
+                  }
                 </span>
                 <h4 className="text-sm font-extrabold truncate mt-0.5 text-white/95">
-                  {selectedEvent.name}
+                  {selectedEvent.isUnifiedGallery 
+                    ? selectedEvent.photos[lightboxIndex].eventName 
+                    : selectedEvent.name
+                  }
                 </h4>
               </div>
               <span className="text-[11px] font-bold bg-white/10 px-3.5 py-1.5 rounded-full border border-white/5 shrink-0 text-white/90">

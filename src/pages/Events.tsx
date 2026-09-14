@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { 
   Clock, 
   MapPin, 
@@ -7,11 +6,10 @@ import {
   Printer, 
   ArrowLeft, 
   ArrowRight, 
-  User, 
-  X 
+  Calendar, 
+  WarningCircle, 
+  ArrowUUpLeft 
 } from '@phosphor-icons/react';
-import { eventsList as initialEvents, blogPosts } from '../data/sportsData';
-import type { BlogPost } from '../data/sportsData';
 
 interface EventsProps {
   sub: string;
@@ -26,22 +24,19 @@ interface RegistrationFormData {
   notes: string;
 }
 
+// ----------------------------------------------------
+// PUBLIC EVENTS FEED AND LISTING PAGE
+// ----------------------------------------------------
 export const Events: React.FC<EventsProps> = ({ sub }) => {
-  const [eventsList, setEventsList] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'events' | 'blogs'>('all');
-  const [viewingArticle, setViewingArticle] = useState<BlogPost | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Pagination State for All Events
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch events from public backend API or fallback to mock data
-  useEffect(() => {
-    fetch('http://localhost:5000/api/public/events')
-      .then(res => res.json())
-      .then(data => setEventsList(data))
-      .catch(err => {
-        console.error(err);
-        setEventsList(initialEvents);
-      });
-  }, []);
-
+  // Registration states
   const [formData, setFormData] = useState<RegistrationFormData>({
     name: '',
     age: '',
@@ -50,58 +45,56 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
     event: '',
     notes: ''
   });
+  const [confirmedTicket, setConfirmedTicket] = useState<any | null>(null);
 
-  const [confirmedTicket, setConfirmedTicket] = useState<{
-    code: string;
-    eventName: string;
-    athleteName: string;
-    athleteAge: string;
-    phone: string;
-    email: string;
-  } | null>(null);
-
-  // Pre-fill event dropdown from hash query params if any
-  useEffect(() => {
-    if (sub === 'registration') {
-      setConfirmedTicket(null); // Reset ticket on navigation
-      const hashPart = window.location.hash;
-      const queryIndex = hashPart.indexOf('?');
-      if (queryIndex !== -1) {
-        const queryStr = hashPart.substring(queryIndex + 1);
-        const params = new URLSearchParams(queryStr);
-        const programId = params.get('program');
-        if (programId) {
-          setFormData((prev) => ({ ...prev, event: `prog-${programId}` }));
-        }
-      } else {
-        setFormData({
-          name: '',
-          age: '',
-          email: '',
-          phone: '',
-          event: '',
-          notes: ''
-        });
+  // Fetch events based on route prop
+  const fetchEventsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let url = 'http://localhost:5000/api/public/events';
+      if (sub === 'upcoming') {
+        url = 'http://localhost:5000/api/public/events/upcoming';
+      } else if (sub === 'tournaments') {
+        url = 'http://localhost:5000/api/public/events/tournaments';
+      } else if (sub === 'camps-workshops') {
+        url = 'http://localhost:5000/api/public/events/camps-workshops';
+      } else if (sub === 'all') {
+        url = `http://localhost:5000/api/public/events?page=${currentPage}&limit=9`;
       }
-    }
-  }, [sub, window.location.hash]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load events data from the server.");
+      const data = await res.json();
+
+      if (sub === 'all') {
+        setEvents(data.events || []);
+        setTotalPages(data.pages || 1);
+      } else {
+        setEvents(Array.isArray(data) ? data : []);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (sub !== 'registration') {
+      fetchEventsData();
+    }
+  }, [sub, currentPage]);
+
+  // Handle Event registration submission
+  const handleRegisterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const ticketCode = "RLB-" + Math.floor(100000 + Math.random() * 900000);
     
-    // Find selected event display name
     let selectedName = formData.event;
-    if (formData.event.startsWith('prog-')) {
-      const progKey = formData.event.replace('prog-', '');
-      if (progKey === 'football') selectedName = "Football Coaching";
-      else if (progKey === 'handball') selectedName = "Handball Coaching";
-      else if (progKey === 'rugby') selectedName = "Rugby Coaching";
-      else if (progKey === 'athletics') selectedName = "Athletics Coaching";
-    } else {
-      const match = eventsList.find(evt => evt.id === formData.event);
-      if (match) selectedName = match.title;
-    }
+    const match = events.find(evt => evt.id === formData.event || evt._id === formData.event);
+    if (match) selectedName = match.title;
 
     setConfirmedTicket({
       code: ticketCode,
@@ -113,130 +106,99 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
     });
   };
 
-  const formatEventDate = (dateStr: string) => {
+  const getPageTitle = () => {
+    switch (sub) {
+      case 'upcoming': return 'Upcoming Events';
+      case 'tournaments': return 'Tournaments & Matches';
+      case 'camps-workshops': return 'Camps & Workshops';
+      case 'registration': return 'Event & Camp Registration';
+      default: return 'All Events & Activities';
+    }
+  };
+
+  const getPageDescription = () => {
+    switch (sub) {
+      case 'upcoming': return 'Stay ahead with our upcoming tournaments, schedules, and active training sessions.';
+      case 'tournaments': return 'Compete at the highest level. View current and scheduled tournament programs.';
+      case 'camps-workshops': return 'Immersive coaching camps and specialized technique workshops led by certified directors.';
+      case 'registration': return 'Secure your entry ticket for upcoming championship matches, clinics, and selections.';
+      default: return 'Browse the full spectrum of events, training camps, and tournaments hosted by RLBSA Siwan.';
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
     const dateObj = new Date(dateStr);
-    const day = dateObj.getDate();
-    const month = dateObj.toLocaleString('en-US', { month: 'short' });
-    return { day, month };
+    return dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  // Build the combined list
-  const typedEvents = eventsList.map(e => ({ ...e, feedType: 'event' }));
-  const typedBlogs = blogPosts.map(b => ({ ...b, feedType: 'blog' }));
+  const getStatusBadgeStyles = (status: string, startDateStr: string, endDateStr?: string) => {
+    const now = new Date();
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date(start.getTime() + 24*60*60*1000);
 
-  // Interleave events and blogs for the "All" view to look dynamic
-  const interleaveFeed = () => {
-    const combined: any[] = [];
-    const max = Math.max(typedEvents.length, typedBlogs.length);
-    for (let i = 0; i < max; i++) {
-      if (i < typedEvents.length) combined.push(typedEvents[i]);
-      if (i < typedBlogs.length) combined.push(typedBlogs[i]);
+    let calculatedStatus = status;
+    if (status === 'Published') {
+      if (start > now) calculatedStatus = 'Upcoming';
+      else if (start <= now && end >= now) calculatedStatus = 'Ongoing';
+      else calculatedStatus = 'Completed';
     }
-    return combined;
-  };
 
-  const getFilteredFeed = () => {
-    if (activeTab === 'events') return typedEvents;
-    if (activeTab === 'blogs') return typedBlogs;
-    return interleaveFeed();
-  };
-
-  const feedItems = getFilteredFeed();
-
-  // Helper to determine the decorative background text for each card
-  const getDecorativeText = (item: any) => {
-    if (item.feedType === 'blog') {
-      if (item.category === 'nutrition') return 'FUEL';
-      if (item.category === 'training') return 'MIND';
-      return 'FOCUS';
-    } else {
-      if (item.category === 'tournaments') return 'GOAL';
-      if (item.category === 'workshops') return 'DRILL';
-      return 'CAMP';
+    switch (calculatedStatus) {
+      case 'Upcoming':
+      case 'upcoming':
+        return 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+      case 'Ongoing':
+      case 'open':
+        return 'bg-amber-50 text-amber-600 border border-amber-200';
+      case 'Completed':
+      case 'closed':
+        return 'bg-slate-100 text-slate-500 border border-slate-200';
+      case 'Cancelled':
+        return 'bg-rose-50 text-rose-600 border border-rose-200';
+      case 'Postponed':
+        return 'bg-blue-50 text-blue-600 border border-blue-200';
+      default:
+        return 'bg-slate-50 text-slate-500';
     }
   };
 
-  // Helper to assign Bento Grid styling tags based on array index
-  const getBentoCardStyles = (index: number) => {
-    const layouts = [
-      // 0: Large soft teal card (2 columns)
-      {
-        container: 'lg:col-span-2 bg-[#e6f7f5] text-[#082142] border border-[#00a896]/20 p-8 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.12)]',
-        badge: 'bg-[#00a896] text-white',
-        accentText: 'text-[#00a896]',
-        button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
-        decorColor: 'text-[#00a896]/5'
-      },
-      // 1: Solid Navy card (1 column)
-      {
-        container: 'bg-[#082142] text-white p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.2)]',
-        badge: 'bg-[#00a896] text-white',
-        accentText: 'text-[#00a896]',
-        button: 'bg-white text-[#082142] group-hover:bg-[#00a896] group-hover:text-white',
-        decorColor: 'text-white/5'
-      },
-      // 2: Solid Active Teal card (1 column)
-      {
-        container: 'bg-[#00a896] text-white p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(0,168,150,0.2)]',
-        badge: 'bg-[#082142] text-white',
-        accentText: 'text-[#082142] font-black',
-        button: 'bg-white text-[#00a896] group-hover:bg-[#082142] group-hover:text-white',
-        decorColor: 'text-white/5'
-      },
-      // 3: White card (1 column)
-      {
-        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
-        badge: 'bg-[#082142]/10 text-[#082142]',
-        accentText: 'text-[#00a896]',
-        button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
-        decorColor: 'text-slate-100'
-      },
-      // 4: Large Navy Card (2 columns)
-      {
-        container: 'lg:col-span-2 bg-[#082142] text-white p-8 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.25)]',
-        badge: 'bg-[#00a896] text-white',
-        accentText: 'text-[#00a896]',
-        button: 'bg-white text-[#082142] group-hover:bg-[#00a896] group-hover:text-white',
-        decorColor: 'text-white/5'
-      },
-      // 5: White card (1 column)
-      {
-        container: 'bg-white text-[#082142] border border-slate-100 shadow-sm p-7 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[360px] group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(8,33,66,0.08)]',
-        badge: 'bg-[#082142]/10 text-[#082142]',
-        accentText: 'text-[#00a896]',
-        button: 'bg-[#082142] text-white group-hover:bg-[#00a896]',
-        decorColor: 'text-slate-100'
-      }
-    ];
-    return layouts[index % layouts.length];
+  const getDisplayState = (status: string, startDateStr: string, endDateStr?: string) => {
+    const now = new Date();
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date(start.getTime() + 24*60*60*1000);
+
+    if (status === 'Cancelled') return 'Cancelled';
+    if (status === 'Postponed') return 'Postponed';
+    if (status === 'Archived') return 'Archived';
+
+    if (start > now) return 'Upcoming';
+    if (start <= now && end >= now) return 'Ongoing';
+    return 'Completed';
   };
 
   if (sub === 'registration') {
     return (
-      <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
+      <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in text-left">
         <div className="text-center max-w-[700px] mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-            Event & Camp Registration
+            {getPageTitle()}
           </h2>
           <p className="text-text-light text-base md:text-lg">
-            Confirm your slot for upcoming tournaments, workshops, or training cycles.
+            {getPageDescription()}
           </p>
         </div>
 
         <div className="max-w-[600px] mx-auto">
           {!confirmedTicket ? (
-            /* Registration Form */
             <div className="bg-white p-8 md:p-10 rounded-xl border border-border-gray shadow-lg">
-              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-name" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Athlete Full Name
-                  </label>
+                  <label className="text-xs font-bold text-primary uppercase tracking-wider">Athlete Full Name</label>
                   <input
                     type="text"
-                    id="reg-name"
-                    placeholder="E.g. Rohan Shah"
                     required
+                    placeholder="E.g. Rohan Kumar"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
@@ -244,16 +206,13 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-age" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Athlete Age
-                  </label>
+                  <label className="text-xs font-bold text-primary uppercase tracking-wider">Athlete Age</label>
                   <input
                     type="number"
-                    id="reg-age"
-                    placeholder="E.g. 14"
-                    min="5"
-                    max="25"
                     required
+                    min="5"
+                    max="30"
+                    placeholder="E.g. 14"
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                     className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
@@ -261,14 +220,11 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-email" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Parent/Guardian Email
-                  </label>
+                  <label className="text-xs font-bold text-primary uppercase tracking-wider">Guardian Email</label>
                   <input
                     type="email"
-                    id="reg-email"
-                    placeholder="guardian@email.com"
                     required
+                    placeholder="guardian@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
@@ -276,76 +232,30 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-phone" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Parent Phone Number
-                  </label>
+                  <label className="text-xs font-bold text-primary uppercase tracking-wider">Parent Phone Number</label>
                   <input
                     type="tel"
-                    id="reg-phone"
-                    placeholder="10 Digit Mobile Number"
-                    pattern="[0-9]{10}"
                     required
+                    pattern="[0-9]{10}"
+                    placeholder="10 Digit Mobile Number"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-event" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Select Program / Event
-                  </label>
-                  <select
-                    id="reg-event"
-                    required
-                    value={formData.event}
-                    onChange={(e) => setFormData({ ...formData, event: e.target.value })}
-                    className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
-                  >
-                    <option value="" disabled>Choose from list...</option>
-                     <optgroup label="Sports Disciplines">
-                       <option value="prog-football">Football</option>
-                       <option value="prog-handball">Handball</option>
-                       <option value="prog-rugby">Rugby</option>
-                       <option value="prog-athletics">Athletics</option>
-                     </optgroup>
-                    <optgroup label="Upcoming Camps & Events">
-                      {eventsList.map((evt, idx) => (
-                        <option key={idx} value={evt.id}>{evt.title}</option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-notes" className="text-xs font-bold text-primary uppercase tracking-wider">
-                    Special Medical/Coaching Instructions
-                  </label>
-                  <textarea
-                    id="reg-notes"
-                    rows={3}
-                    placeholder="E.g. allergies, previous sports training, or health concerns..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full py-3 px-4 border border-border-gray rounded-xl bg-soft-light text-sm outline-none focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/8 transition-all"
-                  />
-                </div>
-
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white font-bold py-3.5 hover:bg-accent hover:text-primary transition-all rounded-xl cursor-pointer mt-2.5"
+                  className="w-full bg-primary text-white font-bold py-3.5 hover:bg-accent hover:text-primary transition-all rounded-xl cursor-pointer mt-2.5 border-none"
                 >
                   SUBMIT REGISTRATION
                 </button>
               </form>
             </div>
           ) : (
-            /* Ticket Receipt */
-            <div className="bg-white border-2 border-dashed border-accent rounded-xl p-8 shadow-lg animate-fade-in print:shadow-none print:border-solid">
+            <div className="bg-white border-2 border-dashed border-accent rounded-xl p-8 shadow-lg print:shadow-none print:border-solid">
               <div className="text-center border-b border-border-gray pb-5 mb-6">
-                <div className="font-extrabold text-primary text-lg tracking-tight">
-                  RANILAXMIBAI SPORTS ACADEMY
-                </div>
+                <div className="font-extrabold text-primary text-lg tracking-tight">RANILAXMIBAI SPORTS ACADEMY</div>
                 <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1 rounded-full mt-3">
                   <CheckCircle size={14} weight="fill" /> Slot Confirmed
                 </span>
@@ -354,68 +264,28 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-left">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
-                    Selected Event / Program
-                  </span>
-                  <p className="text-sm font-bold text-primary mt-0.5">{confirmedTicket.eventName}</p>
+                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">Selected Event</span>
+                  <p className="text-sm font-bold text-primary mt-0.5">{confirmedTicket.eventName || "Coaching Session"}</p>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
-                    Athlete Name
-                  </span>
-                  <p className="text-sm font-bold text-primary mt-0.5">
-                    {confirmedTicket.athleteName} (Age {confirmedTicket.athleteAge})
-                  </p>
+                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">Athlete Name</span>
+                  <p className="text-sm font-bold text-primary mt-0.5">{confirmedTicket.athleteName} (Age {confirmedTicket.athleteAge})</p>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
-                    Primary Phone
-                  </span>
+                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">Primary Phone</span>
                   <p className="text-sm font-bold text-primary mt-0.5">{confirmedTicket.phone}</p>
                 </div>
                 <div className="col-span-2">
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
-                    Guardian Email
-                  </span>
+                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">Guardian Email</span>
                   <p className="text-sm font-bold text-primary mt-0.5">{confirmedTicket.email}</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider">
-                    Gate Entry Venue
-                  </span>
-                  <p className="text-sm font-bold text-primary mt-0.5">RLBSA Campus, Laxmipur, Siwan, Bihar</p>
                 </div>
               </div>
 
               <div className="border-t border-dashed border-border-gray mt-6 pt-5 text-center">
-                {/* QR Code Barcode Mockup */}
-                <svg width="120" height="120" className="mx-auto block bg-soft-light">
-                  <rect width="120" height="120" fill="#F4F6F6" />
-                  <rect x="10" y="10" width="30" height="30" fill="#003C3C" />
-                  <rect x="15" y="15" width="20" height="20" fill="#F4F6F6" />
-                  <rect x="18" y="18" width="14" height="14" fill="#003C3C" />
-                  
-                  <rect x="80" y="10" width="30" height="30" fill="#003C3C" />
-                  <rect x="85" y="15" width="20" height="20" fill="#F4F6F6" />
-                  <rect x="88" y="18" width="14" height="14" fill="#003C3C" />
- 
-                  <rect x="10" y="80" width="30" height="30" fill="#003C3C" />
-                  <rect x="15" y="85" width="20" height="20" fill="#F4F6F6" />
-                  <rect x="18" y="88" width="14" height="14" fill="#003C3C" />
- 
-                  <rect x="50" y="20" width="10" height="10" fill="#003C3C" />
-                  <rect x="65" y="10" width="10" height="20" fill="#003C3C" />
-                  <rect x="50" y="45" width="20" height="10" fill="#003C3C" />
-                  <rect x="80" y="50" width="15" height="15" fill="#003C3C" />
-                  <rect x="15" y="55" width="20" height="10" fill="#003C3C" />
-                  <rect x="45" y="70" width="30" height="15" fill="#003C3C" />
-                  <rect x="85" y="85" width="25" height="25" fill="#003C3C" />
-                  <rect x="90" y="90" width="15" height="15" fill="#F4F6F6" />
-                </svg>
-                <p className="text-[11px] text-text-light mt-3 leading-relaxed">
-                  Present this digital ticket at reception to complete fees structure and kit sizing.
+                <p className="text-[11px] text-text-light leading-relaxed">
+                  Present this receipt code at admission desk. For queries contact academy support.
                 </p>
               </div>
 
@@ -441,255 +311,395 @@ export const Events: React.FC<EventsProps> = ({ sub }) => {
   }
 
   return (
-    <section className="py-16 px-5 max-w-[1380px] mx-auto animate-fade-in">
-      
-      {/* Title Header area */}
-      <div className="text-center max-w-[700px] mx-auto mb-10">
+    <section className="py-16 px-5 max-w-[1380px] mx-auto animate-fade-in text-left">
+      <div className="text-center max-w-[700px] mx-auto mb-12">
         <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] bg-[#e6f7f5] px-3.5 py-1.5 rounded-full inline-block mb-3.5">
-          Announcements & News
+          Academy Feed
         </span>
         <h2 className="text-3xl md:text-[42px] font-black text-[#082142] mb-4 leading-tight">
-          What's Happening At RLBSA
+          {getPageTitle()}
         </h2>
         <p className="text-slate-500 text-sm md:text-base leading-relaxed">
-          Stay updated with our latest local tournaments, specialized training camps, and wellness blogs written by our expert coaches.
+          {getPageDescription()}
         </p>
       </div>
 
-      {/* Tabs and Filters */}
-      <div className="flex justify-center items-center gap-2 md:gap-3 mb-10 border-b border-slate-100 pb-5 max-w-lg mx-auto">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border-none cursor-pointer ${
-            activeTab === 'all' 
-              ? 'bg-[#082142] text-white shadow-md' 
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          All Feed
-        </button>
-        <button
-          onClick={() => setActiveTab('events')}
-          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border-none cursor-pointer ${
-            activeTab === 'events' 
-              ? 'bg-[#082142] text-white shadow-md' 
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Upcoming Events
-        </button>
-        <button
-          onClick={() => setActiveTab('blogs')}
-          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border-none cursor-pointer ${
-            activeTab === 'blogs' 
-              ? 'bg-[#082142] text-white shadow-md' 
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Articles & Blogs
-        </button>
-      </div>
-
-      {/* Bento Box Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {feedItems.map((item, idx) => {
-          const styles = getBentoCardStyles(idx);
-          const decorText = getDecorativeText(item);
-          
-          if (item.feedType === 'event') {
-            const { day, month } = formatEventDate(item.date);
-            const isOpen = item.status === 'open';
-            
-            return (
-              <div key={`event-${item.id}-${idx}`} className={styles.container}>
-                {/* Sports Outline Text Watermark */}
-                <div className={`absolute -bottom-6 -right-6 text-[100px] font-black uppercase select-none tracking-tighter opacity-100 leading-none ${styles.decorColor}`}>
-                  {decorText}
-                </div>
-
-                {/* Card Header Info */}
-                <div className="z-10 text-left">
-                  <div className="flex justify-between items-start gap-2.5">
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${styles.badge}`}>
-                      {item.category}
-                    </span>
-                    
-                    {/* Date Badge */}
-                    <div className="flex flex-col items-center leading-none text-right shrink-0">
-                      <span className="text-xl font-black">{day}</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">{month}</span>
-                    </div>
-                  </div>
-
-                  <h3 className="text-lg font-black leading-snug mt-4 max-w-[90%]">
-                    {item.title}
-                  </h3>
-                  
-                  <p className="text-xs font-semibold opacity-75 mt-2.5 leading-relaxed max-w-[95%]">
-                    {item.description}
-                  </p>
-                </div>
-
-                {/* Card Footer Info */}
-                <div className="z-10 mt-8 flex items-end justify-between text-left">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                      <Clock size={13} className={styles.accentText} />
-                      <span>{item.time}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                      <MapPin size={13} className={styles.accentText} />
-                      <span>{item.venue}</span>
-                    </div>
-                  </div>
-
-                  {/* Register Button */}
-                  {isOpen ? (
-                    <a
-                      href={`#/events/registration?event=${item.id}`}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:translate-x-1 ${styles.button}`}
-                    >
-                      <ArrowRight size={18} weight="bold" />
-                    </a>
-                  ) : (
-                    <span className="text-[10px] font-black tracking-widest uppercase opacity-40 px-2">
-                      Closed
-                    </span>
-                  )}
-                </div>
+      {loading ? (
+        // Pulse Skeleton Loading States
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="border border-slate-100 rounded-2xl p-5 bg-white space-y-4 animate-pulse">
+              <div className="h-44 bg-slate-200 rounded-xl w-full"></div>
+              <div className="h-5 bg-slate-200 rounded w-2/3"></div>
+              <div className="h-3 bg-slate-200 rounded w-full"></div>
+              <div className="h-3 bg-slate-200 rounded w-5/6"></div>
+              <div className="flex justify-between items-center pt-2">
+                <div className="h-8 bg-slate-200 rounded-full w-24"></div>
+                <div className="h-8 bg-slate-200 rounded-full w-20"></div>
               </div>
-            );
-          } else {
-            // It is a Blog Post item
-            return (
-              <div 
-                key={`blog-${item.id}-${idx}`} 
-                onClick={() => setViewingArticle(item)}
-                className={`${styles.container} cursor-pointer`}
-              >
-                {/* Sports Outline Text Watermark */}
-                <div className={`absolute -bottom-6 -right-6 text-[100px] font-black uppercase select-none tracking-tighter opacity-100 leading-none ${styles.decorColor}`}>
-                  {decorText}
-                </div>
-
-                {/* Card Header Info */}
-                <div className="z-10 text-left w-full">
-                  <div className="flex justify-between items-center">
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${styles.badge}`}>
-                      {item.category}
-                    </span>
-                    <span className="text-[9px] font-bold opacity-60">
-                      {item.date}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-black leading-snug mt-4">
-                    {item.title}
-                  </h3>
-                  
-                  <p className="text-xs font-semibold opacity-75 mt-2.5 leading-relaxed">
-                    {item.excerpt}
-                  </p>
-                </div>
-
-                {/* Card Footer Info */}
-                <div className="z-10 mt-8 flex items-center justify-between w-full text-left">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-200/50 flex items-center justify-center border border-slate-300/20">
-                      <User size={12} />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold leading-none">{item.author}</p>
-                      <p className="text-[8px] opacity-60 mt-0.5">Coach/Staff</p>
-                    </div>
-                  </div>
-
-                  {/* Read Article Arrow Button */}
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:translate-x-1 ${styles.button}`}
-                  >
-                    <ArrowRight size={18} weight="bold" />
-                  </div>
-                </div>
-              </div>
-            );
-          }
-        })}
-      </div>
-
-      {feedItems.length === 0 && (
-        <div className="text-center py-24 text-[#082142]/60 bg-slate-50 rounded-xl border border-slate-100 mt-6 font-semibold">
-          <p>No active events or articles matching this tab at this time.</p>
+            </div>
+          ))}
         </div>
-      )}
-
-      {/* ARTICLE READER MODAL (Portal to document.body) */}
-      {viewingArticle && createPortal(
-        <div 
-          className="fixed inset-0 bg-[#082142]/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setViewingArticle(null)}
-        >
-          <div 
-            className="bg-white text-[#082142] rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-scale-up text-left"
-            onClick={(e) => e.stopPropagation()}
+      ) : error ? (
+        <div className="text-center py-16 bg-rose-50/50 rounded-2xl border border-rose-100 max-w-lg mx-auto">
+          <WarningCircle size={40} className="text-rose-500 mx-auto mb-3" />
+          <h4 className="font-bold text-primary text-sm mb-1">Failed to Load Content</h4>
+          <p className="text-xs text-text-light mb-4">{error}</p>
+          <button 
+            onClick={fetchEventsData}
+            className="px-4 py-2 bg-primary text-white font-semibold text-xs rounded-lg cursor-pointer"
           >
-            {/* Header Area */}
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <div>
-                <span className="text-[9px] font-black uppercase bg-[#e6f7f5] text-[#00a896] px-3 py-1 rounded-full">
-                  {viewingArticle.category}
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 ml-3">
-                  Published on {viewingArticle.date}
-                </span>
-              </div>
-              <button 
-                onClick={() => setViewingArticle(null)} 
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors border-none cursor-pointer outline-none text-[#082142]"
-              >
-                <X size={16} weight="bold" />
-              </button>
-            </div>
+            Retry Fetching
+          </button>
+        </div>
+      ) : events.length === 0 ? (
+        <div className="text-center py-20 bg-slate-50 rounded-xl border border-slate-100 max-w-lg mx-auto">
+          <Calendar size={44} className="text-primary/40 mx-auto mb-3" />
+          <p className="text-xs text-text-light font-bold">No active events found in this category at this time.</p>
+        </div>
+      ) : (
+        <>
+          {/* Card Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {events.map((evt) => {
+              const coverUrl = evt.coverMedia 
+                ? (evt.coverMedia.startsWith('http') || evt.coverMedia.startsWith('/images') || evt.coverMedia.startsWith('/uploads') ? evt.coverMedia : `http://localhost:5000${evt.coverMedia}`)
+                : 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop';
+              
+              const calculatedStatus = getDisplayState(evt.status, evt.startDate, evt.endDate);
 
-            {/* Content Area */}
-            <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-5">
-              <h2 className="text-2xl md:text-3xl font-black leading-tight text-[#082142]">
-                {viewingArticle.title}
-              </h2>
+              return (
+                <div 
+                  key={evt._id} 
+                  className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group"
+                >
+                  {/* Image and status badge overlay */}
+                  <div className="h-48 overflow-hidden relative bg-soft-light flex-shrink-0">
+                    <img 
+                      src={coverUrl} 
+                      alt={evt.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
+                    />
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full ${getStatusBadgeStyles(evt.status, evt.startDate, evt.endDate)}`}>
+                        {calculatedStatus}
+                      </span>
+                    </div>
+                    <div className="absolute top-4 right-4 z-10">
+                      <span className="text-[9px] font-extrabold uppercase bg-primary text-white px-2.5 py-1 rounded">
+                        {evt.category}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3 border-y border-slate-100 py-3">
-                <div className="w-9 h-9 rounded-full bg-[#e6f7f5] text-[#00a896] flex items-center justify-center font-bold">
-                  {viewingArticle.author.substring(0, 2).toUpperCase()}
+                  {/* Card description details */}
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-base font-bold text-primary group-hover:text-accent transition-colors leading-snug line-clamp-1 mb-2">
+                      {evt.title}
+                    </h3>
+                    
+                    <p className="text-xs text-text-light line-clamp-2 leading-relaxed mb-4">
+                      {evt.shortDescription}
+                    </p>
+
+                    <div className="mt-auto space-y-2 border-t border-slate-50 pt-4 text-xs font-medium text-slate-500">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-accent" />
+                        <span>
+                          {formatDate(evt.startDate)}
+                          {evt.endDate && ` - ${formatDate(evt.endDate)}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin size={14} className="text-accent" />
+                        <span className="line-clamp-1">{evt.location}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex gap-2">
+                      <a 
+                        href={`#/events/${evt.slug}`}
+                        className="flex-1 py-2 bg-primary hover:bg-[#00a896] text-white hover:text-white transition-all text-center rounded-lg text-xs font-bold"
+                      >
+                        View Details
+                      </a>
+                      {evt.registrationRequired && calculatedStatus === 'Upcoming' && (
+                        <a 
+                          href={`#/events/registration?event=${evt.id}`}
+                          className="px-3.5 py-2 border border-border-gray hover:border-primary text-primary hover:bg-soft-light transition-all rounded-lg text-xs font-bold"
+                        >
+                          Register
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-black">{viewingArticle.author}</p>
-                  <p className="text-[10px] text-slate-500 font-bold">RLBSA Coaching & Wellness Contributor</p>
-                </div>
-              </div>
-
-              <div className="text-sm text-slate-600 leading-relaxed font-medium space-y-4 pt-2">
-                {viewingArticle.content.split('\n').map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer Area */}
-            <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-between items-center shrink-0 rounded-b-3xl">
-              <span className="text-[10px] font-black text-slate-500 tracking-wider">
-                © RANILAXMIBAI SPORTS ACADEMY
-              </span>
-              <button 
-                onClick={() => setViewingArticle(null)}
-                className="px-5 py-2 bg-[#082142] hover:bg-[#00a896] text-white font-bold rounded-xl transition-colors border-none cursor-pointer text-xs"
-              >
-                Close Article
-              </button>
-            </div>
+              );
+            })}
           </div>
-        </div>,
-        document.body
+
+          {/* Pagination Strategy */}
+          {sub === 'all' && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-12 border-t border-slate-100 pt-6">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                className="w-9 h-9 rounded-full border border-border-gray hover:border-primary text-primary flex items-center justify-center cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <span className="text-xs font-bold text-primary">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                className="w-9 h-9 rounded-full border border-border-gray hover:border-primary text-primary flex items-center justify-center cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </section>
+  );
+};
+
+
+// ----------------------------------------------------
+// DYNAMIC EVENT DETAIL PAGE COMPONENT
+// ----------------------------------------------------
+interface EventDetailProps {
+  slug: string;
+}
+
+export const EventDetail: React.FC<EventDetailProps> = ({ slug }) => {
+  const [event, setEvent] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`http://localhost:5000/api/public/events/${slug}`)
+      .then(res => {
+        if (!res.ok) {
+          if (res.status === 403) throw new Error("Private or draft content access is restricted.");
+          if (res.status === 404) throw new Error("The requested event details could not be found.");
+          throw new Error("Failed to load details sheet.");
+        }
+        return res.json();
+      })
+      .then(data => setEvent(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+  };
+
+  const getDisplayState = (status: string, startDateStr: string, endDateStr?: string) => {
+    const now = new Date();
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date(start.getTime() + 24*60*60*1000);
+
+    if (status === 'Cancelled') return 'Cancelled';
+    if (status === 'Postponed') return 'Postponed';
+
+    if (start > now) return 'Upcoming';
+    if (start <= now && end >= now) return 'Ongoing';
+    return 'Completed';
+  };
+
+  if (loading) {
+    return (
+      <div className="py-24 px-5 max-w-4xl mx-auto space-y-6 animate-pulse text-left">
+        <div className="h-64 bg-slate-200 rounded-2xl w-full"></div>
+        <div className="h-8 bg-slate-200 rounded w-1/2"></div>
+        <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+        <div className="space-y-2 pt-4">
+          <div className="h-3 bg-slate-200 rounded w-full"></div>
+          <div className="h-3 bg-slate-200 rounded w-full"></div>
+          <div className="h-3 bg-slate-200 rounded w-4/5"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="py-24 px-5 max-w-md mx-auto text-center">
+        <WarningCircle size={48} className="text-rose-500 mx-auto mb-4" />
+        <h3 className="text-lg font-black text-primary mb-2">Details Retrieval Failed</h3>
+        <p className="text-xs text-text-light leading-relaxed mb-6">{error || "Event detail not found."}</p>
+        <a 
+          href="#/events/all"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary hover:bg-[#00a896] text-white font-bold rounded-xl transition-all text-xs"
+        >
+          <ArrowUUpLeft size={16} /> Back to Events feed
+        </a>
+      </div>
+    );
+  }
+
+  const coverUrl = event.coverMedia 
+    ? (event.coverMedia.startsWith('http') || event.coverMedia.startsWith('/images') || event.coverMedia.startsWith('/uploads') ? event.coverMedia : `http://localhost:5000${event.coverMedia}`)
+    : 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop';
+
+  const calculatedStatus = getDisplayState(event.status, event.startDate, event.endDate);
+
+  return (
+    <article className="py-12 px-5 max-w-4xl mx-auto animate-fade-in text-left">
+      {/* Return button */}
+      <a 
+        href="#/events/all"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary border-b border-border-gray hover:border-primary pb-1 mb-8"
+      >
+        <ArrowLeft size={14} /> Back to Events listing
+      </a>
+
+      {/* Cover image header banner */}
+      <div className="h-[300px] md:h-[400px] w-full rounded-2xl overflow-hidden relative shadow-md bg-soft-light mb-8 border border-slate-100">
+        <img 
+          src={coverUrl} 
+          alt={event.title} 
+          className="w-full h-full object-cover" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/65 via-primary/10 to-transparent"></div>
+        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider bg-[#00a896] px-3 py-1 rounded mb-2 inline-block">
+              {event.category}
+            </span>
+            <h1 className="text-xl md:text-3xl font-black leading-tight text-white drop-shadow-md">
+              {event.title}
+            </h1>
+          </div>
+          <span className="bg-white/95 text-primary text-xs font-black uppercase px-4 py-1.5 rounded-full shrink-0 border border-slate-100 self-start md:self-auto">
+            {calculatedStatus}
+          </span>
+        </div>
+      </div>
+
+      {/* Grid details block */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left main content body */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-slate-50 border border-slate-100 p-6 rounded-2xl">
+            <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">Brief Summary</h3>
+            <p className="text-sm font-medium text-slate-600 leading-relaxed">
+              {event.shortDescription}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-base font-black text-primary border-b border-slate-100 pb-2">Full Program Description</h3>
+            <div 
+              className="text-sm text-slate-600 leading-relaxed font-medium space-y-4 overflow-hidden break-words"
+              dangerouslySetInnerHTML={{ __html: event.content }}
+            />
+          </div>
+
+          {/* Event Gallery */}
+          {event.galleryMedia && event.galleryMedia.length > 0 && (
+            <div className="space-y-4 pt-4">
+              <h3 className="text-base font-black text-primary border-b border-slate-100 pb-2">Event Media Gallery</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {event.galleryMedia.map((url: string, index: number) => {
+                  const mediaUrl = url.startsWith('http') || url.startsWith('/images') || url.startsWith('/uploads') ? url : `http://localhost:5000${url}`;
+                  return (
+                    <div 
+                      key={index} 
+                      className="h-28 rounded-xl overflow-hidden border border-slate-100 shadow-sm cursor-pointer hover:scale-105 transition-all"
+                    >
+                      <img src={mediaUrl} alt={`gallery-${index}`} className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar quick check details */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-[#e6f7f5] text-primary p-6 rounded-2xl border border-[#00a896]/20">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-primary border-b border-[#00a896]/25 pb-2.5 mb-4">
+              Timing & Location
+            </h3>
+            
+            <div className="space-y-4 text-xs font-bold">
+              <div className="flex gap-2">
+                <Calendar size={18} className="text-[#00a896] shrink-0" />
+                <div>
+                  <p className="text-text-light font-medium uppercase text-[9px] leading-none mb-1">Date</p>
+                  <p className="leading-tight">
+                    {formatDate(event.startDate)}
+                    {event.endDate && (
+                      <span className="block mt-0.5 text-slate-600">
+                        to {formatDate(event.endDate)}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {(event.startTime || event.time) && (
+                <div className="flex gap-2">
+                  <Clock size={18} className="text-[#00a896] shrink-0" />
+                  <div>
+                    <p className="text-text-light font-medium uppercase text-[9px] leading-none mb-1">Time</p>
+                    <p className="leading-tight">
+                      {event.startTime || event.time}
+                      {event.endTime && ` - ${event.endTime}`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <MapPin size={18} className="text-[#00a896] shrink-0" />
+                <div>
+                  <p className="text-text-light font-medium uppercase text-[9px] leading-none mb-1">Venue</p>
+                  <p className="leading-tight">{event.location || event.venue}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Registration sidebar block */}
+          {calculatedStatus === 'Upcoming' && (
+            <div className="bg-[#082142] text-white p-6 rounded-2xl border border-primary/20">
+              <h3 className="text-xs font-bold uppercase tracking-wider border-b border-white/10 pb-2.5 mb-4">
+                Slot Registration
+              </h3>
+              {event.registrationRequired ? (
+                <div>
+                  <p className="text-xs opacity-75 leading-relaxed mb-5">
+                    Official booking is required for this activity. Click register below to submit details and request entry credentials.
+                  </p>
+                  <a 
+                    href={event.registrationUrl || `#/events/registration?event=${event.id}`}
+                    className="block w-full py-2.5 bg-[#00a896] hover:bg-accent text-white hover:text-primary transition-all text-center rounded-xl text-xs font-bold"
+                  >
+                    Register Online Now
+                  </a>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs opacity-75 leading-relaxed">
+                    This event is open for all general audiences. No prior booking required. Gate entry is free.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
   );
 };

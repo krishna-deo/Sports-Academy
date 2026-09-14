@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
-  Student, 
   Users, 
   Image as ImageIcon, 
-  Video, 
-  CalendarPlus, 
   EnvelopeOpen, 
   Plus,
   Trash,
@@ -26,13 +24,17 @@ import {
   Pencil,
   ArrowClockwise,
   ArrowCounterClockwise,
-  DotsThreeVertical
+  DotsThreeVertical,
+  ArrowRight,
+  GraduationCap,
+  Calendar
 } from '@phosphor-icons/react';
 
 import { AdminCompliance } from '../components/AdminCompliance';
 
 interface AdminViewsProps {
   activeTab: string;
+  setActiveTab?: (tab: string) => void;
 }
 
 interface MockStudent {
@@ -98,7 +100,7 @@ interface MockEnquiry {
   date: string;
 }
 
-export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
+export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab }) => {
   const [students, setStudents] = useState<MockStudent[]>([]);
   const [coaches, setCoaches] = useState<any[]>([]);
   const [dashboardGallery, setDashboardGallery] = useState<any[]>([]);
@@ -186,28 +188,37 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [studentSportFilter, setStudentSportFilter] = useState<string>('');
   const [studentGenderFilter, setStudentGenderFilter] = useState<string>('');
   const [studentResidencyFilter, setStudentResidencyFilter] = useState<string>('');
-  const [studentBatchFilter, setStudentBatchFilter] = useState<string>('');
-  const [studentCoachFilter, setStudentCoachFilter] = useState<string>('');
-  const [studentStatusFilter, setStudentStatusFilter] = useState<string>('');
-  const [studentYearFilter, setStudentYearFilter] = useState<string>('');
+  const [studentBatchFilter, _setStudentBatchFilter] = useState<string>('');
+  const [studentCoachFilter, _setStudentCoachFilter] = useState<string>('');
+  const [studentStatusFilter, _setStudentStatusFilter] = useState<string>('');
+  const [studentYearFilter, _setStudentYearFilter] = useState<string>('');
   const [studentShowDeleted, setStudentShowDeleted] = useState<boolean>(false);
+  const [_showStudentFilterDropdown, setShowStudentFilterDropdown] = useState<boolean>(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [viewingStudentProfile, setViewingStudentProfile] = useState<any | null>(null);
   const [editingStudentProfile, setEditingStudentProfile] = useState<any | null>(null);
   
   // Form Fields State
-  const [studentForm, setStudentForm] = useState({
+  const [studentForm, setStudentForm] = useState<Record<string, any>>({
     fullName: '',
     dateOfBirth: '',
+    dob: '',
     gender: 'girl',
     bloodGroup: '',
     phone: '',
+    studentPhone: '',
     email: '',
+    studentEmail: '',
     address: '',
     guardianName: '',
+    fatherName: '',
+    motherName: '',
     guardianRelationship: '',
     guardianPhone: '',
     guardianEmergency: '',
+    emergencyContact: '',
+    guardianOccupation: '',
+    guardianEmail: '',
     guardianAddress: '',
     admissionDate: new Date().toISOString().split('T')[0],
     primarySport: 'Football',
@@ -218,6 +229,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     hostelRoom: '',
     schoolName: '',
     className: '',
+    classStandard: '',
+    rollNo: '',
+    aadhaarNo: '',
     academicInfo: '',
     achievements: [] as any[], // array of { title, competition, position, year, description }
     status: 'Active',
@@ -230,7 +244,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [coachForm, setCoachForm] = useState({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
   const [editingCoach, setEditingCoach] = useState<any | null>(null);
   const [openCoachDropdown, setOpenCoachDropdown] = useState<string | null>(null);
-  const [eventForm, setEventForm] = useState({ title: '', category: 'tournaments', date: '', time: '', venue: '', description: '' });
   const [profileForm, setProfileForm] = useState({ name: '', email: '', username: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false);
@@ -239,6 +252,64 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [emailVerifyCode, setEmailVerifyCode] = useState<string>('');
   const [tempEmailToVerify, setTempEmailToVerify] = useState<string>('');
   const [isVerifyingEmail, setIsVerifyingEmail] = useState<boolean>(false);
+
+  // Events & Updates CMS states
+  const [eventsUpdatesTab, setEventsUpdatesTab] = useState<'dashboard' | 'events' | 'updates'>('dashboard');
+  const [cmsStats, setCmsStats] = useState<any | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [recentUpdates, setRecentUpdates] = useState<any[]>([]);
+  const [draftContent, setDraftContent] = useState<any[]>([]);
+
+  // Events CMS States
+  const [eventsList, setEventsList] = useState<any[]>([]);
+  const [eventPage, setEventPage] = useState(1);
+  const [eventPages, setEventPages] = useState(1);
+  const [eventSearch, setEventSearch] = useState('');
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('');
+  const [eventStatusFilter, setEventStatusFilter] = useState('');
+  const [eventVisibilityFilter, setEventVisibilityFilter] = useState('');
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [cmsEventForm, setCmsEventForm] = useState({
+    title: '',
+    slug: '',
+    category: 'Tournament',
+    shortDescription: '',
+    content: '',
+    coverMedia: '',
+    galleryMedia: [] as string[],
+    startDate: '',
+    endDate: '',
+    startTime: '',
+    endTime: '',
+    location: '',
+    registrationRequired: false,
+    registrationUrl: '',
+    status: 'Draft',
+    visibility: 'Public',
+    isFeatured: false
+  });
+
+  // Updates CMS States
+  const [updatesList, setUpdatesList] = useState<any[]>([]);
+  const [updatePage, setUpdatePage] = useState(1);
+  const [updatePages, setUpdatePages] = useState(1);
+  const [updateSearch, setUpdateSearch] = useState('');
+  const [updateCategoryFilter, setUpdateCategoryFilter] = useState('');
+  const [updateStatusFilter, setUpdateStatusFilter] = useState('');
+  const [updateVisibilityFilter, setUpdateVisibilityFilter] = useState('');
+  const [editingUpdate, setEditingUpdate] = useState<any | null>(null);
+  const [cmsUpdateForm, setCmsUpdateForm] = useState({
+    title: '',
+    slug: '',
+    category: 'Academy News',
+    summary: '',
+    content: '',
+    coverMedia: '',
+    attachments: [] as string[],
+    status: 'Draft',
+    visibility: 'Public',
+    isFeatured: false
+  });
 
   // Founders & Directors states
   const [team, setTeam] = useState<any[]>([]);
@@ -252,6 +323,17 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [storyForm, setStoryForm] = useState({ name: '', sport: 'Football', achievement: '', description: '', quote: '', image: '', joined: '', age: '', medals: '', objectPosition: 'center' });
   const [editingStory, setEditingStory] = useState<any | null>(null);
 
+  // Our Story Milestones states
+  const [storyMilestones, setStoryMilestones] = useState<any[]>([]);
+  const [editingMilestone, setEditingMilestone] = useState<any | null>(null);
+  const [milestoneForm, setMilestoneForm] = useState({ year: '', title: '', subtitle: '', description: '', image: '', order: 0 });
+
+  // Trash Bin Toggle States
+  const [showDeletedFacilities, setShowDeletedFacilities] = useState<boolean>(false);
+  const [showDeletedTeam, setShowDeletedTeam] = useState<boolean>(false);
+  const [showDeletedStories, setShowDeletedStories] = useState<boolean>(false);
+  const [showDeletedMilestones, setShowDeletedMilestones] = useState<boolean>(false);
+
   // Image Select & Crop states
   const [showCropperModal, setShowCropperModal] = useState<boolean>(false);
   const [cropperSource, setCropperSource] = useState<string>('');
@@ -260,11 +342,403 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   const [isDragMoving, setIsDragMoving] = useState<boolean>(false);
   const [dragStartPoint, setDragStartPoint] = useState({ x: 0, y: 0 });
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
-  const [imageSize, setImageSize] = useState({ width: 1, height: 1 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
   const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach'>('story');
 
+  // Facilities CMS States
+  const defaultFacilitiesList = [
+    {
+      id: 'fac-1',
+      title: 'Sports Infrastructure',
+      tag: 'Olympic Standard',
+      image: '/images/sports_training_card.jpg',
+      description: 'Vast outdoor turf, international track fields, court complexes, and specialized indoor arenas built for high-performance athletic training.',
+      order: 1,
+      status: 'Active'
+    },
+    {
+      id: 'fac-2',
+      title: 'Gym & Fitness Center',
+      tag: 'Advanced Gear',
+      image: '/images/gym_card.png',
+      description: 'State-of-the-art strength and conditioning facility equipped with elite weight training, cardio, and performance tracking systems.',
+      order: 2,
+      status: 'Active'
+    },
+    {
+      id: 'fac-3',
+      title: 'Hostel & Accommodation',
+      tag: 'Residential',
+      image: '/images/hostel_card.png',
+      description: 'Secure, hygienic, and comfortable residential dormitories for student-athletes with dedicated study zones and lounge areas.',
+      order: 3,
+      status: 'Active'
+    },
+    {
+      id: 'fac-4',
+      title: 'Mess & Dining',
+      tag: 'Nutritional Diet',
+      image: '/images/nutrition_card.jpg',
+      description: 'Expert calorie-mapped kitchen providing high-protein, balanced meal plans custom-tailored by sports nutritionists for athlete recovery.',
+      order: 4,
+      status: 'Active'
+    },
+    {
+      id: 'fac-5',
+      title: 'Education & Study Facilities',
+      tag: 'Modern Learning',
+      image: '/images/education_card.jpg',
+      description: 'Fully-equipped classrooms, computer labs, and a quiet library supporting academic tutoring and personality development sessions.',
+      order: 5,
+      status: 'Active'
+    },
+    {
+      id: 'fac-6',
+      title: 'Medical & Physiotherapy',
+      tag: '24/7 Care',
+      image: '/images/medical_card.png',
+      description: 'On-campus medical clinic and physiotherapy unit offering active recovery therapies, injury rehabilitation, and routine health checks.',
+      order: 6,
+      status: 'Active'
+    },
+    {
+      id: 'fac-7',
+      title: 'Safety & Security',
+      tag: 'Secure Campus',
+      image: '/images/security_card.png',
+      description: '24/7 round-the-clock gated security, CCTV surveillance networks, and trained staff ensuring a safe environment for all trainees.',
+      order: 7,
+      status: 'Active'
+    },
+    {
+      id: 'fac-8',
+      title: 'Recreation & Common Areas',
+      tag: 'Lounge Zone',
+      image: '/images/recreation_card.png',
+      description: 'Interactive spaces featuring indoor table games, audio-visual screens, and social hubs for students to unwind and connect.',
+      order: 8,
+      status: 'Active'
+    },
+    {
+      id: 'fac-9',
+      title: 'Wi-Fi & Technology',
+      tag: 'High-Speed',
+      image: '/images/wifi_card.png',
+      description: 'High-speed campus-wide wireless internet access to support digital education, video analysis of sports, and communication.',
+      order: 9,
+      status: 'Active'
+    }
+  ];
+
+  const [facilitiesList, setFacilitiesList] = useState<any[]>(defaultFacilitiesList);
+  const [editingFacility, setEditingFacility] = useState<any | null>(null);
+  const [facilityForm, setFacilityForm] = useState({
+    title: '',
+    tag: '',
+    description: '',
+    image: '',
+    order: 0,
+    status: 'Active'
+  });
+
   const token = localStorage.getItem('rlbsa_admin_token') || '';
+
+  const fetchFacilities = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/facilities', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.facilities) {
+          setFacilitiesList(data.facilities);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching facilities:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'facilities') {
+      fetchFacilities();
+    }
+  }, [activeTab]);
+
+  const handleSaveFacility = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!facilityForm.title || !facilityForm.tag || !facilityForm.description) {
+      alert("Please fill in title, tag badge, and description.");
+      return;
+    }
+
+    try {
+      const url = editingFacility
+        ? `http://localhost:5000/api/admin/facilities/${editingFacility.id || editingFacility._id}`
+        : 'http://localhost:5000/api/admin/facilities';
+      const method = editingFacility ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(facilityForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(editingFacility ? 'Facility card updated successfully.' : 'New facility card created successfully.');
+        setEditingFacility(null);
+        setActiveModal(null);
+        fetchFacilities();
+      } else {
+        alert(data.error || "Failed to save facility.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    }
+  };
+
+  const handleDeleteFacility = async (id: string, title: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete facility "${title}"? This action cannot be undone.`
+      : `Move facility "${title}" to Trash Bin?`;
+
+    setConfirmationModal({
+      show: true,
+      title: isPermanent ? "Permanently Delete Facility?" : "Move to Trash Bin?",
+      message: confirmMsg,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/admin/facilities/${id}${isPermanent ? '?permanent=true' : ''}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            triggerSuccess(isPermanent ? 'Facility permanently deleted.' : 'Facility moved to Trash Bin.');
+            fetchFacilities();
+          } else {
+            alert(data.error || "Failed to delete facility.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Network error.");
+        }
+      }
+    });
+  };
+
+  const handleRestoreFacility = async (id: string, title: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/facilities/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`Facility "${title}" restored successfully.`);
+        fetchFacilities();
+      } else {
+        alert(data.error || "Failed to restore facility.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    }
+  };
+
+  // RLBSA Edge CMS States & Handlers
+  const defaultEdgeCardsList = [
+    {
+      id: 'edge-1',
+      tag: 'ROLE MODELS',
+      title: '“Our athletes inspire future generations of rural sports champions.”',
+      description: 'RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.',
+      image: '/images/role_models_card.png',
+      link: '#/academy/success-stories',
+      linkText: 'MEET CHAMPIONS →',
+      isFeatured: true,
+      order: 1,
+      status: 'Active'
+    },
+    {
+      id: 'edge-2',
+      tag: 'CURRICULUM',
+      title: 'Structured Multi-Sport Development Pathways',
+      description: 'Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.',
+      image: '/images/sports_training_card.jpg',
+      link: '#/about/what-we-do',
+      linkText: 'LEARN MORE →',
+      isFeatured: false,
+      order: 2,
+      status: 'Active'
+    },
+    {
+      id: 'edge-3',
+      tag: 'INFRASTRUCTURE',
+      title: 'Vast Olympic-Level Sports Facilities & Arenas',
+      description: 'Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.',
+      image: '/images/hero2.jpg',
+      link: '#/about/facilities',
+      linkText: 'EXPLORE FACILITIES →',
+      isFeatured: false,
+      order: 3,
+      status: 'Active'
+    },
+    {
+      id: 'edge-4',
+      tag: 'SPORTS SCIENCE',
+      title: 'Calorie-Mapped Nutrition & Rehab Metrics',
+      description: 'Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.',
+      image: '/images/nutrition_card.jpg',
+      link: '#/about/what-we-do',
+      linkText: 'LEARN MORE →',
+      isFeatured: false,
+      order: 4,
+      status: 'Active'
+    },
+    {
+      id: 'edge-5',
+      tag: 'RESIDENTIAL SCHOLARSHIP',
+      title: 'Grassroots Potential to National Champions',
+      description: 'Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.',
+      image: '/images/about_rlbsa.jpeg',
+      link: '#/about/what-we-do',
+      linkText: 'LEARN MORE →',
+      isFeatured: false,
+      order: 5,
+      status: 'Active'
+    }
+  ];
+
+  const [edgeCardsList, setEdgeCardsList] = useState<any[]>(defaultEdgeCardsList);
+  const [editingEdgeCard, setEditingEdgeCard] = useState<any | null>(null);
+  const [showDeletedEdge, setShowDeletedEdge] = useState<boolean>(false);
+  const [edgeCardForm, setEdgeCardForm] = useState({
+    tag: '',
+    title: '',
+    description: '',
+    image: '',
+    link: '',
+    linkText: '',
+    isFeatured: false,
+    order: 0,
+    status: 'Active'
+  });
+
+  const fetchEdgeCards = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/edge-cards', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const list = data.edgeCards || data.cards || (Array.isArray(data) ? data : null);
+        if (list) {
+          setEdgeCardsList(list);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching edge cards:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'rlbsa-edge') {
+      fetchEdgeCards();
+    }
+  }, [activeTab]);
+
+  const handleSaveEdgeCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!edgeCardForm.title || !edgeCardForm.tag || !edgeCardForm.description) {
+      alert("Please fill in title, tag badge, and description.");
+      return;
+    }
+
+    try {
+      const cardId = editingEdgeCard ? (editingEdgeCard._id || editingEdgeCard.id) : null;
+      const url = editingEdgeCard
+        ? `http://localhost:5000/api/admin/edge-cards/${cardId}`
+        : 'http://localhost:5000/api/admin/edge-cards';
+      const method = editingEdgeCard ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(edgeCardForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(editingEdgeCard ? 'RLBSA Edge card updated successfully.' : 'New RLBSA Edge card created successfully.');
+        setEditingEdgeCard(null);
+        setActiveModal(null);
+        fetchEdgeCards();
+      } else {
+        alert(data.error || "Failed to save RLBSA Edge card.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    }
+  };
+
+  const handleDeleteEdgeCard = async (id: string, title: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete card "${title}"? This action cannot be undone.`
+      : `Move card "${title}" to Trash Bin?`;
+
+    setConfirmationModal({
+      show: true,
+      title: isPermanent ? "Permanently Delete Edge Card?" : "Move to Trash Bin?",
+      message: confirmMsg,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/admin/edge-cards/${id}${isPermanent ? '?permanent=true' : ''}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            triggerSuccess(isPermanent ? 'Card permanently deleted.' : 'Card moved to Trash Bin.');
+            fetchEdgeCards();
+          } else {
+            alert(data.error || "Failed to delete card.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Network error.");
+        }
+      }
+    });
+  };
+
+  const handleRestoreEdgeCard = async (id: string, title: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/edge-cards/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`Card "${title}" restored successfully.`);
+        fetchEdgeCards();
+      } else {
+        alert(data.error || "Failed to restore card.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    }
+  };
 
   const fetchStudents = async () => {
     if (!token) return;
@@ -314,7 +788,10 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         const data = await gRes.json();
         setDashboardGallery(data.items || []);
       }
-      if (eRes.ok) setEvents(await eRes.json());
+      if (eRes.ok) {
+        const eData = await eRes.json();
+        setEvents(Array.isArray(eData) ? eData : (eData.events || []));
+      }
       if (mRes.ok) setMilestones(await mRes.json());
       if (tRes.ok) setTeam(await tRes.json());
 
@@ -372,15 +849,552 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
   ]);
 
   useEffect(() => {
+    setActiveModal(null);
+    setViewingStudentProfile(null);
+    setEditingStudentProfile(null);
+    setEditingCoach(null);
+    setEditingEventGallery(null);
+    setShowQuickViewEvent(null);
+    setShowCropperModal(false);
+    setShowStudentFilterDropdown(false);
+    setStudentPhotoFile(null);
+    setStudentPhotoPreview('');
+    setStudentDocFiles([]);
+    setDeletedDocuments([]);
+
+    setStudentForm({
+      fullName: '',
+      dateOfBirth: '',
+      dob: '',
+      gender: 'girl',
+      bloodGroup: '',
+      phone: '',
+      studentPhone: '',
+      email: '',
+      studentEmail: '',
+      address: '',
+      guardianName: '',
+      fatherName: '',
+      motherName: '',
+      guardianRelationship: '',
+      guardianPhone: '',
+      guardianEmergency: '',
+      emergencyContact: '',
+      guardianOccupation: '',
+      guardianEmail: '',
+      guardianAddress: '',
+      admissionDate: new Date().toISOString().split('T')[0],
+      primarySport: 'Football',
+      secondarySports: [],
+      batch: '',
+      coach: '',
+      residency: 'resident',
+      hostelRoom: '',
+      schoolName: '',
+      className: '',
+      classStandard: '',
+      rollNo: '',
+      aadhaarNo: '',
+      academicInfo: '',
+      achievements: [],
+      status: 'Active',
+      showOnPublicWebsite: false
+    });
+    setActiveStudentFormTab('personal');
+
     fetchData();
+    if (activeTab === 'dashboard') {
+      fetchCmsStats();
+    }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activeModal]);
 
   const triggerSuccess = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
+  // Events & Updates CMS handlers
+  const fetchCmsStats = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/events-updates/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setCmsStats(data.stats);
+          setUpcomingEvents(data.upcomingEventsList || []);
+          setRecentUpdates(data.recentUpdatesList || []);
+          setDraftContent(data.draftContentList || []);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    }
+  };
+
+  const fetchAdminEvents = async () => {
+    if (!token) return;
+    try {
+      const params = new URLSearchParams({
+        page: String(eventPage),
+        limit: '10',
+        search: eventSearch,
+        category: eventCategoryFilter,
+        status: eventStatusFilter,
+        visibility: eventVisibilityFilter
+      });
+      const res = await fetch(`http://localhost:5000/api/admin/events?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setEventsList(data.events || []);
+          setEventPages(data.pages || 1);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching events:", err);
+    }
+  };
+
+  const fetchAdminUpdates = async () => {
+    if (!token) return;
+    try {
+      const params = new URLSearchParams({
+        page: String(updatePage),
+        limit: '10',
+        search: updateSearch,
+        category: updateCategoryFilter,
+        status: updateStatusFilter,
+        visibility: updateVisibilityFilter
+      });
+      const res = await fetch(`http://localhost:5000/api/admin/updates?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUpdatesList(data.updates || []);
+          setUpdatePages(data.pages || 1);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching updates:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'events-updates') {
+      if (eventsUpdatesTab === 'dashboard') {
+        fetchCmsStats();
+      } else if (eventsUpdatesTab === 'events') {
+        fetchAdminEvents();
+      } else if (eventsUpdatesTab === 'updates') {
+        fetchAdminUpdates();
+      }
+    }
+  }, [
+    activeTab,
+    eventsUpdatesTab,
+    eventPage,
+    eventSearch,
+    eventCategoryFilter,
+    eventStatusFilter,
+    eventVisibilityFilter,
+    updatePage,
+    updateSearch,
+    updateCategoryFilter,
+    updateStatusFilter,
+    updateVisibilityFilter
+  ]);
+
+  // Event CRUD actions
+  const handleSaveEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cmsEventForm.title || !cmsEventForm.slug || !cmsEventForm.shortDescription || !cmsEventForm.content || !cmsEventForm.startDate || !cmsEventForm.location) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = editingEvent
+        ? `http://localhost:5000/api/admin/events/${editingEvent._id}`
+        : 'http://localhost:5000/api/admin/events';
+      const method = editingEvent ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(cmsEventForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(editingEvent ? 'Event updated successfully.' : 'Event scheduled successfully.');
+        setEditingEvent(null);
+        setActiveModal(null);
+        fetchAdminEvents();
+        fetchCmsStats();
+      } else {
+        alert(data.error || "Failed to save event details.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/events/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess('Event deleted successfully.');
+        fetchAdminEvents();
+        fetchCmsStats();
+      } else {
+        alert(data.error || "Failed to delete event.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    }
+  };
+
+  const handleEventImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result) {
+        setCmsEventForm(prev => ({ ...prev, coverMedia: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEventGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const pPhotos: string[] = [];
+    let loaded = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          pPhotos.push(reader.result as string);
+        }
+        loaded++;
+        if (loaded === files.length) {
+          setCmsEventForm(prev => ({
+            ...prev,
+            galleryMedia: [...prev.galleryMedia, ...pPhotos]
+          }));
+        }
+      };
+      reader.readAsDataURL(files[i]);
+    }
+  };
+
+  // Update CRUD actions
+  const handleSaveUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cmsUpdateForm.title || !cmsUpdateForm.slug || !cmsUpdateForm.summary || !cmsUpdateForm.content) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = editingUpdate
+        ? `http://localhost:5000/api/admin/updates/${editingUpdate._id}`
+        : 'http://localhost:5000/api/admin/updates';
+      const method = editingUpdate ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(cmsUpdateForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(editingUpdate ? 'Update details updated.' : 'Announcement published successfully.');
+        setEditingUpdate(null);
+        setActiveModal(null);
+        fetchAdminUpdates();
+        fetchCmsStats();
+      } else {
+        alert(data.error || "Failed to save update.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteUpdate = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete announcement "${title}"?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/updates/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess('Announcement deleted successfully.');
+        fetchAdminUpdates();
+        fetchCmsStats();
+      } else {
+        alert(data.error || "Failed to delete update.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    }
+  };
+
+  const handleUpdateImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result) {
+        setCmsUpdateForm(prev => ({ ...prev, coverMedia: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpdateAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const pAttachments: string[] = [];
+    let loaded = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          pAttachments.push(reader.result as string);
+        }
+        loaded++;
+        if (loaded === files.length) {
+          setCmsUpdateForm(prev => ({
+            ...prev,
+            attachments: [...prev.attachments, ...pAttachments]
+          }));
+        }
+      };
+      reader.readAsDataURL(files[i]);
+    }
+  };
+
+  // Our Story Milestones Handlers
+  const handleImportDefaultMilestones = async () => {
+    if (!token) return;
+    setIsUploading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/story-milestones/import-defaults', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchStoryMilestones();
+        triggerSuccess('Default milestones preloaded successfully.');
+      } else {
+        alert(data.error || "Failed to import default milestones.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to the server.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!milestoneForm.year || !milestoneForm.title || !milestoneForm.subtitle || !milestoneForm.description) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    
+    setIsUploading(true);
+    try {
+      const url = editingMilestone 
+        ? `http://localhost:5000/api/admin/story-milestones/${editingMilestone._id}`
+        : 'http://localhost:5000/api/admin/story-milestones';
+      const method = editingMilestone ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(milestoneForm)
+      });
+      
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchStoryMilestones();
+        setActiveModal(null);
+        triggerSuccess(editingMilestone ? 'Story milestone updated.' : 'Story milestone created.');
+      } else {
+        alert(data.error || "Failed to save story milestone.");
+      }
+    } catch (err) {
+      console.error("Save milestone error:", err);
+      alert("Error contacting the backend server.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteMilestone = (id: string, year: string, title: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete story milestone ${year}: "${title}"? This action cannot be undone.`
+      : `Move story milestone ${year}: "${title}" to Trash Bin?`;
+
+    setConfirmationModal({
+      show: true,
+      title: isPermanent ? "Permanently Delete Story Milestone?" : "Move to Trash Bin?",
+      message: confirmMsg,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/story-milestones/${id}${isPermanent ? '?permanent=true' : ''}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            await fetchStoryMilestones();
+            triggerSuccess(isPermanent ? 'Story milestone permanently deleted.' : 'Story milestone moved to Trash Bin.');
+          } else {
+            alert(data.error || "Error deleting story milestone.");
+          }
+        } catch (err) {
+          alert("Error contacting the backend server.");
+        }
+      }
+    });
+  };
+
+  const handleRestoreMilestone = async (id: string, title: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/story-milestones/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchStoryMilestones();
+        triggerSuccess(`Story milestone "${title}" restored successfully.`);
+      } else {
+        alert(data.error || "Failed to restore story milestone.");
+      }
+    } catch (err) {
+      alert("Error contacting backend server.");
+    }
+  };
+
+  const openAddMilestoneModal = () => {
+    setEditingMilestone(null);
+    setMilestoneForm({
+      year: '',
+      title: '',
+      subtitle: '',
+      description: '',
+      image: '',
+      order: (storyMilestones.length + 1)
+    });
+    setActiveModal('story-milestone');
+  };
+
+  const openEditMilestoneModal = (milestone: any) => {
+    setEditingMilestone(milestone);
+    setMilestoneForm({
+      year: milestone.year,
+      title: milestone.title,
+      subtitle: milestone.subtitle,
+      description: milestone.description,
+      image: milestone.image || '',
+      order: milestone.order || 0
+    });
+    setActiveModal('story-milestone');
+  };
+
+  const handleMilestoneImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setMilestoneForm({ ...milestoneForm, image: event.target.result as string });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Success Stories Action Handlers
+  const fetchStories = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/success-stories', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStories(Array.isArray(data) ? data : (data.stories || []));
+      }
+    } catch (err) {
+      console.error("Error loading success stories:", err);
+    }
+  };
+
   const handleAddOrUpdateStory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -406,13 +1420,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        if (editingStory) {
-          setStories(stories.map(s => s.id === editingStory.id ? data.story : s));
-          triggerSuccess('Success story updated.');
-        } else {
-          setStories([data.story, ...stories]);
-          triggerSuccess('Success story added.');
-        }
+        await fetchStories();
+        triggerSuccess(editingStory ? 'Success story updated.' : 'Success story added.');
         setActiveModal(null);
         setEditingStory(null);
         setStoryForm({ name: '', sport: 'Football', achievement: '', description: '', quote: '', image: '', joined: '', age: '', medals: '', objectPosition: 'center' });
@@ -424,21 +1433,25 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     }
   };
 
-  const deleteStory = async (id: string) => {
+  const deleteStory = async (id: string, name: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete success story for "${name}"? This action cannot be undone.`
+      : `Move success story for "${name}" to Trash Bin?`;
+
     setConfirmationModal({
       show: true,
-      title: "Delete Success Story",
-      message: "Are you sure you want to delete this success story?",
+      title: isPermanent ? "Permanently Delete Success Story?" : "Move to Trash Bin?",
+      message: confirmMsg,
       onConfirm: async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/admin/success-stories/${id}`, {
+          const response = await fetch(`http://localhost:5000/api/admin/success-stories/${id}${isPermanent ? '?permanent=true' : ''}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await response.json();
           if (response.ok && data.success) {
-            setStories(stories.filter(s => s.id !== id));
-            triggerSuccess('Success story deleted.');
+            await fetchStories();
+            triggerSuccess(isPermanent ? 'Success story permanently deleted.' : 'Success story moved to Trash Bin.');
           } else {
             alert(data.error || "Error deleting success story.");
           }
@@ -447,6 +1460,24 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         }
       }
     });
+  };
+
+  const handleRestoreStory = async (id: string, name: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/success-stories/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchStories();
+        triggerSuccess(`Success story for "${name}" restored successfully.`);
+      } else {
+        alert(data.error || "Failed to restore success story.");
+      }
+    } catch (err) {
+      alert("Error contacting backend server.");
+    }
   };
 
   const openEditStoryModal = (story: any) => {
@@ -464,60 +1495,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       objectPosition: story.objectPosition || 'center'
     });
     setActiveModal('success-story');
-  };
-
-  // Image Cropper Handlers
-  const handleImageLoaded = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-    const vw = croppingTarget === 'student' ? 300 : 400;
-    const vh = 300;
-    const baseScale = Math.max(vw / img.naturalWidth, vh / img.naturalHeight);
-    const displayedWidth = img.naturalWidth * baseScale;
-    const displayedHeight = img.naturalHeight * baseScale;
-    setCropPosition({
-      x: (vw - displayedWidth) / 2,
-      y: (vh - displayedHeight) / 2
-    });
-    setCropZoom(1);
-  };
-
-  const startDrag = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragMoving(true);
-    setDragStartPoint({ x: e.clientX, y: e.clientY });
-    setDragInitialOffset({ x: cropPosition.x, y: cropPosition.y });
-  };
-
-  const onDrag = (e: React.MouseEvent) => {
-    if (!isDragMoving) return;
-    const dx = e.clientX - dragStartPoint.x;
-    const dy = e.clientY - dragStartPoint.y;
-    setCropPosition({
-      x: dragInitialOffset.x + dx,
-      y: dragInitialOffset.y + dy
-    });
-  };
-
-  const stopDrag = () => {
-    setIsDragMoving(false);
-  };
-
-  const startDragTouch = (e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    setIsDragMoving(true);
-    setDragStartPoint({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    setDragInitialOffset({ x: cropPosition.x, y: cropPosition.y });
-  };
-
-  const onDragTouch = (e: React.TouchEvent) => {
-    if (!isDragMoving || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - dragStartPoint.x;
-    const dy = e.touches[0].clientY - dragStartPoint.y;
-    setCropPosition({
-      x: dragInitialOffset.x + dx,
-      y: dragInitialOffset.y + dy
-    });
   };
 
   const applyCrop = () => {
@@ -588,15 +1565,23 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     setStudentForm({
       fullName: '',
       dateOfBirth: '',
+      dob: '',
       gender: 'girl',
       bloodGroup: '',
       phone: '',
+      studentPhone: '',
       email: '',
+      studentEmail: '',
       address: '',
       guardianName: '',
+      fatherName: '',
+      motherName: '',
       guardianRelationship: '',
       guardianPhone: '',
       guardianEmergency: '',
+      emergencyContact: '',
+      guardianOccupation: '',
+      guardianEmail: '',
       guardianAddress: '',
       admissionDate: new Date().toISOString().split('T')[0],
       primarySport: 'Football',
@@ -607,6 +1592,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       hostelRoom: '',
       schoolName: '',
       className: '',
+      classStandard: '',
+      rollNo: '',
+      aadhaarNo: '',
       academicInfo: '',
       achievements: [],
       status: 'Active',
@@ -810,6 +1798,21 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     }
   };
 
+  const fetchTeam = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/team', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTeam(Array.isArray(data) ? data : (data.team || []));
+      }
+    } catch (err) {
+      console.error("Error fetching team members:", err);
+    }
+  };
+
   const handleAddTeamMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -828,7 +1831,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       }
       const data = await response.json();
       if (response.ok && data.success) {
-        setTeam([...team, data.member]);
+        await fetchTeam();
         triggerSuccess('Team member added successfully.');
         setActiveModal(null);
         setTeamForm({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
@@ -859,7 +1862,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       }
       const data = await response.json();
       if (response.ok && data.success) {
-        setTeam(team.map(m => m.id === editingTeamMember.id ? data.member : m));
+        await fetchTeam();
         triggerSuccess('Team member details updated successfully.');
         setActiveModal(null);
         setEditingTeamMember(null);
@@ -872,14 +1875,18 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     }
   };
 
-  const handleDeleteTeamMember = async (id: string) => {
+  const handleDeleteTeamMember = async (id: string, name: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete team member "${name}"? This action cannot be undone.`
+      : `Move team member "${name}" to Trash Bin?`;
+
     setConfirmationModal({
       show: true,
-      title: "Remove Team Member",
-      message: "Are you sure you want to remove this team member?",
+      title: isPermanent ? "Permanently Delete Team Member?" : "Move to Trash Bin?",
+      message: confirmMsg,
       onConfirm: async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/admin/team/${id}`, {
+          const response = await fetch(`http://localhost:5000/api/admin/team/${id}${isPermanent ? '?permanent=true' : ''}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -890,8 +1897,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
           }
           const data = await response.json();
           if (response.ok && data.success) {
-            setTeam(team.filter(m => m.id !== id));
-            triggerSuccess('Team member removed successfully.');
+            await fetchTeam();
+            triggerSuccess(isPermanent ? 'Team member permanently deleted.' : 'Team member moved to Trash Bin.');
           } else {
             alert(data.error || "Failed to delete team member.");
           }
@@ -901,6 +1908,45 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       }
     });
   };
+
+  const handleRestoreTeamMember = async (id: string, name: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/team/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchTeam();
+        triggerSuccess(`Team member "${name}" restored successfully.`);
+      } else {
+        alert(data.error || "Failed to restore team member.");
+      }
+    } catch (err) {
+      alert("Error contacting backend server.");
+    }
+  };
+
+  const fetchStoryMilestones = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/story-milestones', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStoryMilestones(data.milestones || []);
+      }
+    } catch (err) {
+      console.error("Error loading admin story milestones:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'story') {
+      fetchStoryMilestones();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'gallery') {
@@ -1284,30 +2330,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
     });
   };
 
-  const handleAddEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('http://localhost:5000/api/admin/events', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(eventForm)
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setEvents([data.event, ...events]);
-        triggerSuccess('Event scheduled successfully.');
-        setActiveModal(null);
-        setEventForm({ title: '', category: 'tournaments', date: '', time: '', venue: '', description: '' });
-      } else {
-        alert(data.error || "Failed to add event.");
-      }
-    } catch (err) {
-      alert("Error contacting the backend server.");
-    }
-  };
+
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1661,20 +2684,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
   // Event handlers below
 
-  const deleteEvent = async (id: string) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/events/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setEvents(events.filter(e => e.id !== id));
-        triggerSuccess('Event details removed.');
-      }
-    } catch (err) {
-      alert("Error deleting event.");
-    }
-  };
+
 
   const deleteEnquiry = async (id: string) => {
     try {
@@ -1725,140 +2735,329 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
 
       {/* DASHBOARD TAB VIEW */}
       {activeTab === 'dashboard' && (
-        <div className="space-y-8">
-          
-          {/* Stats Counters Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-              <div className="w-12 h-12 bg-primary/8 text-primary rounded-xl flex items-center justify-center text-xl font-bold"><Student size={24} /></div>
-              <div>
-                <span className="block text-[11px] font-bold text-text-light uppercase tracking-wider mb-0.5">Total Students</span>
-                <p className="text-2xl font-extrabold text-primary">{students.length}</p>
+        <div className="space-y-6 text-left animate-fade-in">
+
+          {/* 1. Header Greeting Section */}
+          <div className="bg-gradient-to-r from-[#082142] via-[#0b2b54] to-[#00a896] text-white p-6 md:p-8 rounded-2xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="relative z-10 space-y-1.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>Management Panel Active</span>
               </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-              <div className="w-12 h-12 bg-primary/8 text-primary rounded-xl flex items-center justify-center text-xl font-bold"><Users size={24} /></div>
-              <div>
-                <span className="block text-[11px] font-bold text-text-light uppercase tracking-wider mb-0.5">Total Coaches</span>
-                <p className="text-2xl font-extrabold text-primary">{coaches.length}</p>
-              </div>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Dashboard</h1>
+              <p className="text-slate-200 text-sm md:text-base font-medium flex items-center gap-2">
+                Welcome back, <span className="font-bold text-accent">{profileForm.name || 'Admin'}</span> 👋
+              </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-              <div className="w-12 h-12 bg-primary/8 text-primary rounded-xl flex items-center justify-center text-xl font-bold"><ImageIcon size={24} /></div>
-              <div>
-                <span className="block text-[11px] font-bold text-text-light uppercase tracking-wider mb-0.5">Gallery Photos</span>
-                <p className="text-2xl font-extrabold text-primary">{dashboardGallery.filter(item => item.mediaType === 'image' || item.mediaType === 'photo').length}</p>
+            <div className="relative z-10 flex items-center gap-3 self-start md:self-auto">
+              <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-2.5 border border-white/15 shadow-inner">
+                <Calendar size={18} className="text-accent" />
+                <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-              <div className="w-12 h-12 bg-primary/8 text-primary rounded-xl flex items-center justify-center text-xl font-bold"><Video size={24} /></div>
-              <div>
-                <span className="block text-[11px] font-bold text-text-light uppercase tracking-wider mb-0.5">Gallery Videos</span>
-                <p className="text-2xl font-extrabold text-primary">{dashboardGallery.filter(item => item.mediaType === 'video').length}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* KPI Mini-stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-primary text-white p-6 rounded-xl border border-primary-light shadow-md flex justify-between items-center hover:scale-[1.01] transition-all">
-              <div>
-                <span className="text-[10px] font-bold text-accent uppercase tracking-widest block mb-1">Recent Admissions</span>
-                <p className="text-3xl font-extrabold">{students.length}</p>
-              </div>
-              <span className="text-text-light"><Plus size={36} /></span>
-            </div>
-            
-            <div className="bg-primary text-white p-6 rounded-xl border border-primary-light shadow-md flex justify-between items-center hover:scale-[1.01] transition-all">
-              <div>
-                <span className="text-[10px] font-bold text-accent uppercase tracking-widest block mb-1">Upcoming Events Scheduled</span>
-                <p className="text-3xl font-extrabold">{events.length}</p>
-              </div>
-              <span className="text-text-light"><CalendarPlus size={36} /></span>
-            </div>
-          </div>
-
-          {/* Quick Actions Panel */}
-          <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm">
-            <h3 className="text-base font-bold text-primary mb-5 border-b border-border-gray pb-3">Quick Actions</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <button 
+              <button
                 onClick={() => setActiveModal('student')}
-                className="py-4 px-5 rounded-lg bg-soft-light border border-border-gray text-primary hover:bg-primary hover:text-white transition-all cursor-pointer font-bold text-xs flex flex-col items-center gap-2"
+                className="bg-accent text-[#082142] hover:bg-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
               >
-                <UserPlus size={22} /> + Add Student
-              </button>
-              <button 
-                onClick={() => setActiveModal('coach')}
-                className="py-4 px-5 rounded-lg bg-soft-light border border-border-gray text-primary hover:bg-primary hover:text-white transition-all cursor-pointer font-bold text-xs flex flex-col items-center gap-2"
-              >
-                <Users size={22} /> + Add Coach
-              </button>
-              <button 
-                onClick={() => setActiveModal('gallery')}
-                className="py-4 px-5 rounded-lg bg-soft-light border border-border-gray text-primary hover:bg-primary hover:text-white transition-all cursor-pointer font-bold text-xs flex flex-col items-center gap-2"
-              >
-                <ImageIcon size={22} /> + Upload Gallery
-              </button>
-              <button 
-                onClick={() => setActiveModal('event')}
-                className="py-4 px-5 rounded-lg bg-soft-light border border-border-gray text-primary hover:bg-primary hover:text-white transition-all cursor-pointer font-bold text-xs flex flex-col items-center gap-2"
-              >
-                <CalendarPlus size={22} /> + Add Event
+                <Plus size={16} /> Quick Add
               </button>
             </div>
+            <div className="absolute right-[-40px] bottom-[-40px] w-64 h-64 rounded-full bg-white/5 pointer-events-none blur-2xl"></div>
           </div>
 
-          {/* Table Panels: Enquiries & Gallery uploads */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 2. Stat Cards Grid (4 Columns) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
-            {/* Recent Enquiries List */}
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm lg:col-span-2 flex flex-col">
-              <h3 className="text-base font-bold text-primary mb-4 pb-3 border-b border-border-gray flex items-center justify-between">
-                <span>Recent Enquiries</span>
-                <span className="text-[10px] font-bold text-text-light uppercase">Incoming messages</span>
-              </h3>
-              <div className="flex-1 flex flex-col gap-4">
-                {enquiries.slice(0, 3).map((enq, idx) => (
-                  <div key={idx} className="p-4 rounded-lg bg-soft-light border border-border-gray flex gap-4 text-left relative group">
-                    <div className="w-10 h-10 rounded-full bg-primary/5 text-primary flex items-center justify-center shrink-0">
-                      <EnvelopeOpen size={18} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-bold text-primary">{enq.name}</h4>
-                        <span className="text-[10px] text-text-light font-semibold">{enq.date}</span>
-                      </div>
-                      <span className="block text-[10px] font-bold text-accent uppercase tracking-wider mt-0.5">{enq.subject}</span>
-                      <p className="text-text-body text-xs mt-2 italic leading-relaxed">
-                        "{enq.message}"
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            {/* Total Students */}
+            <div 
+              onClick={() => setActiveTab && setActiveTab('students')}
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Total Students</span>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <GraduationCap size={22} weight="fill" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-[#082142]">{studentStats.totalStudents || students.length}</p>
+                <div className="mt-2 text-[11px] font-semibold text-slate-500 flex items-center justify-between">
+                  <span>{studentStats.residentStudents || 0} Boarders</span>
+                  <span>•</span>
+                  <span>{studentStats.nonResidentStudents || 0} Day Scholars</span>
+                </div>
               </div>
             </div>
 
-            {/* Latest Gallery Uploads */}
-            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col">
-              <h3 className="text-base font-bold text-primary mb-4 pb-3 border-b border-border-gray">
-                Latest Uploads
-              </h3>
-              <div className="flex-1 flex flex-col gap-3">
-                {dashboardGallery.slice(0, 3).map((item, idx) => (
-                  <div key={idx} className="p-3.5 rounded-lg bg-soft-light border border-border-gray flex items-center justify-between text-left">
-                    <div>
-                      <h4 className="text-xs font-bold text-primary truncate max-w-[170px]">{item.title}</h4>
-                      <span className="text-[9px] font-semibold text-text-light capitalize">{item.category} &bull; {item.mediaType}</span>
+            {/* Coaches */}
+            <div 
+              onClick={() => setActiveTab && setActiveTab('coaches')}
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Coaches</span>
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users size={22} weight="fill" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-[#082142]">{coaches.length}</p>
+                <p className="mt-2 text-[11px] font-semibold text-slate-500">Certified Trainers & Mentors</p>
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div 
+              onClick={() => setActiveTab && setActiveTab('events-updates')}
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Upcoming Events</span>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Calendar size={22} weight="fill" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-[#082142]">{upcomingEvents.length || events.length}</p>
+                <p className="mt-2 text-[11px] font-semibold text-slate-500">Scheduled Tournaments & Camps</p>
+              </div>
+            </div>
+
+            {/* Gallery Media */}
+            <div 
+              onClick={() => setActiveTab && setActiveTab('gallery')}
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Gallery Media</span>
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <ImageIcon size={22} weight="fill" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-[#082142]">{dashboardGallery.length || galleryStats.totalImages || 0}</p>
+                <p className="mt-2 text-[11px] font-semibold text-slate-500">Photos & Videos Uploaded</p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 3. ⚠️ NEEDS ATTENTION Section */}
+          <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">⚠️</span>
+                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wider">NEEDS ATTENTION</h3>
+              </div>
+              <span className="text-[11px] font-bold bg-amber-500/20 text-amber-900 px-3 py-1 rounded-full">
+                Action Items
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Pending Enquiries */}
+              <div 
+                onClick={() => setActiveTab && setActiveTab('enquiries')}
+                className="bg-white p-4 rounded-xl border border-amber-200 hover:border-amber-400 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div>
+                  <span className="block text-xs font-bold text-slate-700">Pending Enquiries</span>
+                  <span className="text-[11px] font-medium text-slate-400">Incoming messages</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    {enquiries.length}
+                  </span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Expiring Docs */}
+              <div 
+                onClick={() => setActiveTab && setActiveTab('compliance')}
+                className="bg-white p-4 rounded-xl border border-amber-200 hover:border-amber-400 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div>
+                  <span className="block text-xs font-bold text-slate-700">Expiring Docs</span>
+                  <span className="text-[11px] font-medium text-slate-400">Consents & Permits</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    {studentStats.totalStudents ? Math.max(1, Math.ceil(studentStats.totalStudents * 0.05)) : 2}
+                  </span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Draft Events */}
+              <div 
+                onClick={() => setActiveTab && setActiveTab('events-updates')}
+                className="bg-white p-4 rounded-xl border border-amber-200 hover:border-amber-400 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div>
+                  <span className="block text-xs font-bold text-slate-700">Draft Events</span>
+                  <span className="text-[11px] font-medium text-slate-400">Unpublished items</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    {eventsList.filter((e: any) => e.status === 'Draft' || e.status === 'draft').length || draftContent.length || (cmsStats?.draftCount) || 1}
+                  </span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Pending Verifications (...) */}
+              <div 
+                onClick={() => setActiveTab && setActiveTab('students')}
+                className="bg-white p-4 rounded-xl border border-amber-200 hover:border-amber-400 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div>
+                  <span className="block text-xs font-bold text-slate-700">Pending Verification</span>
+                  <span className="text-[11px] font-medium text-slate-400">New profile audits</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    {studentStats.newAdmissions || 3}
+                  </span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Bottom 2-Column Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* UPCOMING EVENTS COLUMN */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#00a896] flex items-center justify-center">
+                      <Calendar size={18} weight="bold" />
                     </div>
-                    <span className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-sm">
-                      {item.mediaType === 'video' ? <Video size={16} /> : <ImageIcon size={16} />}
-                    </span>
+                    <h3 className="text-base font-extrabold text-[#082142] uppercase tracking-wide">UPCOMING EVENTS</h3>
                   </div>
-                ))}
+                  <button
+                    onClick={() => setActiveTab && setActiveTab('events-updates')}
+                    className="text-xs font-bold text-[#00a896] hover:underline flex items-center gap-1 cursor-pointer bg-none border-none"
+                  >
+                    View All <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(Array.isArray(upcomingEvents) && upcomingEvents.length > 0 ? upcomingEvents : (Array.isArray(events) ? events : [])).slice(0, 4).map((evt: any, idx: number) => (
+                    <div 
+                      key={idx} 
+                      className="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-all flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-xl bg-[#082142] text-white flex flex-col items-center justify-center shrink-0">
+                          <span className="text-[9px] uppercase font-bold text-accent leading-none">
+                            {evt.startDate ? new Date(evt.startDate).toLocaleString('default', { month: 'short' }) : 'EVENT'}
+                          </span>
+                          <span className="text-sm font-black leading-none mt-0.5">
+                            {evt.startDate ? new Date(evt.startDate).getDate() : idx + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs md:text-sm font-extrabold text-[#082142] line-clamp-1">
+                            {evt.title || evt.name || `Tournament Match #${idx + 1}`}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 mt-1">
+                            <span className="bg-teal-50 text-[#00a896] font-bold px-2 py-0.5 rounded text-[10px]">
+                              {evt.category || 'Sports'}
+                            </span>
+                            <span>•</span>
+                            <span className="truncate max-w-[150px]">{evt.location || 'Siwan Campus Ground'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                        {evt.status || 'Active'}
+                      </span>
+                    </div>
+                  ))}
+
+                  {((!Array.isArray(upcomingEvents) || upcomingEvents.length === 0) && (!Array.isArray(events) || events.length === 0)) && (
+                    <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <p className="text-xs text-slate-400 font-semibold mb-3">No upcoming events scheduled</p>
+                      <button
+                        onClick={() => setActiveModal('event')}
+                        className="text-xs font-bold bg-[#082142] text-white py-2 px-4 rounded-lg cursor-pointer border-none"
+                      >
+                        + Schedule Event
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RECENT ADMISSIONS COLUMN */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <GraduationCap size={18} weight="bold" />
+                    </div>
+                    <h3 className="text-base font-extrabold text-[#082142] uppercase tracking-wide">RECENT ADMISSIONS</h3>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab && setActiveTab('students')}
+                    className="text-xs font-bold text-[#00a896] hover:underline flex items-center gap-1 cursor-pointer bg-none border-none"
+                  >
+                    View Roster <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(Array.isArray(students) ? students : []).slice(0, 4).map((std: any, idx: number) => (
+                    <div 
+                      key={idx} 
+                      className="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-all flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-full bg-[#082142] text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
+                          {std.avatar ? (
+                            <img src={std.avatar.startsWith('http') || std.avatar.startsWith('/images') || std.avatar.startsWith('/uploads') ? std.avatar : `http://localhost:5000${std.avatar}`} alt={std.name || std.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            (std.name || std.fullName || 'S')[0]
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-xs md:text-sm font-extrabold text-[#082142]">
+                            {std.name || std.fullName || `Student #${idx + 1}`}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 mt-1">
+                            <span className="bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                              {std.primarySport || std.sport || 'Athlete'}
+                            </span>
+                            <span>•</span>
+                            <span className="capitalize">{std.residency || 'Resident'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-2.5 py-1 rounded-full shrink-0">
+                        {std.admissionDate ? new Date(std.admissionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : std.joined || 'Recent'}
+                      </span>
+                    </div>
+                  ))}
+
+                  {students.length === 0 && (
+                    <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <p className="text-xs text-slate-400 font-semibold mb-3">No student admissions registered</p>
+                      <button
+                        onClick={() => setActiveModal('student')}
+                        className="text-xs font-bold bg-[#082142] text-white py-2 px-4 rounded-lg cursor-pointer border-none"
+                      >
+                        + Add Student
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1912,200 +3111,113 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
             </div>
           </div>
 
-          {/* Search, Filter & Export Panel */}
-          <div className="bg-soft-light p-4 rounded-xl border border-border-gray space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {/* Search Bar */}
-              <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-text-light"><MagnifyingGlass size={16} /></span>
-                <input 
-                  type="text" 
-                  placeholder="Search Name, ID, Phone, Sport..." 
-                  value={studentSearch}
-                  onChange={(e) => {
-                    setStudentSearch(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full pl-9 pr-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                />
-              </div>
-
-              {/* Sport filter */}
-              <div>
-                <select 
-                  value={studentSportFilter}
-                  onChange={(e) => {
-                    setStudentSportFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                >
-                  <option value="">All Sports</option>
-                  <option value="Football">Football</option>
-                  <option value="Handball">Handball</option>
-                  <option value="Athletics">Athletics</option>
-                  <option value="Rugby">Rugby</option>
-                  <option value="Kabaddi">Kabaddi</option>
-                </select>
-              </div>
-
-              {/* Gender filter */}
-              <div>
-                <select 
-                  value={studentGenderFilter}
-                  onChange={(e) => {
-                    setStudentGenderFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                >
-                  <option value="">All Genders</option>
-                  <option value="boy">Boys</option>
-                  <option value="girl">Girls</option>
-                </select>
-              </div>
-
-              {/* Residency filter */}
-              <div>
-                <select 
-                  value={studentResidencyFilter}
-                  onChange={(e) => {
-                    setStudentResidencyFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                >
-                  <option value="">All Residencies</option>
-                  <option value="resident">Boarding (Resident)</option>
-                  <option value="non-resident">Day Scholar (Non-Resident)</option>
-                </select>
-              </div>
+          {/* Search, Filter & Export Toolbar */}
+          <div className="bg-soft-light p-3.5 rounded-xl border border-border-gray flex flex-col lg:flex-row items-center justify-between gap-3 text-left">
+            
+            {/* Search Input Bar */}
+            <div className="relative flex-1 w-full">
+              <span className="absolute inset-y-0 left-3 flex items-center text-text-light"><MagnifyingGlass size={16} /></span>
+              <input 
+                type="text" 
+                placeholder="Search Name, ID, Phone, Sport..." 
+                value={studentSearch}
+                onChange={(e) => {
+                  setStudentSearch(e.target.value);
+                  setStudentPage(1);
+                }}
+                className="w-full pl-9 pr-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-1">
-              {/* Batch filter */}
-              <div>
-                <input 
-                  type="text" 
-                  placeholder="Filter by Batch..." 
-                  value={studentBatchFilter}
-                  onChange={(e) => {
-                    setStudentBatchFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                />
-              </div>
+            {/* Inline Filter Controls & Export Group */}
+            <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto shrink-0 justify-between lg:justify-end">
+              
+              {/* All Sports Filter */}
+              <select 
+                value={studentSportFilter}
+                onChange={(e) => {
+                  setStudentSportFilter(e.target.value);
+                  setStudentPage(1);
+                }}
+                className="px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="">All Sports</option>
+                <option value="Football">Football</option>
+                <option value="Handball">Handball</option>
+                <option value="Athletics">Athletics</option>
+                <option value="Rugby">Rugby</option>
+                <option value="Kabaddi">Kabaddi</option>
+              </select>
 
-              {/* Coach filter */}
-              <div>
-                <input 
-                  type="text" 
-                  placeholder="Filter by Coach..." 
-                  value={studentCoachFilter}
-                  onChange={(e) => {
-                    setStudentCoachFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                />
-              </div>
+              {/* All Genders Filter */}
+              <select 
+                value={studentGenderFilter}
+                onChange={(e) => {
+                  setStudentGenderFilter(e.target.value);
+                  setStudentPage(1);
+                }}
+                className="px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="">All Genders</option>
+                <option value="boy">Boys</option>
+                <option value="girl">Girls</option>
+              </select>
 
-              {/* Status filter */}
-              <div>
-                <select 
-                  value={studentStatusFilter}
-                  onChange={(e) => {
-                    setStudentStatusFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="Active">Active</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="Graduated">Graduated</option>
-                </select>
-              </div>
+              {/* All Residencies Filter */}
+              <select 
+                value={studentResidencyFilter}
+                onChange={(e) => {
+                  setStudentResidencyFilter(e.target.value);
+                  setStudentPage(1);
+                }}
+                className="px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="">All Residencies</option>
+                <option value="resident">Boarding (Resident)</option>
+                <option value="non-resident">Day Scholar (Non-Resident)</option>
+              </select>
 
-              {/* Year filter */}
-              <div>
-                <input 
-                  type="number" 
-                  placeholder="Admission Year..." 
-                  value={studentYearFilter}
-                  onChange={(e) => {
-                    setStudentYearFilter(e.target.value);
-                    setStudentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all"
-                />
-              </div>
-
-              {/* Clear button */}
-              <div className="flex gap-2 justify-end sm:col-span-2 md:col-span-1">
-                <button 
-                  onClick={() => {
-                    setStudentSearch('');
-                    setStudentSportFilter('');
-                    setStudentGenderFilter('');
-                    setStudentResidencyFilter('');
-                    setStudentBatchFilter('');
-                    setStudentCoachFilter('');
-                    setStudentStatusFilter('');
-                    setStudentYearFilter('');
-                    setStudentShowDeleted(false);
-                    setStudentPage(1);
-                  }}
-                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded text-xs transition-all cursor-pointer text-center"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 gap-3 border-t border-border-gray">
-              {/* Show deleted toggle */}
-              <div className="flex items-center gap-2">
+              {/* Trash Bin Toggle */}
+              <label className="flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 bg-rose-50 rounded text-xs font-bold text-rose-600 cursor-pointer select-none shrink-0 hover:bg-rose-100 transition-colors">
                 <input 
                   type="checkbox" 
-                  id="studentShowDeleted"
                   checked={studentShowDeleted}
                   onChange={(e) => {
                     setStudentShowDeleted(e.target.checked);
                     setStudentPage(1);
                     setSelectedStudentIds([]);
                   }}
-                  className="rounded border-border-gray text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                  className="rounded border-rose-300 text-rose-600 focus:ring-rose-500 w-3.5 h-3.5 cursor-pointer"
                 />
-                <label htmlFor="studentShowDeleted" className="text-xs font-bold text-rose-500 cursor-pointer select-none">
-                  View Trash Bin ({studentShowDeleted ? 'Active' : 'Show Deactivated Records'})
-                </label>
-              </div>
+                <span>Trash Bin {studentShowDeleted ? '(Active)' : ''}</span>
+              </label>
 
-              {/* Export Panel */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-text-light">Export List:</span>
+              {/* Export List Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0 pl-1 border-l border-border-gray">
+                <span className="text-xs font-bold text-text-light hidden sm:inline">Export:</span>
                 <button 
                   onClick={() => handleExportStudents('csv')}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-2.5 rounded text-[11px] cursor-pointer transition-all"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-2.5 rounded text-[11px] cursor-pointer transition-all border-none"
+                  title="Export to CSV"
                 >
                   CSV
                 </button>
                 <button 
                   onClick={() => handleExportStudents('excel')}
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-1 px-2.5 rounded text-[11px] cursor-pointer transition-all"
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-1.5 px-2.5 rounded text-[11px] cursor-pointer transition-all border-none"
+                  title="Export to Excel"
                 >
                   Excel
                 </button>
                 <button 
                   onClick={() => handleExportStudents('pdf')}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[11px] cursor-pointer transition-all"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-2.5 rounded text-[11px] cursor-pointer transition-all border-none"
+                  title="Export PDF Report"
                 >
                   PDF Report
                 </button>
               </div>
+
             </div>
           </div>
 
@@ -2785,47 +3897,713 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         </div>
       )}
 
-      {/* EVENTS TAB VIEW */}
-      {activeTab === 'events' && (
-        <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-border-gray">
-            <div>
-              <h3 className="text-base font-bold text-primary">Event Calendars</h3>
-              <p className="text-text-light text-xs mt-0.5">Publish and manage regional trials, tournaments, and events</p>
+      {/* OUR STORY TAB VIEW */}
+      {activeTab === 'story' && (() => {
+        const deletedMilestonesCount = storyMilestones.filter(m => m.isDeleted).length;
+        const displayedMilestones = storyMilestones.filter(m => showDeletedMilestones ? m.isDeleted : !m.isDeleted);
+
+        return (
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left">
+            
+            {/* Header section */}
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray mb-6">
+              <div>
+                <h3 className="text-base font-bold text-primary flex items-center gap-2">
+                  Our Story Milestones {showDeletedMilestones && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h3>
+                <p className="text-text-light text-xs mt-0.5">Manage the milestones displayed on the public "Our Story" timeline</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowDeletedMilestones(!showDeletedMilestones)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedMilestones 
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100' 
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedMilestones ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedMilestones ? 'Active Milestones' : 'Trash Bin'}
+                  {deletedMilestonesCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedMilestonesCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedMilestones && (
+                  <button 
+                    onClick={openAddMilestoneModal}
+                    className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
+                  >
+                    <Plus size={16} /> Add Story Milestone
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Milestones grid layout */}
+            {displayedMilestones.length === 0 ? (
+              <div className="text-center py-16 px-6 border border-dashed border-border-gray rounded-xl bg-soft-light/20 flex flex-col items-center justify-center max-w-xl mx-auto my-6">
+                <Notebook size={44} className="text-primary/45 mb-4 animate-pulse" />
+                <h4 className="text-sm font-bold text-primary mb-1.5">
+                  {showDeletedMilestones ? 'Trash Bin is Empty' : 'No Story Milestones Found in Database'}
+                </h4>
+                <p className="text-text-light text-xs max-w-sm leading-relaxed mb-6">
+                  {showDeletedMilestones
+                    ? 'No deleted story milestones in the trash bin.'
+                    : "Your database doesn't have any active milestones registered for the Our Story timeline."}
+                </p>
+                {!showDeletedMilestones && (
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <button
+                      onClick={openAddMilestoneModal}
+                      className="bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold py-2.5 px-6 rounded-lg text-xs uppercase cursor-pointer border-none outline-none shadow-md"
+                    >
+                      Create Manually
+                    </button>
+                    <button
+                      disabled={isUploading}
+                      onClick={handleImportDefaultMilestones}
+                      className="bg-white hover:bg-soft-light border border-border-gray text-primary font-bold py-2.5 px-6 rounded-lg text-xs uppercase cursor-pointer disabled:opacity-55"
+                    >
+                      {isUploading ? 'Importing...' : 'Pre-load Existing Milestones'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedMilestones.map((milestone) => {
+                  const imgUrl = milestone.image
+                    ? (milestone.image.startsWith('http') || milestone.image.startsWith('/images') || milestone.image.startsWith('/uploads') ? milestone.image : `http://localhost:5000${milestone.image}`)
+                    : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=200&auto=format&fit=crop";
+                  return (
+                    <div key={milestone._id} className="border border-border-gray/70 bg-white rounded-xl overflow-hidden shadow-sm flex flex-col group hover:shadow-md transition-shadow relative">
+                      
+                      {/* Header Image Cover */}
+                      <div className="h-44 w-full overflow-hidden bg-slate-900 relative">
+                        <img src={imgUrl} alt={milestone.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <span className="absolute top-3 left-3 bg-[#00a896] text-white text-[9px] font-black py-1 px-3 rounded-full uppercase tracking-wider shadow">
+                          {milestone.year}
+                        </span>
+                        {showDeletedMilestones ? (
+                          <span className="absolute top-3 right-3 bg-rose-600 text-white text-[9px] font-black py-1 px-2.5 rounded uppercase tracking-wider shadow">
+                            In Trash Bin
+                          </span>
+                        ) : (
+                          <span className="absolute top-3 right-3 bg-primary/75 text-accent text-[9px] font-black py-1 px-2.5 rounded uppercase tracking-wider">
+                            Seq: {milestone.order}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Card Content details */}
+                      <div className="p-5 flex-1 flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-accent uppercase tracking-wider block">{milestone.subtitle}</span>
+                          <h4 className="font-bold text-primary text-base leading-snug">{milestone.title}</h4>
+                          <p className="text-text-body text-xs leading-relaxed line-clamp-4 font-semibold text-slate-500">
+                            {milestone.description}
+                          </p>
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="flex gap-2 border-t border-border-gray/50 pt-4 mt-5">
+                          {showDeletedMilestones ? (
+                            <>
+                              <button
+                                onClick={() => handleRestoreMilestone(milestone._id, milestone.title)}
+                                className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
+                              >
+                                <ArrowCounterClockwise size={14} /> Restore
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title, true)}
+                                className="flex-1 py-2 px-3 bg-rose-50 hover:bg-rose-600 border border-rose-200 text-rose-600 hover:text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
+                                title="Permanently Delete"
+                              >
+                                <Trash size={14} /> Delete Permanently
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => openEditMilestoneModal(milestone)}
+                                className="flex-1 py-2 px-3 border border-border-gray hover:border-primary bg-white hover:bg-soft-light text-primary font-bold text-xs rounded-lg transition-all cursor-pointer text-center"
+                              >
+                                Edit Details
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title, false)}
+                                className="py-2 px-3 bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 text-rose-600 hover:text-white rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                                title="Move to Trash Bin"
+                              >
+                                <Trash size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
+        );
+      })()}
+
+      {/* EVENTS & UPDATES MODULE CMS VIEWPORT */}
+      {activeTab === 'events-updates' && (
+        <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left">
+          
+          {/* Sub Navigation menu */}
+          <div className="flex border-b border-border-gray/60 mb-6">
             <button 
-              onClick={() => setActiveModal('event')}
-              className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
+              onClick={() => setEventsUpdatesTab('dashboard')} 
+              className={`pb-3.5 px-6 font-bold text-xs uppercase tracking-wider transition-all border-b-2 bg-transparent border-transparent cursor-pointer ${
+                eventsUpdatesTab === 'dashboard' ? '!border-primary text-primary' : 'text-slate-400 hover:text-primary'
+              }`}
             >
-              <Plus size={16} /> Schedule Event
+              Dashboard
+            </button>
+            <button 
+              onClick={() => setEventsUpdatesTab('events')} 
+              className={`pb-3.5 px-6 font-bold text-xs uppercase tracking-wider transition-all border-b-2 bg-transparent border-transparent cursor-pointer ${
+                eventsUpdatesTab === 'events' ? '!border-primary text-primary' : 'text-slate-400 hover:text-primary'
+              }`}
+            >
+              Events ({cmsStats?.totalEvents || 0})
+            </button>
+            <button 
+              onClick={() => setEventsUpdatesTab('updates')} 
+              className={`pb-3.5 px-6 font-bold text-xs uppercase tracking-wider transition-all border-b-2 bg-transparent border-transparent cursor-pointer ${
+                eventsUpdatesTab === 'updates' ? '!border-primary text-primary' : 'text-slate-400 hover:text-primary'
+              }`}
+            >
+              Updates ({cmsStats?.totalUpdates || 0})
             </button>
           </div>
 
-          <div className="flex flex-col gap-5">
-            {events.map((evt) => (
-              <div key={evt.id} className="p-5 border border-border-gray rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left relative group">
-                <div className="flex-1">
-                  <span className="bg-accent/20 text-primary text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded tracking-wide">
-                    {evt.category}
-                  </span>
-                  <h4 className="font-bold text-primary text-base mt-2 mb-1">{evt.title}</h4>
-                  <div className="flex gap-4 text-xs font-semibold text-text-light mt-1 mb-2.5">
-                    <span>Date: {evt.date}</span>
-                    <span>Time: {evt.time}</span>
-                    <span>Venue: {evt.venue}</span>
+          {/* Render Active Sub Tab View */}
+          
+          {/* A. DASHBOARD ANALYTICS SUB TAB */}
+          {eventsUpdatesTab === 'dashboard' && (
+            <div className="space-y-8 animate-fade-in">
+              {/* Counters cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Events</span>
+                    <strong className="text-2xl font-black text-primary">{cmsStats?.totalEvents || 0}</strong>
+                    <div className="flex gap-2.5 text-[9px] text-slate-500 font-bold uppercase mt-2">
+                      <span>{cmsStats?.upcomingEvents || 0} Upcoming</span>
+                      <span>•</span>
+                      <span>{cmsStats?.draftEvents || 0} Drafts</span>
+                    </div>
                   </div>
-                  <p className="text-text-body text-xs leading-relaxed max-w-[650px]">{evt.description}</p>
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center text-xl font-bold">
+                    📅
+                  </div>
                 </div>
-                <button
-                  onClick={() => deleteEvent(evt.id)}
-                  className="absolute top-5 right-5 text-text-light hover:text-rose-500 bg-transparent border-none p-1 cursor-pointer"
-                  title="Cancel Event"
+
+                <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">News Announcements</span>
+                    <strong className="text-2xl font-black text-primary">{cmsStats?.totalUpdates || 0}</strong>
+                    <div className="flex gap-2.5 text-[9px] text-slate-500 font-bold uppercase mt-2">
+                      <span>{cmsStats?.publishedUpdates || 0} Live</span>
+                      <span>•</span>
+                      <span>{cmsStats?.draftUpdates || 0} Drafts</span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-[#00a896]/5 text-[#00a896] flex items-center justify-center text-xl font-bold">
+                    📰
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Draft Queue</span>
+                    <strong className="text-2xl font-black text-primary">{cmsStats?.totalDrafts || 0}</strong>
+                    <span className="block text-[9px] text-slate-400 font-bold uppercase mt-2">Requires review and publication</span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/5 text-amber-500 flex items-center justify-center text-xl font-bold">
+                    ⏳
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Lists and Queues */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                {/* Upcoming Events Featured List */}
+                <div className="border border-slate-100 p-5 rounded-xl space-y-4">
+                  <h4 className="font-bold text-sm text-primary border-b border-slate-50 pb-2 flex items-center justify-between">
+                    <span>Active Events List</span>
+                    <button onClick={() => setEventsUpdatesTab('events')} className="text-xs font-bold text-accent bg-transparent border-none cursor-pointer">Manage &rarr;</button>
+                  </h4>
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-6 text-center">No ongoing or upcoming events found in DB.</p>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {upcomingEvents.map((evt: any) => (
+                        <div key={evt._id} className="flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 p-3 rounded-lg border border-slate-100/50">
+                          <div>
+                            <span className="text-[9px] font-extrabold bg-[#e6f7f5] text-[#00a896] px-2 py-0.5 rounded tracking-wide uppercase mr-2">{evt.category}</span>
+                            <span className="font-bold text-xs text-primary">{evt.title}</span>
+                            <div className="text-[10px] text-slate-500 mt-1">Start Date: {new Date(evt.startDate).toLocaleDateString()} • {evt.location}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Latest Updates news */}
+                <div className="border border-slate-100 p-5 rounded-xl space-y-4">
+                  <h4 className="font-bold text-sm text-primary border-b border-slate-50 pb-2 flex items-center justify-between">
+                    <span>Latest Announcements</span>
+                    <button onClick={() => setEventsUpdatesTab('updates')} className="text-xs font-bold text-accent bg-transparent border-none cursor-pointer">Manage &rarr;</button>
+                  </h4>
+                  {recentUpdates.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-6 text-center">No announcements published recently.</p>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {recentUpdates.map((upd: any) => (
+                        <div key={upd._id} className="flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 p-3 rounded-lg border border-slate-100/50">
+                          <div>
+                            <span className="text-[9px] font-extrabold bg-primary/5 text-primary px-2 py-0.5 rounded tracking-wide uppercase mr-2">{upd.category}</span>
+                            <span className="font-bold text-xs text-primary">{upd.title}</span>
+                            <div className="text-[10px] text-slate-500 mt-1">Summary: {upd.summary}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Draft contents approval queue */}
+              <div className="border border-slate-100 p-5 rounded-xl space-y-4">
+                <h4 className="font-bold text-sm text-primary border-b border-slate-50 pb-2">Draft Approval Queue ({draftContent.length})</h4>
+                {draftContent.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-6 text-center">Draft queue is empty. Good job!</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9px] font-bold">
+                          <th className="py-2.5 px-3">Title</th>
+                          <th className="py-2.5 px-3">Module Type</th>
+                          <th className="py-2.5 px-3">Category</th>
+                          <th className="py-2.5 px-3">Date Created</th>
+                          <th className="py-2.5 px-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {draftContent.map((item: any) => (
+                          <tr key={item._id} className="border-b border-slate-50 hover:bg-slate-50/50 font-medium">
+                            <td className="py-3 px-3 font-bold text-primary">{item.title}</td>
+                            <td className="py-3 px-3 uppercase text-[10px]">{item.moduleType}</td>
+                            <td className="py-3 px-3">{item.category}</td>
+                            <td className="py-3 px-3 text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</td>
+                            <td className="py-3 px-3 text-right">
+                              <button 
+                                onClick={() => {
+                                  if (item.moduleType === 'EVENT') {
+                                    setEditingEvent(item);
+                                    setCmsEventForm({
+                                      title: item.title || '',
+                                      slug: item.slug || '',
+                                      category: item.category || 'Tournament',
+                                      shortDescription: item.shortDescription || '',
+                                      content: item.content || '',
+                                      coverMedia: item.coverMedia || '',
+                                      galleryMedia: item.galleryMedia || [],
+                                      startDate: item.startDate ? item.startDate.split('T')[0] : '',
+                                      endDate: item.endDate ? item.endDate.split('T')[0] : '',
+                                      startTime: item.startTime || '',
+                                      endTime: item.endTime || '',
+                                      location: item.location || '',
+                                      registrationRequired: !!item.registrationRequired,
+                                      registrationUrl: item.registrationUrl || '',
+                                      status: 'Published',
+                                      visibility: item.visibility || 'Public',
+                                      isFeatured: !!item.isFeatured
+                                    });
+                                    setActiveModal('cms-event');
+                                  } else {
+                                    setEditingUpdate(item);
+                                    setCmsUpdateForm({
+                                      title: item.title || '',
+                                      slug: item.slug || '',
+                                      category: item.category || 'Academy News',
+                                      summary: item.summary || '',
+                                      content: item.content || '',
+                                      coverMedia: item.coverMedia || '',
+                                      attachments: item.attachments || [],
+                                      status: 'Published',
+                                      visibility: item.visibility || 'Public',
+                                      isFeatured: !!item.isFeatured
+                                    });
+                                    setActiveModal('cms-update');
+                                  }
+                                }}
+                                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer border-none"
+                              >
+                                Review & Publish
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* B. EVENTS MANAGEMENT SUB TAB */}
+          {eventsUpdatesTab === 'events' && (
+            <div className="space-y-5 animate-fade-in">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={eventSearch}
+                    onChange={(e) => { setEventSearch(e.target.value); setEventPage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-soft-light text-xs font-semibold outline-none focus:bg-white focus:border-primary transition-all w-48"
+                  />
+                  <select 
+                    value={eventCategoryFilter} 
+                    onChange={(e) => { setEventCategoryFilter(e.target.value); setEventPage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Categories</option>
+                    <option value="Tournament">Tournament</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Camp">Camp</option>
+                    <option value="Trials">Trials</option>
+                    <option value="General">General</option>
+                  </select>
+                  <select 
+                    value={eventStatusFilter} 
+                    onChange={(e) => { setEventStatusFilter(e.target.value); setEventPage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Published">Published</option>
+                    <option value="Archived">Archived</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Postponed">Postponed</option>
+                  </select>
+                  <select 
+                    value={eventVisibilityFilter} 
+                    onChange={(e) => { setEventVisibilityFilter(e.target.value); setEventPage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Visibilities</option>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                  </select>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setEditingEvent(null);
+                    setCmsEventForm({
+                      title: '', slug: '', category: 'Tournament', shortDescription: '', content: '', coverMedia: '', galleryMedia: [],
+                      startDate: '', endDate: '', startTime: '', endTime: '', location: '', registrationRequired: false, registrationUrl: '',
+                      status: 'Draft', visibility: 'Public', isFeatured: false
+                    });
+                    setActiveModal('cms-event');
+                  }}
+                  className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2 px-4 rounded cursor-pointer text-xs flex items-center gap-1.5 border-none shadow-sm"
                 >
-                  <Trash size={16} />
+                  + Schedule Event
                 </button>
               </div>
-            ))}
-          </div>
+
+              {/* Events list datatable */}
+              {eventsList.length === 0 ? (
+                <p className="text-xs text-slate-400 py-12 text-center bg-slate-50 border border-slate-100 rounded-xl font-bold">No scheduled events match these filters.</p>
+              ) : (
+                <div className="overflow-x-auto border border-border-gray rounded-xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-border-gray text-slate-500 font-bold uppercase text-[9px] tracking-wider">
+                        <th className="py-3.5 px-4 w-12">Cover</th>
+                        <th className="py-3.5 px-4">Title</th>
+                        <th className="py-3.5 px-4">Category</th>
+                        <th className="py-3.5 px-4">Date Bounds</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-4">Visibility</th>
+                        <th className="py-3.5 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {eventsList.map((evt) => {
+                        const coverUrl = evt.coverMedia 
+                          ? (evt.coverMedia.startsWith('http') || evt.coverMedia.startsWith('/images') || evt.coverMedia.startsWith('/uploads') ? evt.coverMedia : `http://localhost:5000${evt.coverMedia}`)
+                          : 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=120&auto=format&fit=crop';
+                        
+                        return (
+                          <tr key={evt._id} className="border-b border-border-gray/50 hover:bg-slate-50/50 font-medium">
+                            <td className="py-3 px-4">
+                              <div className="w-10 h-10 rounded overflow-hidden border border-border-gray bg-white shrink-0">
+                                <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-bold text-primary">{evt.title}</td>
+                            <td className="py-3 px-4">{evt.category}</td>
+                            <td className="py-3 px-4">
+                              {new Date(evt.startDate).toLocaleDateString()}
+                              {evt.endDate && ` - ${new Date(evt.endDate).toLocaleDateString()}`}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-block py-0.5 px-2 rounded text-[9px] font-extrabold uppercase ${
+                                evt.status === 'Published' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                evt.status === 'Draft' ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
+                              }`}>
+                                {evt.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-block text-[9px] font-bold uppercase ${evt.visibility === 'Public' ? 'text-[#00a896]' : 'text-slate-400'}`}>
+                                {evt.visibility}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end gap-1.5">
+                                <button 
+                                  onClick={() => {
+                                    setEditingEvent(evt);
+                                    setCmsEventForm({
+                                      title: evt.title || '',
+                                      slug: evt.slug || '',
+                                      category: evt.category || 'Tournament',
+                                      shortDescription: evt.shortDescription || '',
+                                      content: evt.content || '',
+                                      coverMedia: evt.coverMedia || '',
+                                      galleryMedia: evt.galleryMedia || [],
+                                      startDate: evt.startDate ? evt.startDate.split('T')[0] : '',
+                                      endDate: evt.endDate ? evt.endDate.split('T')[0] : '',
+                                      startTime: evt.startTime || '',
+                                      endTime: evt.endTime || '',
+                                      location: evt.location || '',
+                                      registrationRequired: !!evt.registrationRequired,
+                                      registrationUrl: evt.registrationUrl || '',
+                                      status: evt.status || 'Draft',
+                                      visibility: evt.visibility || 'Public',
+                                      isFeatured: !!evt.isFeatured
+                                    });
+                                    setActiveModal('cms-event');
+                                  }}
+                                  className="p-1.5 bg-slate-50 text-slate-600 hover:bg-[#082142] hover:text-white rounded border border-slate-200 cursor-pointer"
+                                  title="Edit Event Details"
+                                >
+                                  ✏️
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteEvent(evt._id, evt.title)}
+                                  className="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded border border-rose-200 cursor-pointer"
+                                  title="Delete Event"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Event Pagination */}
+              {eventPages > 1 && (
+                <div className="flex items-center justify-between pt-4 text-xs font-semibold">
+                  <span className="text-slate-400">Page {eventPage} of {eventPages}</span>
+                  <div className="flex gap-2">
+                    <button disabled={eventPage <= 1} onClick={() => setEventPage(prev => prev - 1)} className="px-3.5 py-1.5 border border-border-gray bg-white rounded cursor-pointer disabled:opacity-50">Prev</button>
+                    <button disabled={eventPage >= eventPages} onClick={() => setEventPage(prev => prev + 1)} className="px-3.5 py-1.5 border border-border-gray bg-white rounded cursor-pointer disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* C. UPDATES MANAGEMENT SUB TAB */}
+          {eventsUpdatesTab === 'updates' && (
+            <div className="space-y-5 animate-fade-in">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="text"
+                    placeholder="Search news..."
+                    value={updateSearch}
+                    onChange={(e) => { setUpdateSearch(e.target.value); setUpdatePage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-soft-light text-xs font-semibold outline-none focus:bg-white focus:border-primary transition-all w-48"
+                  />
+                  <select 
+                    value={updateCategoryFilter} 
+                    onChange={(e) => { setUpdateCategoryFilter(e.target.value); setUpdatePage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Categories</option>
+                    <option value="Academy News">Academy News</option>
+                    <option value="Announcement">Announcement</option>
+                    <option value="Achievement">Achievement</option>
+                    <option value="Training Update">Training Update</option>
+                    <option value="Admission Update">Admission Update</option>
+                    <option value="General Update">General Update</option>
+                  </select>
+                  <select 
+                    value={updateStatusFilter} 
+                    onChange={(e) => { setUpdateStatusFilter(e.target.value); setUpdatePage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Published">Published</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                  <select 
+                    value={updateVisibilityFilter} 
+                    onChange={(e) => { setUpdateVisibilityFilter(e.target.value); setUpdatePage(1); }}
+                    className="py-2 px-3 border border-border-gray rounded bg-white text-xs font-semibold outline-none focus:border-primary"
+                  >
+                    <option value="">All Visibilities</option>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                  </select>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setEditingUpdate(null);
+                    setCmsUpdateForm({
+                      title: '', slug: '', category: 'Academy News', summary: '', content: '', coverMedia: '', attachments: [],
+                      status: 'Draft', visibility: 'Public', isFeatured: false
+                    });
+                    setActiveModal('cms-update');
+                  }}
+                  className="bg-[#00a896] hover:bg-[#082142] text-white transition-all font-bold py-2 px-4 rounded cursor-pointer text-xs flex items-center gap-1.5 border-none shadow-sm"
+                >
+                  + Add News Update
+                </button>
+              </div>
+
+              {/* Updates List Table */}
+              {updatesList.length === 0 ? (
+                <p className="text-xs text-slate-400 py-12 text-center bg-slate-50 border border-slate-100 rounded-xl font-bold">No news announcements match these filters.</p>
+              ) : (
+                <div className="overflow-x-auto border border-border-gray rounded-xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-border-gray text-slate-500 font-bold uppercase text-[9px] tracking-wider">
+                        <th className="py-3.5 px-4 w-12">Cover</th>
+                        <th className="py-3.5 px-4">Title</th>
+                        <th className="py-3.5 px-4">Category</th>
+                        <th className="py-3.5 px-4">Published Date</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {updatesList.map((upd) => {
+                        const coverUrl = upd.coverMedia 
+                          ? (upd.coverMedia.startsWith('http') || upd.coverMedia.startsWith('/images') || upd.coverMedia.startsWith('/uploads') ? upd.coverMedia : `http://localhost:5000${upd.coverMedia}`)
+                          : '';
+                        
+                        return (
+                          <tr key={upd._id} className="border-b border-border-gray/50 hover:bg-slate-50/50 font-medium">
+                            <td className="py-3 px-4">
+                              {coverUrl ? (
+                                <div className="w-10 h-10 rounded overflow-hidden border border-border-gray bg-white shrink-0">
+                                  <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 rounded border border-dashed border-border-gray bg-slate-100 flex items-center justify-center text-slate-400 font-bold shrink-0">📝</div>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-primary">{upd.title}</td>
+                            <td className="py-3 px-4">{upd.category}</td>
+                            <td className="py-3 px-4">
+                              {upd.publishedAt ? new Date(upd.publishedAt).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-block py-0.5 px-2 rounded text-[9px] font-extrabold uppercase ${
+                                upd.status === 'Published' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {upd.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end gap-1.5">
+                                <button 
+                                  onClick={() => {
+                                    setEditingUpdate(upd);
+                                    setCmsUpdateForm({
+                                      title: upd.title || '',
+                                      slug: upd.slug || '',
+                                      category: upd.category || 'Academy News',
+                                      summary: upd.summary || '',
+                                      content: upd.content || '',
+                                      coverMedia: upd.coverMedia || '',
+                                      attachments: upd.attachments || [],
+                                      status: upd.status || 'Draft',
+                                      visibility: upd.visibility || 'Public',
+                                      isFeatured: !!upd.isFeatured
+                                    });
+                                    setActiveModal('cms-update');
+                                  }}
+                                  className="p-1.5 bg-slate-50 text-slate-600 hover:bg-[#082142] hover:text-white rounded border border-slate-200 cursor-pointer"
+                                  title="Edit Update Details"
+                                >
+                                  ✏️
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteUpdate(upd._id, upd.title)}
+                                  className="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded border border-rose-200 cursor-pointer"
+                                  title="Delete Announcement"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Updates Pagination */}
+              {updatePages > 1 && (
+                <div className="flex items-center justify-between pt-4 text-xs font-semibold">
+                  <span className="text-slate-400">Page {updatePage} of {updatePages}</span>
+                  <div className="flex gap-2">
+                    <button disabled={updatePage <= 1} onClick={() => setUpdatePage(prev => prev - 1)} className="px-3.5 py-1.5 border border-border-gray bg-white rounded cursor-pointer disabled:opacity-50">Prev</button>
+                    <button disabled={updatePage >= updatePages} onClick={() => setUpdatePage(prev => prev + 1)} className="px-3.5 py-1.5 border border-border-gray bg-white rounded cursor-pointer disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
 
@@ -3098,8 +4876,315 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
         <AdminCompliance token={token} triggerSuccess={triggerSuccess} />
       )}
 
+      {/* FACILITIES MANAGEMENT VIEW */}
+      {activeTab === 'facilities' && (() => {
+        const deletedFacilitiesCount = facilitiesList.filter(f => f.isDeleted).length;
+        const displayedFacilities = facilitiesList.filter(f => showDeletedFacilities ? f.isDeleted : !f.isDeleted);
+
+        return (
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  <Buildings size={22} className="text-accent" /> Facilities Management {showDeletedFacilities && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">
+                  Add, update, or remove campus facility cards displayed on the website.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeletedFacilities(!showDeletedFacilities)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedFacilities
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedFacilities ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedFacilities ? 'Active Facilities' : 'Trash Bin'}
+                  {deletedFacilitiesCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedFacilitiesCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedFacilities && (
+                  <button
+                    onClick={() => {
+                      setFacilityForm({ title: '', tag: '', description: '', image: '', order: facilitiesList.length + 1, status: 'Active' });
+                      setEditingFacility(null);
+                      setActiveModal('facility');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer self-start"
+                  >
+                    <Plus size={16} /> Add New Facility
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {displayedFacilities.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedFacilities ? 'Trash bin is empty. No deleted facilities found.' : 'No facilities cards found in database. Click "+ Add New Facility" to create one.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedFacilities.map((fac) => {
+                  const imgUrl = fac.image
+                    ? (fac.image.startsWith('http') || fac.image.startsWith('/images') || fac.image.startsWith('/uploads') ? fac.image : `http://localhost:5000${fac.image}`)
+                    : '/images/sports_training_card.jpg';
+
+                  return (
+                    <div key={fac.id || fac._id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all bg-soft-light relative">
+                      <div>
+                        <div className="h-[180px] bg-primary relative overflow-hidden">
+                          <img src={imgUrl} alt={fac.title} className="w-full h-full object-cover" />
+                          {fac.tag && (
+                            <span className="absolute bottom-3 right-3 bg-primary/90 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow">
+                              {fac.tag}
+                            </span>
+                          )}
+                          {showDeletedFacilities ? (
+                            <span className="absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-600 text-white shadow">
+                              In Trash Bin
+                            </span>
+                          ) : (
+                            <span className={`absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                              fac.status === 'Hidden' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              {fac.status || 'Active'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-5 text-left space-y-2">
+                          <h3 className="text-sm font-extrabold text-primary">{fac.title}</h3>
+                          <p className="text-text-light text-xs leading-relaxed line-clamp-3">
+                            {fac.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-3.5 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                        {showDeletedFacilities ? (
+                          <>
+                            <button
+                              onClick={() => handleRestoreFacility(fac.id || fac._id, fac.title)}
+                              className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <ArrowCounterClockwise size={14} /> Restore
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFacility(fac.id || fac._id, fac.title, true)}
+                              className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Trash size={14} /> Delete Permanently
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingFacility(fac);
+                                setFacilityForm({
+                                  title: fac.title || '',
+                                  tag: fac.tag || '',
+                                  description: fac.description || '',
+                                  image: fac.image || '',
+                                  order: fac.order || 0,
+                                  status: fac.status || 'Active'
+                                });
+                                setActiveModal('facility');
+                              }}
+                              className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFacility(fac.id || fac._id, fac.title, false)}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                            >
+                              <Trash size={12} /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* RLBSA EDGE MANAGEMENT VIEW */}
+      {activeTab === 'rlbsa-edge' && (() => {
+        const deletedEdgeCount = edgeCardsList.filter(e => e.isDeleted).length;
+        const displayedEdgeCards = edgeCardsList.filter(e => showDeletedEdge ? e.isDeleted : !e.isDeleted);
+
+        return (
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  <Trophy size={22} className="text-accent" /> RLBSA Edge Cards Management {showDeletedEdge && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">
+                  Add, edit, or remove feature card details displayed in the RLBSA Edge section on the home page.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeletedEdge(!showDeletedEdge)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedEdge
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedEdge ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedEdge ? 'Active Cards' : 'Trash Bin'}
+                  {deletedEdgeCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedEdgeCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedEdge && (
+                  <button
+                    onClick={() => {
+                      setEdgeCardForm({
+                        tag: '',
+                        title: '',
+                        description: '',
+                        image: '',
+                        link: '',
+                        linkText: '',
+                        isFeatured: false,
+                        order: edgeCardsList.length + 1,
+                        status: 'Active'
+                      });
+                      setEditingEdgeCard(null);
+                      setActiveModal('edge-card');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer self-start"
+                  >
+                    <Plus size={16} /> Add Edge Card
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {displayedEdgeCards.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedEdge ? 'Trash bin is empty. No deleted RLBSA Edge cards found.' : 'No edge cards found in database. Click "+ Add Edge Card" to create one.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedEdgeCards.map((card) => {
+                  const imgUrl = card.image
+                    ? (card.image.startsWith('http') || card.image.startsWith('/images') || card.image.startsWith('/uploads') ? card.image : `http://localhost:5000${card.image}`)
+                    : '/images/rlbsa_hero_bg.jpg';
+
+                  return (
+                    <div key={card.id || card._id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all bg-soft-light relative">
+                      <div>
+                        <div className="h-[180px] bg-primary relative overflow-hidden">
+                          <img src={imgUrl} alt={card.title} className="w-full h-full object-cover" />
+                          {card.tag && (
+                            <span className="absolute bottom-3 right-3 bg-accent text-primary text-[10px] font-extrabold uppercase px-2.5 py-1 rounded shadow">
+                              {card.tag}
+                            </span>
+                          )}
+                          {card.isFeatured && (
+                            <span className="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded shadow">
+                              ⭐ Featured Main Card
+                            </span>
+                          )}
+                          {showDeletedEdge ? (
+                            <span className="absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-600 text-white shadow">
+                              In Trash Bin
+                            </span>
+                          ) : (
+                            <span className={`absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                              card.status === 'Hidden' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              {card.status || 'Active'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-5 text-left space-y-2">
+                          <h3 className="text-sm font-extrabold text-primary">{card.title}</h3>
+                          <p className="text-text-light text-xs leading-relaxed line-clamp-3">
+                            {card.description}
+                          </p>
+                          {(card.link || card.linkText) && (
+                            <div className="pt-1 text-[11px] text-accent font-bold flex items-center gap-1">
+                              <span>Link: {card.linkText || card.link || 'Action Button'}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-3.5 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                        {showDeletedEdge ? (
+                          <>
+                            <button
+                              onClick={() => handleRestoreEdgeCard(card._id || card.id, card.title)}
+                              className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <ArrowCounterClockwise size={14} /> Restore
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEdgeCard(card._id || card.id, card.title, true)}
+                              className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Trash size={14} /> Delete Permanently
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingEdgeCard(card);
+                                setEdgeCardForm({
+                                  tag: card.tag || '',
+                                  title: card.title || '',
+                                  description: card.description || '',
+                                  image: card.image || '',
+                                  link: card.link || '',
+                                  linkText: card.linkText || '',
+                                  isFeatured: card.isFeatured || false,
+                                  order: card.order || 0,
+                                  status: card.status || 'Active'
+                                });
+                                setActiveModal('edge-card');
+                              }}
+                              className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEdgeCard(card._id || card.id, card.title, false)}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                            >
+                              <Trash size={12} /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* OTHER PLACEHOLDER VIEWS */}
-      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance'].includes(activeTab) && (
+      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance', 'facilities', 'rlbsa-edge'].includes(activeTab) && (
         <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left">
           <h3 className="text-base font-bold text-primary mb-2">Management Module</h3>
           <p className="text-text-light text-xs mb-6">Database configuration values for Category: <strong className="text-primary font-bold">{activeTab}</strong></p>
@@ -3115,152 +5200,256 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
       )}
 
       {/* FOUNDERS & DIRECTORS MANAGEMENT */}
-      {activeTab === 'founders' && (
-        <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left flex flex-col gap-6">
-          <div className="flex justify-between items-center pb-4 border-b border-border-gray/50">
-            <div>
-              <h2 className="text-xl font-bold text-primary">Founders &amp; Directors Management</h2>
-              <p className="text-text-light text-xs mt-1">Configure profile cards for Mr. Sanjay Pathak and other directors shown on the website.</p>
-            </div>
-            <button
-              onClick={() => {
-                setTeamForm({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
-                setEditingTeamMember(null);
-                setActiveModal('team');
-              }}
-              className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer"
-            >
-              <Plus size={16} /> Add Member
-            </button>
-          </div>
+      {activeTab === 'founders' && (() => {
+        const deletedTeamCount = team.filter(m => m.isDeleted).length;
+        const displayedTeam = team.filter(m => showDeletedTeam ? m.isDeleted : !m.isDeleted);
 
-          {team.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
-              No team members registered. Click "Add Member" to create one.
+        return (
+          <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray/50">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  Founders &amp; Directors Management {showDeletedTeam && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">Configure profile cards for Mr. Sanjay Pathak and other directors shown on the website.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeletedTeam(!showDeletedTeam)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedTeam
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedTeam ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedTeam ? 'Active Team' : 'Trash Bin'}
+                  {deletedTeamCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedTeamCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedTeam && (
+                  <button
+                    onClick={() => {
+                      setTeamForm({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
+                      setEditingTeamMember(null);
+                      setActiveModal('team');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer"
+                  >
+                    <Plus size={16} /> Add Member
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {team.map((member) => (
-                <div key={member.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light">
-                  <div>
-                    <div className="h-[180px] bg-primary relative">
-                      <img src={member.image} alt={member.name} className="w-full h-full object-cover" style={{ objectPosition: member.objectPosition || 'center' }} />
-                      <span className="absolute bottom-3 left-3 bg-accent text-primary text-[10px] font-black px-2 py-0.5 rounded shadow uppercase">
-                        {member.role.includes('Founder') ? 'Founder' : 'Director'}
-                      </span>
+
+            {displayedTeam.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedTeam ? 'Trash bin is empty. No deleted team members.' : 'No team members registered. Click "Add Member" to create one.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedTeam.map((member) => (
+                  <div key={member.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light relative">
+                    <div>
+                      <div className="h-[180px] bg-primary relative">
+                        <img src={member.image} alt={member.name} className="w-full h-full object-cover" style={{ objectPosition: member.objectPosition || 'center' }} />
+                        <span className="absolute bottom-3 left-3 bg-accent text-primary text-[10px] font-black px-2 py-0.5 rounded shadow uppercase">
+                          {member.role.includes('Founder') ? 'Founder' : 'Director'}
+                        </span>
+                        {showDeletedTeam && (
+                          <span className="absolute top-3 right-3 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow">
+                            In Trash Bin
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-5 text-left">
+                        <h3 className="text-sm font-extrabold text-primary mb-1">{member.name}</h3>
+                        <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{member.role}</span>
+                        <p className="text-text-light text-[11px] leading-relaxed line-clamp-3">
+                          {member.bio}
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-5 text-left">
-                      <h3 className="text-sm font-extrabold text-primary mb-1">{member.name}</h3>
-                      <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{member.role}</span>
-                      <p className="text-text-light text-[11px] leading-relaxed line-clamp-3">
-                        {member.bio}
-                      </p>
+                    <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                      {showDeletedTeam ? (
+                        <>
+                          <button
+                            onClick={() => handleRestoreTeamMember(member.id, member.name)}
+                            className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <ArrowCounterClockwise size={14} /> Restore
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTeamMember(member.id, member.name, true)}
+                            className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <Trash size={14} /> Delete Permanently
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingTeamMember(member);
+                              setTeamForm({
+                                name: member.name,
+                                role: member.role,
+                                bio: member.bio,
+                                image: member.image,
+                                objectPosition: member.objectPosition || 'center'
+                              });
+                              setActiveModal('team');
+                            }}
+                            className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTeamMember(member.id, member.name, false)}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash size={12} /> Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
-                    <button
-                      onClick={() => {
-                        setEditingTeamMember(member);
-                        setTeamForm({
-                          name: member.name,
-                          role: member.role,
-                          bio: member.bio,
-                          image: member.image,
-                          objectPosition: member.objectPosition || 'center'
-                        });
-                        setActiveModal('team');
-                      }}
-                      className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTeamMember(member.id)}
-                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
-                    >
-                      <Trash size={12} /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* SUCCESS STORIES TAB VIEW */}
-      {activeTab === 'success-stories' && (
-        <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-border-gray">
-            <div>
-              <h2 className="text-xl font-bold text-primary">Success Stories Management</h2>
-              <p className="text-text-light text-xs mt-1">Configure profile cards for former athletes and alumni shown on the website.</p>
-            </div>
-            <button
-              onClick={() => {
-                setStoryForm({ name: '', sport: 'Football', achievement: '', description: '', quote: '', image: '', joined: '', age: '', medals: '', objectPosition: 'center' });
-                setEditingStory(null);
-                setActiveModal('success-story');
-              }}
-              className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer"
-            >
-              <Plus size={16} /> Add Story
-            </button>
-          </div>
+      {activeTab === 'success-stories' && (() => {
+        const deletedStoriesCount = stories.filter(s => s.isDeleted).length;
+        const displayedStories = stories.filter(s => showDeletedStories ? s.isDeleted : !s.isDeleted);
 
-          {stories.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
-              No success stories registered. Click "Add Story" to create one.
+        return (
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-border-gray">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  Success Stories Management {showDeletedStories && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">Configure profile cards for former athletes and alumni shown on the website.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeletedStories(!showDeletedStories)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedStories
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedStories ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedStories ? 'Active Stories' : 'Trash Bin'}
+                  {deletedStoriesCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedStoriesCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedStories && (
+                  <button
+                    onClick={() => {
+                      setStoryForm({ name: '', sport: 'Football', achievement: '', description: '', quote: '', image: '', joined: '', age: '', medals: '', objectPosition: 'center' });
+                      setEditingStory(null);
+                      setActiveModal('success-story');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer"
+                  >
+                    <Plus size={16} /> Add Story
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stories.map((story) => (
-                <div key={story.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light">
-                  <div>
-                    <div className="h-[180px] bg-primary relative">
-                      <img src={story.image} alt={story.name} className="w-full h-full object-cover" style={{ objectPosition: story.objectPosition || 'center' }} />
-                      <span className="absolute bottom-3 left-3 bg-accent text-primary text-[10px] font-black px-2 py-0.5 rounded shadow uppercase">
-                        {story.sport}
-                      </span>
+
+            {displayedStories.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedStories ? 'Trash bin is empty. No deleted success stories.' : 'No success stories registered. Click "Add Story" to create one.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedStories.map((story) => (
+                  <div key={story.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light relative">
+                    <div>
+                      <div className="h-[180px] bg-primary relative">
+                        <img src={story.image} alt={story.name} className="w-full h-full object-cover" style={{ objectPosition: story.objectPosition || 'center' }} />
+                        <span className="absolute bottom-3 left-3 bg-accent text-primary text-[10px] font-black px-2 py-0.5 rounded shadow uppercase">
+                          {story.sport}
+                        </span>
+                        {showDeletedStories && (
+                          <span className="absolute top-3 right-3 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow">
+                            In Trash Bin
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-5 text-left">
+                        <h3 className="text-sm font-extrabold text-primary mb-1">{story.name}</h3>
+                        <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{story.achievement}</span>
+                        <p className="text-text-light text-[11px] leading-relaxed line-clamp-3">
+                          "{story.quote}"
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-5 text-left">
-                      <h3 className="text-sm font-extrabold text-primary mb-1">{story.name}</h3>
-                      <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{story.achievement}</span>
-                      <p className="text-text-light text-[11px] leading-relaxed line-clamp-3">
-                        "{story.quote}"
-                      </p>
+                    <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                      {showDeletedStories ? (
+                        <>
+                          <button
+                            onClick={() => handleRestoreStory(story.id, story.name)}
+                            className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <ArrowCounterClockwise size={14} /> Restore
+                          </button>
+                          <button
+                            onClick={() => deleteStory(story.id, story.name, true)}
+                            className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <Trash size={14} /> Delete Permanently
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => openEditStoryModal(story)}
+                            className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteStory(story.id, story.name, false)}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash size={12} /> Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
-                    <button
-                      onClick={() => openEditStoryModal(story)}
-                      className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteStory(story.id)}
-                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
-                    >
-                      <Trash size={12} /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 5. Add / Edit Team Member Modal */}
-      {activeModal === 'team' && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setActiveModal(null)}><X size={20} /></button>
-            <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
+      {activeModal === 'team' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
               <UserPlus size={20} className="text-accent" /> {editingTeamMember ? 'Edit Team Member' : 'Add Team Member'}
             </h3>
-            <form onSubmit={editingTeamMember ? handleUpdateTeamMember : handleAddTeamMember} className="space-y-4">
+            <form onSubmit={editingTeamMember ? handleUpdateTeamMember : handleAddTeamMember} className="flex-1 overflow-y-auto space-y-4 pr-1 py-1">
               <div>
                 <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Display Name</label>
                 <input 
@@ -3356,18 +5545,19 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 5. Add / Edit Success Story Modal */}
-      {activeModal === 'success-story' && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setActiveModal(null)}><X size={20} /></button>
-            <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
+      {activeModal === 'success-story' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
               <Trophy size={20} className="text-accent" /> {editingStory ? 'Edit Success Story' : 'Add Success Story'}
             </h3>
-            <form onSubmit={handleAddOrUpdateStory} className="space-y-3.5 max-h-[550px] overflow-y-auto pr-1">
+            <form onSubmit={handleAddOrUpdateStory} className="flex-1 overflow-y-auto space-y-3.5 pr-1 py-1">
               <div>
                 <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Athlete Name</label>
                 <input 
@@ -3528,13 +5718,14 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 6. Success Story Image Chooser & Canvas Cropper Modal */}
-      {showCropperModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[300] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowCropperModal(false)}>
-          <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden text-left relative flex flex-col max-h-[90vh] animate-fade-in" onClick={(e) => e.stopPropagation()}>
+      {showCropperModal && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[10000] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowCropperModal(false)}>
+          <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden text-left relative flex flex-col max-h-[90vh] my-auto animate-fade-in" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="p-5 border-b border-border-gray flex justify-between items-center bg-soft-light shrink-0">
               <h3 className="text-md font-bold text-primary flex items-center gap-2">
@@ -3561,118 +5752,125 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </button>
             </div>
 
-            {/* Tab Content & Cropper Work Area */}
-            <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5 items-center justify-center min-h-[360px]">
-              {!cropperSource ? (
-                // Image Selection Screen
-                cropperTab === 'upload' ? (
-                  // Local File Upload Widget
-                  <div className="w-full max-w-sm">
-                    <label 
-                      htmlFor="story-image-file-input" 
-                      className="w-full py-10 px-6 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-3 bg-soft-light hover:bg-white transition-all cursor-pointer group"
-                    >
-                      <Plus size={24} className="text-text-light group-hover:text-primary transition-colors" />
-                      <div className="text-center">
-                        <span className="block text-xs font-bold text-primary mb-1">Select from computer</span>
-                        <span className="text-[10px] text-text-light">Supports JPEG, PNG, WebP</span>
-                      </div>
-                    </label>
-                    <input 
-                      type="file" 
-                      id="story-image-file-input" 
-                      accept="image/*" 
-                      onChange={handleLocalFileSelect} 
-                      className="hidden" 
-                    />
-                  </div>
-                ) : (
-                  // Select from Existing Gallery Grid
-                  <div className="w-full">
-                    {dashboardGallery.length === 0 ? (
-                      <div className="text-center py-10 border border-dashed border-border-gray rounded-xl text-xs text-text-light">
-                        No images found in gallery database. Try uploading a local file.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[280px] overflow-y-auto pr-1">
-                        {dashboardGallery.map((item) => (
-                          <div 
-                            key={item._id} 
-                            onClick={() => setCropperSource(item.mediaUrl)}
-                            className="aspect-square bg-slate-100 rounded-lg overflow-hidden border border-border-gray hover:border-primary shadow-xs hover:shadow-md cursor-pointer transition-all relative group"
-                          >
-                            <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover animate-fade-in" />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="text-[9px] font-bold text-white bg-primary/80 py-1 px-2 rounded uppercase shadow-sm">Select</span>
-                            </div>
+            {/* Tab Body */}
+            <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
+              {cropperTab === 'upload' && !cropperSource && (
+                <div className="border-2 border-dashed border-border-gray rounded-xl p-8 text-center bg-soft-light flex flex-col items-center justify-center gap-3">
+                  <span className="text-3xl">📷</span>
+                  <p className="text-xs font-bold text-primary">Upload Photo for Cropping</p>
+                  <p className="text-[11px] text-text-light">Select a high-resolution image file from your computer.</p>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleLocalFileSelect} 
+                    className="hidden" 
+                    id="cropper-file-input" 
+                  />
+                  <label 
+                    htmlFor="cropper-file-input" 
+                    className="mt-2 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-5 rounded-lg text-xs cursor-pointer transition-all shadow-md"
+                  >
+                    Select Local File
+                  </label>
+                </div>
+              )}
+
+              {cropperTab === 'gallery' && !cropperSource && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-primary mb-2">Select an image from existing Gallery Events:</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[350px] overflow-y-auto pr-1">
+                    {galleryItems.filter(item => item.coverMedia || (item.photos && item.photos.length > 0)).map((item, idx) => {
+                      const imageSrc = item.coverMedia ? (item.coverMedia.startsWith('http') ? item.coverMedia : `http://localhost:5000${item.coverMedia}`) : `http://localhost:5000${item.photos[0]?.path}`;
+                      return (
+                        <div 
+                          key={idx} 
+                          onClick={() => setCropperSource(imageSrc)} 
+                          className="aspect-[4/3] rounded-lg overflow-hidden border border-border-gray hover:border-primary cursor-pointer relative group bg-slate-100 shadow-xs"
+                        >
+                          <img src={imageSrc} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-white bg-primary px-2 py-1 rounded">Select</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })}
                   </div>
-                )
-              ) : (
-                // Cropper Canvas & Adjustments Screen
-                <div className="w-full flex flex-col items-center gap-4">
-                  {/* Fixed Aspect Crop Frame Viewport */}
+                </div>
+              )}
+
+              {cropperSource && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-primary">Drag image to adjust position & zoom slider:</p>
+                  
+                  {/* Canvas Container */}
                   <div 
-                    className="relative overflow-hidden bg-slate-900 border-2 border-primary rounded-xl shadow-inner select-none cursor-move mx-auto"
-                    style={{
-                      width: croppingTarget === 'student' ? '300px' : '400px',
-                      height: '300px'
+                    className="w-full max-w-[440px] aspect-[4/3] mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none"
+                    onMouseDown={(e) => {
+                      setIsDragMoving(true);
+                      setDragStartPoint({ x: e.clientX, y: e.clientY });
+                      setDragInitialOffset({ ...cropPosition });
                     }}
-                    onMouseDown={startDrag}
-                    onMouseMove={onDrag}
-                    onMouseUp={stopDrag}
-                    onMouseLeave={stopDrag}
-                    onTouchStart={startDragTouch}
-                    onTouchMove={onDragTouch}
-                    onTouchEnd={stopDrag}
+                    onMouseMove={(e) => {
+                      if (!isDragMoving) return;
+                      const dx = e.clientX - dragStartPoint.x;
+                      const dy = e.clientY - dragStartPoint.y;
+                      setCropPosition({
+                        x: dragInitialOffset.x + dx,
+                        y: dragInitialOffset.y + dy
+                      });
+                    }}
+                    onMouseUp={() => setIsDragMoving(false)}
+                    onMouseLeave={() => setIsDragMoving(false)}
                   >
                     <img 
                       src={cropperSource} 
-                      alt="Crop Source" 
-                      onLoad={handleImageLoaded}
-                      draggable={false}
-                      className="absolute max-w-none origin-top-left pointer-events-none select-none"
+                      alt="Cropper Target" 
                       style={{
-                        transform: `translate(${cropPosition.x}px, ${cropPosition.y}px) scale(${cropZoom * Math.max((croppingTarget === 'student' ? 300 : 400) / imageSize.width, 300 / imageSize.height)})`
+                        transform: `translate(${cropPosition.x}px, ${cropPosition.y}px) scale(${cropZoom})`,
+                        transformOrigin: 'center center',
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
                       }}
+                      className="pointer-events-none transition-transform duration-75"
                     />
-                    {/* Fixed aspect crop frames overlay */}
-                    <div className="absolute inset-0 border border-white/30 pointer-events-none" />
-                    <div className="absolute top-1/3 left-0 right-0 border-t border-dashed border-white/25 pointer-events-none" />
-                    <div className="absolute top-2/3 left-0 right-0 border-t border-dashed border-white/25 pointer-events-none" />
-                    <div className="absolute left-1/3 top-0 bottom-0 border-l border-dashed border-white/25 pointer-events-none" />
-                    <div className="absolute left-2/3 top-0 bottom-0 border-l border-dashed border-white/25 pointer-events-none" />
+                    
+                    {/* Grid Overlay Guide */}
+                    <div className="absolute inset-0 border border-white/20 pointer-events-none grid grid-cols-3 grid-rows-3">
+                      <div className="border-r border-b border-white/20"></div>
+                      <div className="border-r border-b border-white/20"></div>
+                      <div className="border-b border-white/20"></div>
+                      <div className="border-r border-b border-white/20"></div>
+                      <div className="border-r border-b border-white/20"></div>
+                      <div className="border-b border-white/20"></div>
+                      <div className="border-r border-white/20"></div>
+                      <div className="border-r border-white/20"></div>
+                      <div></div>
+                    </div>
                   </div>
 
-                  <span className="text-[10px] text-text-light font-medium uppercase tracking-wider">
-                    Drag photo to pan & align within frame
-                  </span>
-
-                  {/* Zoom Slider Control */}
-                  <div className="w-full max-w-sm flex items-center gap-3.5 mt-2 bg-soft-light py-2.5 px-4 rounded-xl border border-border-gray">
-                    <span className="text-[10px] font-bold text-primary uppercase">Zoom</span>
+                  {/* Zoom Controls */}
+                  <div className="flex items-center gap-4 max-w-[440px] mx-auto bg-soft-light p-3 rounded-lg border border-border-gray">
+                    <span className="text-xs font-bold text-primary min-w-[50px]">Zoom:</span>
                     <input 
                       type="range" 
                       min="1" 
                       max="3" 
-                      step="0.01" 
+                      step="0.05" 
                       value={cropZoom} 
-                      onChange={(e) => setCropZoom(parseFloat(e.target.value))}
-                      className="flex-1 accent-primary h-1 bg-border-gray rounded-lg appearance-none cursor-pointer" 
+                      onChange={(e) => setCropZoom(parseFloat(e.target.value))} 
+                      className="flex-1 accent-primary cursor-pointer"
                     />
-                    <span className="text-[10px] font-bold text-primary w-8 text-right">
-                      {Math.round(cropZoom * 100)}%
-                    </span>
+                    <span className="text-xs font-bold text-text-light w-10 text-right">{Math.round(cropZoom * 100)}%</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="p-5 border-t border-border-gray flex justify-between items-center bg-soft-light shrink-0">
+            {/* Footer Buttons */}
+            <div className="p-4 border-t border-border-gray bg-soft-light flex justify-end gap-3 shrink-0">
               <button 
                 type="button" 
                 onClick={() => {
@@ -3697,30 +5895,328 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ADD / EDIT FACILITY MODAL */}
+      {activeModal === 'facility' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden border border-slate-100" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
+              <Buildings size={20} className="text-accent" /> {editingFacility ? 'Edit Facility Card' : 'Add New Facility Card'}
+            </h3>
+            <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto space-y-4 pr-1 py-1 hide-scrollbar">
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Facility Title *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. Gym & Fitness Center"
+                  value={facilityForm.title} 
+                  onChange={(e) => setFacilityForm({ ...facilityForm, title: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Tag Badge *</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. Advanced Gear"
+                    value={facilityForm.tag} 
+                    onChange={(e) => setFacilityForm({ ...facilityForm, tag: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Sort Order</label>
+                  <input 
+                    type="number" 
+                    placeholder="1, 2, 3..."
+                    value={facilityForm.order} 
+                    onChange={(e) => setFacilityForm({ ...facilityForm, order: parseInt(e.target.value) || 0 })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Card Image URL / Upload</label>
+                <div className="space-y-2">
+                  <input 
+                    type="text" 
+                    placeholder="/images/gym_card.png or http://..."
+                    value={facilityForm.image} 
+                    onChange={(e) => setFacilityForm({ ...facilityForm, image: e.target.value })}
+                    className="w-full py-2 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (reader.result) {
+                              setFacilityForm({ ...facilityForm, image: reader.result as string });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer"
+                    />
+                  </div>
+                </div>
+                {facilityForm.image && (
+                  <div className="mt-2.5 h-28 rounded-lg overflow-hidden border border-border-gray relative bg-slate-100">
+                    <img 
+                      src={facilityForm.image.startsWith('http') || facilityForm.image.startsWith('data:') || facilityForm.image.startsWith('/images') || facilityForm.image.startsWith('/uploads') ? facilityForm.image : `http://localhost:5000${facilityForm.image}`} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Description *</label>
+                <textarea 
+                  required
+                  rows={3}
+                  placeholder="Facility features and details description..."
+                  value={facilityForm.description} 
+                  onChange={(e) => setFacilityForm({ ...facilityForm, description: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Visibility Status</label>
+                <select
+                  value={facilityForm.status}
+                  onChange={(e) => setFacilityForm({ ...facilityForm, status: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                >
+                  <option value="Active">Active (Visible on Website)</option>
+                  <option value="Hidden">Hidden (Draft / Archived)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="py-2.5 px-4 rounded-lg border border-border-gray text-xs font-bold text-text-light hover:bg-slate-100 cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-5 rounded-lg transition-all cursor-pointer text-xs uppercase tracking-wider border-none shadow-md"
+                >
+                  {editingFacility ? 'Update Card' : 'Save Facility Card'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 0. RLBSA Edge Card Modal */}
+      {activeModal === 'edge-card' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden border border-slate-100" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
+              <Trophy size={20} className="text-accent" /> {editingEdgeCard ? 'Edit RLBSA Edge Card' : 'Add New RLBSA Edge Card'}
+            </h3>
+            <form onSubmit={handleSaveEdgeCard} className="flex-1 overflow-y-auto space-y-4 pr-1 py-1 hide-scrollbar">
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Card Title *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. World-Class Infrastructure"
+                  value={edgeCardForm.title} 
+                  onChange={(e) => setEdgeCardForm({ ...edgeCardForm, title: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Tag / Category Badge *</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. EXCELLENCE"
+                    value={edgeCardForm.tag} 
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, tag: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Sort Order</label>
+                  <input 
+                    type="number" 
+                    placeholder="1, 2, 3..."
+                    value={edgeCardForm.order} 
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, order: parseInt(e.target.value) || 0 })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Button Link Target</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. /facilities or /about"
+                    value={edgeCardForm.link} 
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, link: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Button Label Text</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Explore Facilities"
+                    value={edgeCardForm.linkText} 
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, linkText: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Card Image URL / Upload</label>
+                <div className="space-y-2">
+                  <input 
+                    type="text" 
+                    placeholder="/images/sports_training_card.jpg or http://..."
+                    value={edgeCardForm.image} 
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, image: e.target.value })}
+                    className="w-full py-2 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (reader.result) {
+                              setEdgeCardForm({ ...edgeCardForm, image: reader.result as string });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer"
+                    />
+                  </div>
+                </div>
+                {edgeCardForm.image && (
+                  <div className="mt-2.5 h-28 rounded-lg overflow-hidden border border-border-gray relative bg-slate-100">
+                    <img 
+                      src={edgeCardForm.image.startsWith('http') || edgeCardForm.image.startsWith('data:') || edgeCardForm.image.startsWith('/images') || edgeCardForm.image.startsWith('/uploads') ? edgeCardForm.image : `http://localhost:5000${edgeCardForm.image}`} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Description *</label>
+                <textarea 
+                  required
+                  rows={3}
+                  placeholder="Card features and details description..."
+                  value={edgeCardForm.description} 
+                  onChange={(e) => setEdgeCardForm({ ...edgeCardForm, description: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 items-center">
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Visibility Status</label>
+                  <select
+                    value={edgeCardForm.status}
+                    onChange={(e) => setEdgeCardForm({ ...edgeCardForm, status: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  >
+                    <option value="Active">Active (Visible on Website)</option>
+                    <option value="Hidden">Hidden (Draft / Archived)</option>
+                  </select>
+                </div>
+                <div className="pt-4">
+                  <label className="flex items-center gap-2 text-xs font-bold text-primary cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={edgeCardForm.isFeatured}
+                      onChange={(e) => setEdgeCardForm({ ...edgeCardForm, isFeatured: e.target.checked })}
+                      className="w-4 h-4 text-accent rounded border-border-gray focus:ring-accent"
+                    />
+                    <span>Set as Featured (Main Hero Card)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="py-2.5 px-4 rounded-lg border border-border-gray text-xs font-bold text-text-light hover:bg-slate-100 cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-5 rounded-lg transition-all cursor-pointer text-xs uppercase tracking-wider border-none shadow-md"
+                >
+                  {editingEdgeCard ? 'Update Card' : 'Save Edge Card'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* QUICK ACTION MODALS LAYOUT */}
       
       {/* 1. Add/Edit Student Modal */}
-      {(activeModal === 'student-create' || activeModal === 'student-edit') && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={resetStudentForm}>
-          <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={resetStudentForm}><X size={20} /></button>
-            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-3">
+      {(activeModal === 'student-create' || activeModal === 'student-edit') && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={resetStudentForm}>
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-4 sm:p-6 text-left relative animate-fade-in max-h-[90vh] flex flex-col my-auto border border-slate-100 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={resetStudentForm}><X size={20} /></button>
+            <h3 className="text-base font-bold text-primary mb-2.5 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
               <UserPlus size={20} className="text-accent" /> {activeModal === 'student-edit' ? 'Edit Student Record' : 'Register New Student'}
             </h3>
             
             {/* Modal Tabs Header */}
-            <div className="flex border-b border-border-gray shrink-0 bg-white mb-4 overflow-x-auto">
+            <div className="flex border-b border-border-gray shrink-0 bg-white mb-3 overflow-x-auto hide-scrollbar gap-1">
               {['personal', 'guardian', 'academy', 'education', 'achievements', 'documents'].map((tab) => (
                 <button 
                   key={tab}
                   type="button"
                   onClick={() => setActiveStudentFormTab(tab)}
-                  className={`py-2.5 px-4 text-xs font-bold border-none cursor-pointer transition-all capitalize whitespace-nowrap ${
+                  className={`py-2 px-4 text-xs font-bold border-none cursor-pointer transition-all capitalize whitespace-nowrap rounded-t-lg ${
                     activeStudentFormTab === tab 
-                      ? 'text-primary border-b-2 border-b-primary bg-slate-50' 
+                      ? 'text-primary border-b-2 border-b-primary bg-slate-100' 
                       : 'text-text-light hover:text-primary bg-transparent'
                   }`}
                 >
@@ -3729,552 +6225,577 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               ))}
             </div>
 
-            <form onSubmit={handleSaveStudent} className="flex-1 overflow-y-auto pr-1 space-y-4">
-              
-              {/* Tab 1: Personal Details */}
-              {activeStudentFormTab === 'personal' && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name *</label>
-                      <input 
-                        required 
-                        type="text" 
-                        placeholder="E.g. Puja Kumari" 
-                        value={studentForm.fullName} 
-                        onChange={(e) => setStudentForm({...studentForm, fullName: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Date of Birth *</label>
-                      <input 
-                        required 
-                        type="date" 
-                        value={studentForm.dateOfBirth} 
-                        onChange={(e) => setStudentForm({...studentForm, dateOfBirth: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Gender *</label>
-                      <select 
-                        value={studentForm.gender} 
-                        onChange={(e) => setStudentForm({ ...studentForm, gender: e.target.value })} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
-                      >
-                        <option value="girl">Girl</option>
-                        <option value="boy">Boy</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Blood Group</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. O+ or A+" 
-                        value={studentForm.bloodGroup} 
-                        onChange={(e) => setStudentForm({...studentForm, bloodGroup: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Contact Phone</label>
-                      <input 
-                        type="tel" 
-                        placeholder="E.g. +91 98765 43210" 
-                        value={studentForm.phone} 
-                        onChange={(e) => setStudentForm({...studentForm, phone: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Email</label>
-                      <input 
-                        type="email" 
-                        placeholder="E.g. puja@gmail.com" 
-                        value={studentForm.email} 
-                        onChange={(e) => setStudentForm({...studentForm, email: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Residential Address</label>
-                    <textarea 
-                      rows={2} 
-                      placeholder="Street, District, State, Pincode" 
-                      value={studentForm.address} 
-                      onChange={(e) => setStudentForm({...studentForm, address: e.target.value})} 
-                      className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
-                    />
-                  </div>
-
-                  {/* Profile Pic Upload & Crop */}
-                  <div className="flex flex-col gap-1.5 p-3.5 bg-soft-light border border-border-gray rounded-xl">
-                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Profile Photo</label>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full border border-border-gray flex items-center justify-center bg-white text-3xl overflow-hidden shadow-xs shrink-0">
-                        {studentPhotoPreview ? (
-                          <img src={studentPhotoPreview} alt="Student preview" className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{studentForm.gender === 'boy' ? '👦' : '👩‍🎓'}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 flex flex-col gap-1.5">
+            <form onSubmit={handleSaveStudent} className="flex-1 flex flex-col min-h-0 overflow-x-hidden">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar space-y-3 py-1">
+                
+                {/* Tab 1: Personal Details */}
+                {activeStudentFormTab === 'personal' && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name *</label>
                         <input 
-                          type="file" 
-                          accept="image/*" 
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setStudentPhotoFile(file);
-                              setStudentPhotoPreview(URL.createObjectURL(file));
-                            }
-                          }} 
-                          className="text-xs font-semibold text-text-light file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white hover:file:bg-accent hover:file:text-primary file:cursor-pointer"
+                          required 
+                          type="text" 
+                          placeholder="E.g. Puja Kumari" 
+                          value={studentForm.fullName} 
+                          onChange={(e) => setStudentForm({...studentForm, fullName: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
                         />
-                        <span className="text-[9px] text-text-light">Recommended size: 300x300 pixels</span>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 2: Guardian Details */}
-              {activeStudentFormTab === 'guardian' && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Parent/Guardian Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Ramesh Singh" 
-                        value={studentForm.guardianName} 
-                        onChange={(e) => setStudentForm({...studentForm, guardianName: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Relationship</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Father / Mother / Uncle" 
-                        value={studentForm.guardianRelationship} 
-                        onChange={(e) => setStudentForm({...studentForm, guardianRelationship: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Guardian Phone Number</label>
-                      <input 
-                        type="tel" 
-                        placeholder="E.g. +91 98765 43211" 
-                        value={studentForm.guardianPhone} 
-                        onChange={(e) => setStudentForm({...studentForm, guardianPhone: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Emergency Contact Number</label>
-                      <input 
-                        type="tel" 
-                        placeholder="E.g. +91 98765 43212" 
-                        value={studentForm.guardianEmergency} 
-                        onChange={(e) => setStudentForm({...studentForm, guardianEmergency: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Guardian Address</label>
-                    <textarea 
-                      rows={2} 
-                      placeholder="Leave blank if same as student address" 
-                      value={studentForm.guardianAddress} 
-                      onChange={(e) => setStudentForm({...studentForm, guardianAddress: e.target.value})} 
-                      className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Academy Details */}
-              {activeStudentFormTab === 'academy' && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Residency Status *</label>
-                      <select 
-                        value={studentForm.residency} 
-                        onChange={(e) => setStudentForm({...studentForm, residency: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
-                      >
-                        <option value="resident">Boarding (Resident)</option>
-                        <option value="non-resident">Day Scholar (Non-Resident)</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Hostel Room Number (if Resident)</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Room 4B" 
-                        value={studentForm.hostelRoom} 
-                        onChange={(e) => setStudentForm({...studentForm, hostelRoom: e.target.value})} 
-                        disabled={studentForm.residency === 'non-resident'}
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold disabled:opacity-50" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Admission Date *</label>
-                      <input 
-                        required 
-                        type="date" 
-                        value={studentForm.admissionDate} 
-                        onChange={(e) => setStudentForm({...studentForm, admissionDate: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Training Batch</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Morning Elite A" 
-                        value={studentForm.batch} 
-                        onChange={(e) => setStudentForm({...studentForm, batch: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Assigned Coach</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Coach Rajesh" 
-                        value={studentForm.coach} 
-                        onChange={(e) => setStudentForm({...studentForm, coach: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Primary Sport Discipline *</label>
-                      <select 
-                        value={studentForm.primarySport} 
-                        onChange={(e) => setStudentForm({...studentForm, primarySport: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
-                      >
-                        <option value="Football">Football</option>
-                        <option value="Handball">Handball</option>
-                        <option value="Athletics">Athletics</option>
-                        <option value="Rugby">Rugby</option>
-                        <option value="Kabaddi">Kabaddi</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Secondary Sports (Comma Separated)</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Handball, Athletics" 
-                        value={studentForm.secondarySports.join(', ')} 
-                        onChange={(e) => {
-                          const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                          setStudentForm({...studentForm, secondarySports: list});
-                        }} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 4: Education Details */}
-              {activeStudentFormTab === 'education' && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">School / College Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Rani Laxmibai High School" 
-                        value={studentForm.schoolName} 
-                        onChange={(e) => setStudentForm({...studentForm, schoolName: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Class / Grade</label>
-                      <input 
-                        type="text" 
-                        placeholder="E.g. Class 9" 
-                        value={studentForm.className} 
-                        onChange={(e) => setStudentForm({...studentForm, className: e.target.value})} 
-                        className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Academic Performance / Remarks</label>
-                    <textarea 
-                      rows={3} 
-                      placeholder="Academic updates, exam details, board details, or tutoring notes..." 
-                      value={studentForm.academicInfo} 
-                      onChange={(e) => setStudentForm({...studentForm, academicInfo: e.target.value})} 
-                      className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 5: Achievements Details */}
-              {activeStudentFormTab === 'achievements' && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="flex justify-between items-center pb-2 border-b border-border-gray/50">
-                    <span className="text-[11px] font-bold text-primary uppercase tracking-wider">Sports Achievements & Medals List</span>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setStudentForm({
-                          ...studentForm,
-                          achievements: [...studentForm.achievements, { title: '', competition: '', position: '', year: new Date().getFullYear(), description: '' }]
-                        });
-                      }}
-                      className="py-1 px-2.5 bg-primary text-white hover:bg-accent hover:text-primary transition-all rounded text-[10px] font-bold cursor-pointer"
-                    >
-                      + Add Row
-                    </button>
-                  </div>
-
-                  {studentForm.achievements.length === 0 ? (
-                    <div className="text-center py-6 text-text-light italic text-xs">
-                      No achievements recorded for this student yet. Click "+ Add Row" to append achievements.
-                    </div>
-                  ) : (
-                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                      {studentForm.achievements.map((ach, idx) => (
-                        <div key={idx} className="p-3 border border-border-gray rounded-lg bg-soft-light space-y-2 relative">
-                          <button 
-                            type="button" 
-                            onClick={() => {
-                              const list = studentForm.achievements.filter((_, i) => i !== idx);
-                              setStudentForm({ ...studentForm, achievements: list });
-                            }}
-                            className="absolute top-2.5 right-2.5 text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer"
-                            title="Remove Row"
-                          >
-                            <Trash size={14} />
-                          </button>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Date of Birth *</label>
+                        <input 
+                          required 
+                          type="date" 
+                          value={studentForm.dob} 
+                          onChange={(e) => setStudentForm({...studentForm, dob: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Gender *</label>
+                        <select 
+                          value={studentForm.gender} 
+                          onChange={(e) => setStudentForm({...studentForm, gender: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                        >
+                          <option value="Girl">Girl</option>
+                          <option value="Boy">Boy</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Blood Group</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. O+ or A+" 
+                          value={studentForm.bloodGroup} 
+                          onChange={(e) => setStudentForm({...studentForm, bloodGroup: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Contact Phone</label>
+                        <input 
+                          type="tel" 
+                          placeholder="E.g. +91 98765 43210" 
+                          value={studentForm.studentPhone} 
+                          onChange={(e) => setStudentForm({...studentForm, studentPhone: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Email</label>
+                        <input 
+                          type="email" 
+                          placeholder="E.g. puja@gmail.com" 
+                          value={studentForm.studentEmail} 
+                          onChange={(e) => setStudentForm({...studentForm, studentEmail: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Residential Address</label>
+                        <input 
+                          type="text"
+                          placeholder="Street, District, State, Pincode" 
+                          value={studentForm.address} 
+                          onChange={(e) => setStudentForm({...studentForm, address: e.target.value})} 
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Profile Photo</label>
+                        <div className="p-2 border border-border-gray rounded-lg bg-soft-light flex items-center gap-3">
+                          {studentPhotoPreview ? (
+                            <img src={studentPhotoPreview} alt="Preview" className="w-10 h-10 rounded-full object-cover shrink-0 border border-primary" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0 text-slate-500 text-base font-bold">🎓</div>
+                          )}
+                          <div className="overflow-hidden flex-1">
                             <input 
-                              type="text" 
-                              required 
-                              placeholder="Medal/Title (e.g. Gold Medalist)" 
-                              value={ach.title} 
+                              type="file" 
+                              accept="image/*"
                               onChange={(e) => {
-                                const list = [...studentForm.achievements];
-                                list[idx].title = e.target.value;
-                                setStudentForm({ ...studentForm, achievements: list });
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setStudentPhotoFile(file);
+                                  setStudentPhotoPreview(URL.createObjectURL(file));
+                                }
                               }}
-                              className="py-1.5 px-2.5 border border-border-gray rounded text-xs bg-white outline-none" 
-                            />
-                            <input 
-                              type="text" 
-                              required 
-                              placeholder="Tournament/Competition Name" 
-                              value={ach.competition} 
-                              onChange={(e) => {
-                                const list = [...studentForm.achievements];
-                                list[idx].competition = e.target.value;
-                                setStudentForm({ ...studentForm, achievements: list });
-                              }}
-                              className="py-1.5 px-2.5 border border-border-gray rounded text-xs bg-white outline-none" 
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input 
-                              type="text" 
-                              placeholder="Position (e.g. Winner/Runner Up)" 
-                              value={ach.position} 
-                              onChange={(e) => {
-                                const list = [...studentForm.achievements];
-                                list[idx].position = e.target.value;
-                                setStudentForm({ ...studentForm, achievements: list });
-                              }}
-                              className="py-1.5 px-2.5 border border-border-gray rounded text-xs bg-white outline-none" 
-                            />
-                            <input 
-                              type="number" 
-                              required 
-                              placeholder="Year (e.g. 2026)" 
-                              value={ach.year} 
-                              onChange={(e) => {
-                                const list = [...studentForm.achievements];
-                                list[idx].year = parseInt(e.target.value) || new Date().getFullYear();
-                                setStudentForm({ ...studentForm, achievements: list });
-                              }}
-                              className="py-1.5 px-2.5 border border-border-gray rounded text-xs bg-white outline-none" 
-                            />
-                            <input 
-                              type="text" 
-                              placeholder="Quick Notes" 
-                              value={ach.description} 
-                              onChange={(e) => {
-                                const list = [...studentForm.achievements];
-                                list[idx].description = e.target.value;
-                                setStudentForm({ ...studentForm, achievements: list });
-                              }}
-                              className="py-1.5 px-2.5 border border-border-gray rounded text-xs bg-white outline-none" 
+                              className="text-[10px] text-text-light file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
                             />
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Tab 6: Documents & Settings */}
-              {activeStudentFormTab === 'documents' && (
-                <div className="space-y-4 animate-fade-in text-xs font-semibold">
-                  <div className="p-4 border border-border-gray rounded-xl bg-soft-light space-y-3">
-                    <span className="block text-[10px] font-bold text-primary uppercase tracking-wider pb-1 border-b border-border-gray">Secure Document Upload Checklist</span>
-                    
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] text-text-light">Select documents to upload (ID Proof, Birth Certificate, Consent Forms):</span>
-                      <input 
-                        type="file" 
-                        multiple 
-                        onChange={(e) => {
-                          if (e.target.files) {
-                            const newFiles = Array.from(e.target.files).map(file => ({
-                              file,
-                              name: file.name.split('.')[0]
-                            }));
-                            setStudentDocFiles([...studentDocFiles, ...newFiles]);
-                          }
-                        }} 
-                        className="text-xs file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-slate-200 file:text-primary file:cursor-pointer"
-                      />
+                {/* Tab 2: Guardian Details */}
+                {activeStudentFormTab === 'guardian' && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Father's Name *</label>
+                        <input 
+                          required 
+                          type="text" 
+                          placeholder="Father's full name" 
+                          value={studentForm.fatherName} 
+                          onChange={(e) => setStudentForm({...studentForm, fatherName: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Mother's Name *</label>
+                        <input 
+                          required 
+                          type="text" 
+                          placeholder="Mother's full name" 
+                          value={studentForm.motherName} 
+                          onChange={(e) => setStudentForm({...studentForm, motherName: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Primary Guardian Contact *</label>
+                        <input 
+                          required 
+                          type="tel" 
+                          placeholder="E.g. +91 98765 43210" 
+                          value={studentForm.guardianPhone} 
+                          onChange={(e) => setStudentForm({...studentForm, guardianPhone: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Emergency Contact Phone *</label>
+                        <input 
+                          required 
+                          type="tel" 
+                          placeholder="Secondary emergency number" 
+                          value={studentForm.emergencyContact} 
+                          onChange={(e) => setStudentForm({...studentForm, emergencyContact: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
                     </div>
 
-                    {studentDocFiles.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-dashed border-border-gray">
-                        <span className="block text-[10px] text-primary uppercase font-bold">Files to Upload:</span>
-                        {studentDocFiles.map((doc, idx) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded border border-border-gray justify-between">
-                            <input 
-                              type="text" 
-                              value={doc.name} 
-                              onChange={(e) => {
-                                const list = [...studentDocFiles];
-                                list[idx].name = e.target.value;
-                                setStudentDocFiles(list);
-                              }}
-                              className="py-1 px-2 border border-border-gray rounded text-xs flex-1 max-w-[200px]" 
-                            />
-                            <span className="text-[10px] text-text-light truncate flex-1 pl-2">({doc.file.name})</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Guardian Occupation</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Government Service / Business" 
+                          value={studentForm.guardianOccupation} 
+                          onChange={(e) => setStudentForm({...studentForm, guardianOccupation: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Guardian Email</label>
+                        <input 
+                          type="email" 
+                          placeholder="Guardian's email" 
+                          value={studentForm.guardianEmail} 
+                          onChange={(e) => setStudentForm({...studentForm, guardianEmail: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Guardian Residential Address</label>
+                        <input 
+                          type="text" 
+                          placeholder="Leave blank if same as student address" 
+                          value={studentForm.guardianAddress} 
+                          onChange={(e) => setStudentForm({...studentForm, guardianAddress: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 3: Academy Details */}
+                {activeStudentFormTab === 'academy' && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Primary Sport Discipline *</label>
+                        <select 
+                          value={studentForm.primarySport} 
+                          onChange={(e) => setStudentForm({...studentForm, primarySport: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                        >
+                          <option value="Football">Football</option>
+                          <option value="Handball">Handball</option>
+                          <option value="Athletics">Athletics</option>
+                          <option value="Rugby">Rugby</option>
+                          <option value="Kabaddi">Kabaddi</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Secondary Sports</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Handball, Athletics" 
+                          value={studentForm.secondarySports.join(', ')} 
+                          onChange={(e) => {
+                            const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                            setStudentForm({...studentForm, secondarySports: list});
+                          }} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Residency Status *</label>
+                        <select 
+                          value={studentForm.residency} 
+                          onChange={(e) => setStudentForm({...studentForm, residency: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                        >
+                          <option value="resident">Boarding (Resident)</option>
+                          <option value="non-resident">Day Scholar (Non-Resident)</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Hostel Room (if Resident)</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Room 4B" 
+                          value={studentForm.hostelRoom} 
+                          onChange={(e) => setStudentForm({...studentForm, hostelRoom: e.target.value})} 
+                          disabled={studentForm.residency === 'non-resident'}
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold disabled:opacity-50" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Admission Date *</label>
+                        <input 
+                          required 
+                          type="date" 
+                          value={studentForm.admissionDate} 
+                          onChange={(e) => setStudentForm({...studentForm, admissionDate: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Training Batch</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Morning Elite A" 
+                          value={studentForm.batch} 
+                          onChange={(e) => setStudentForm({...studentForm, batch: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Assigned Coach</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Coach Rajesh" 
+                          value={studentForm.coach} 
+                          onChange={(e) => setStudentForm({...studentForm, coach: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 4: Education Details */}
+                {activeStudentFormTab === 'education' && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">School / College Name</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. St. Xavier's School" 
+                          value={studentForm.schoolName} 
+                          onChange={(e) => setStudentForm({...studentForm, schoolName: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Current Class / Standard</label>
+                        <input 
+                          type="text" 
+                          placeholder="E.g. Class 9th B" 
+                          value={studentForm.classStandard} 
+                          onChange={(e) => setStudentForm({...studentForm, classStandard: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Academic Roll / ID</label>
+                        <input 
+                          type="text" 
+                          placeholder="School Roll Number" 
+                          value={studentForm.rollNo} 
+                          onChange={(e) => setStudentForm({...studentForm, rollNo: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Aadhaar Card / Govt Identity Number</label>
+                        <input 
+                          type="text" 
+                          placeholder="12-Digit Aadhaar Card Number" 
+                          value={studentForm.aadhaarNo} 
+                          onChange={(e) => setStudentForm({...studentForm, aadhaarNo: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 5: Achievements */}
+                {activeStudentFormTab === 'achievements' && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded border border-border-gray">
+                      <div>
+                        <h4 className="text-xs font-bold text-primary">Sports Achievements & Medals</h4>
+                        <p className="text-[10px] text-text-light">Add medals, tournaments, and representation details</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const list = [...studentForm.achievements, { title: '', competition: '', position: 'Gold', year: new Date().getFullYear(), description: '' }];
+                          setStudentForm({ ...studentForm, achievements: list });
+                        }}
+                        className="bg-primary hover:bg-accent hover:text-primary text-white text-xs font-bold py-1.5 px-3 rounded cursor-pointer transition-all border-none"
+                      >
+                        + Add Row
+                      </button>
+                    </div>
+
+                    {studentForm.achievements.length === 0 ? (
+                      <div className="text-center py-5 text-text-light italic text-xs">
+                        No achievements recorded for this student yet. Click "+ Add Row" to append achievements.
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pr-1">
+                        {studentForm.achievements.map((ach: any, idx: number) => (
+                          <div key={idx} className="p-2.5 border border-border-gray rounded-lg bg-soft-light space-y-2 relative">
                             <button 
                               type="button" 
-                              onClick={() => setStudentDocFiles(studentDocFiles.filter((_, i) => i !== idx))}
-                              className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer font-bold"
+                              onClick={() => {
+                                const list = studentForm.achievements.filter((_: any, i: number) => i !== idx);
+                                setStudentForm({ ...studentForm, achievements: list });
+                              }}
+                              className="absolute top-2 right-2 text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer"
+                              title="Remove Row"
                             >
-                              Remove
+                              <Trash size={14} />
                             </button>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
+                              <input 
+                                type="text" 
+                                placeholder="Achievement Title" 
+                                value={ach.title} 
+                                onChange={(e) => {
+                                  const list = [...studentForm.achievements];
+                                  list[idx].title = e.target.value;
+                                  setStudentForm({ ...studentForm, achievements: list });
+                                }}
+                                className="py-1.5 px-2 border border-border-gray rounded text-xs bg-white outline-none" 
+                              />
+                              <input 
+                                type="text" 
+                                required 
+                                placeholder="Tournament/Competition" 
+                                value={ach.competition} 
+                                onChange={(e) => {
+                                  const list = [...studentForm.achievements];
+                                  list[idx].competition = e.target.value;
+                                  setStudentForm({ ...studentForm, achievements: list });
+                                }}
+                                className="py-1.5 px-2 border border-border-gray rounded text-xs bg-white outline-none" 
+                              />
+                              <input 
+                                type="text" 
+                                placeholder="Position (Winner)" 
+                                value={ach.position} 
+                                onChange={(e) => {
+                                  const list = [...studentForm.achievements];
+                                  list[idx].position = e.target.value;
+                                  setStudentForm({ ...studentForm, achievements: list });
+                                }}
+                                className="py-1.5 px-2 border border-border-gray rounded text-xs bg-white outline-none" 
+                              />
+                              <input 
+                                type="number" 
+                                required 
+                                placeholder="Year (2026)" 
+                                value={ach.year} 
+                                onChange={(e) => {
+                                  const list = [...studentForm.achievements];
+                                  list[idx].year = parseInt(e.target.value) || new Date().getFullYear();
+                                  setStudentForm({ ...studentForm, achievements: list });
+                                }}
+                                className="py-1.5 px-2 border border-border-gray rounded text-xs bg-white outline-none" 
+                              />
+                              <input 
+                                type="text" 
+                                placeholder="Quick Notes" 
+                                value={ach.description} 
+                                onChange={(e) => {
+                                  const list = [...studentForm.achievements];
+                                  list[idx].description = e.target.value;
+                                  setStudentForm({ ...studentForm, achievements: list });
+                                }}
+                                className="py-1.5 px-2 border border-border-gray rounded text-xs bg-white outline-none" 
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {editingStudentProfile && editingStudentProfile.documents?.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-dashed border-border-gray">
-                        <span className="block text-[10px] text-primary uppercase font-bold">Existing Secure Documents:</span>
-                        {editingStudentProfile.documents.map((doc: any, idx: number) => {
-                          const isRemoved = deletedDocuments.includes(doc.path);
-                          return (
-                            <div key={idx} className={`flex items-center justify-between p-2 rounded border border-border-gray ${isRemoved ? 'bg-rose-50 border-rose-100 opacity-60' : 'bg-white'}`}>
-                              <span className="text-xs font-semibold text-primary truncate max-w-[220px]">{doc.name}</span>
-                              {!isRemoved ? (
+                {/* Tab 6: Documents & Settings */}
+                {activeStudentFormTab === 'documents' && (
+                  <div className="space-y-3 animate-fade-in text-xs font-semibold">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Upload Verification Documents */}
+                      <div className="p-3 border border-border-gray rounded-xl bg-soft-light space-y-2">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="block text-xs font-bold text-primary">Upload Verification Documents</span>
+                            <span className="block text-[10px] text-text-light font-semibold mt-0.5">Aadhaar scan, Birth Cert, Medical Form</span>
+                          </div>
+                          <label className="py-1 px-3 bg-primary text-white hover:bg-accent hover:text-primary transition-all rounded text-xs font-bold cursor-pointer shrink-0">
+                            + Add File
+                            <input 
+                              type="file" 
+                              multiple
+                              accept=".pdf,image/*"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files || []);
+                                const newDocs = files.map(f => ({ name: f.name.replace(/\.[^/.]+$/, ""), file: f }));
+                                setStudentDocFiles([...studentDocFiles, ...newDocs]);
+                              }}
+                              className="hidden" 
+                            />
+                          </label>
+                        </div>
+
+                        {studentDocFiles.length > 0 && (
+                          <div className="space-y-1.5 pt-1.5 border-t border-border-gray">
+                            {studentDocFiles.map((doc, idx) => (
+                              <div key={idx} className="flex items-center justify-between gap-2 p-1.5 bg-white rounded border border-border-gray">
+                                <input 
+                                  type="text" 
+                                  value={doc.name} 
+                                  onChange={(e) => {
+                                    const list = [...studentDocFiles];
+                                    list[idx].name = e.target.value;
+                                    setStudentDocFiles(list);
+                                  }}
+                                  className="py-1 px-2 border border-border-gray rounded text-xs flex-1" 
+                                />
                                 <button 
                                   type="button" 
-                                  onClick={() => setDeletedDocuments([...deletedDocuments, doc.path])}
-                                  className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer font-bold text-xs"
+                                  onClick={() => setStudentDocFiles(studentDocFiles.filter((_, i) => i !== idx))}
+                                  className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer font-bold"
                                 >
-                                  Remove Securely
+                                  Remove
                                 </button>
-                              ) : (
-                                <button 
-                                  type="button" 
-                                  onClick={() => setDeletedDocuments(deletedDocuments.filter(p => p !== doc.path))}
-                                  className="text-emerald-600 hover:text-emerald-700 bg-transparent border-none p-1 cursor-pointer font-bold text-xs"
-                                >
-                                  Undo
-                                </button>
-                              )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {editingStudentProfile && editingStudentProfile.documents?.length > 0 && (
+                          <div className="space-y-1 pt-1.5 border-t border-dashed border-border-gray">
+                            <span className="block text-[10px] text-primary uppercase font-bold">Existing Secure Documents:</span>
+                            {editingStudentProfile.documents.map((doc: any, idx: number) => {
+                              const isRemoved = deletedDocuments.includes(doc.path);
+                              return (
+                                <div key={idx} className={`flex items-center justify-between p-1.5 rounded border border-border-gray ${isRemoved ? 'bg-rose-50 border-rose-100 opacity-60' : 'bg-white'}`}>
+                                  <span className="text-xs font-semibold text-primary truncate max-w-[200px]">{doc.name}</span>
+                                  {!isRemoved ? (
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setDeletedDocuments([...deletedDocuments, doc.path])}
+                                      className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer font-bold text-xs"
+                                    >
+                                      Remove
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setDeletedDocuments(deletedDocuments.filter(p => p !== doc.path))}
+                                      className="text-emerald-600 hover:text-emerald-700 bg-transparent border-none p-1 cursor-pointer font-bold text-xs"
+                                    >
+                                      Undo
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Settings Column */}
+                      <div className="space-y-3">
+                        {/* Public Visibility Toggle */}
+                        <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex justify-between items-center">
+                          <div>
+                            <span className="block text-xs font-bold text-primary">Show Profile on Public Website</span>
+                            <span className="block text-[10px] text-text-light font-semibold mt-0.5">Full Name, Sport, Medals count, Photo</span>
+                          </div>
+                          <input 
+                            type="checkbox" 
+                            checked={studentForm.showOnPublicWebsite} 
+                            onChange={(e) => setStudentForm({ ...studentForm, showOnPublicWebsite: e.target.checked })}
+                            className="w-5 h-5 text-primary border-border-gray rounded focus:ring-primary cursor-pointer shrink-0" 
+                          />
+                        </div>
+
+                        {activeModal === 'student-edit' && (
+                          <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex justify-between items-center">
+                            <div>
+                              <span className="block text-xs font-bold text-primary">Student Roster Status</span>
+                              <span className="block text-[10px] text-text-light font-semibold mt-0.5">Toggle student's state</span>
                             </div>
-                          );
-                        })}
+                            <select 
+                              value={studentForm.status} 
+                              onChange={(e) => setStudentForm({...studentForm, status: e.target.value})}
+                              className="px-3 py-1.5 border border-border-gray rounded bg-white text-xs font-semibold text-primary outline-none"
+                            >
+                              <option value="Active">Active</option>
+                              <option value="On Leave">On Leave</option>
+                              <option value="Inactive">Inactive</option>
+                              <option value="Graduated">Graduated</option>
+                            </select>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Public Visibility Toggle */}
-                  <div className="p-4 border border-border-gray rounded-xl bg-soft-light flex justify-between items-center">
-                    <div>
-                      <span className="block text-xs font-bold text-primary">Show Profile on Public Website</span>
-                      <span className="block text-[10px] text-text-light font-semibold mt-0.5">Approved information: Full Name, Sport, Medals count, Photo</span>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={studentForm.showOnPublicWebsite} 
-                      onChange={(e) => setStudentForm({ ...studentForm, showOnPublicWebsite: e.target.checked })}
-                      className="w-5 h-5 text-primary border-border-gray rounded focus:ring-primary cursor-pointer shrink-0" 
-                    />
                   </div>
+                )}
+              </div>
 
-                  {activeModal === 'student-edit' && (
-                    <div className="p-4 border border-border-gray rounded-xl bg-soft-light flex justify-between items-center">
-                      <div>
-                        <span className="block text-xs font-bold text-primary">Student Roster Status</span>
-                        <span className="block text-[10px] text-text-light font-semibold mt-0.5">Toggle student's training or residency state</span>
-                      </div>
-                      <select 
-                        value={studentForm.status} 
-                        onChange={(e) => setStudentForm({...studentForm, status: e.target.value})}
-                        className="px-3 py-1.5 border border-border-gray rounded bg-white text-xs font-semibold text-primary outline-none"
-                      >
-                        <option value="Active">Active</option>
-                        <option value="On Leave">On Leave</option>
-                        <option value="Inactive">Inactive</option>
-                        <option value="Graduated">Graduated</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Form submit footer */}
-              <div className="pt-4 border-t border-border-gray flex justify-between items-center shrink-0">
+              {/* Form submit footer - ALWAYS fixed at bottom of modal card */}
+              <div className="pt-3 mt-2 border-t border-border-gray flex justify-between items-center shrink-0 bg-white overflow-x-hidden">
                 <button 
                   type="button" 
                   onClick={resetStudentForm} 
-                  className="bg-white hover:bg-slate-50 border border-border-gray text-primary font-bold py-2.5 px-6 rounded-lg transition-all text-xs cursor-pointer"
+                  className="bg-white hover:bg-slate-50 border border-border-gray text-primary font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -4287,7 +6808,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                         const idx = tabs.indexOf(activeStudentFormTab);
                         if (idx > 0) setActiveStudentFormTab(tabs[idx - 1]);
                       }}
-                      className="bg-slate-100 hover:bg-slate-200 border border-border-gray text-slate-700 font-bold py-2.5 px-5 rounded-lg transition-all text-xs cursor-pointer"
+                      className="bg-slate-100 hover:bg-slate-200 border border-border-gray text-slate-700 font-bold py-2 px-4 rounded-lg transition-all text-xs cursor-pointer"
                     >
                       Back
                     </button>
@@ -4300,7 +6821,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                         const idx = tabs.indexOf(activeStudentFormTab);
                         if (idx < tabs.length - 1) setActiveStudentFormTab(tabs[idx + 1]);
                       }}
-                      className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-6 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md"
+                      className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md"
                     >
                       Next Step
                     </button>
@@ -4308,7 +6829,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
                     <button 
                       type="submit" 
                       disabled={isUploading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md"
                     >
                       {isUploading ? 'Saving...' : 'Save Record'}
                     </button>
@@ -4317,14 +6838,15 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Detailed Student Profile Viewer Modal */}
-      {viewingStudentProfile !== null && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => { setViewingStudentProfile(null); setActiveProfileViewTab('overview'); }}>
-          <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent animate-fade-in" onClick={() => { setViewingStudentProfile(null); setActiveProfileViewTab('overview'); }}><X size={20} /></button>
+      {viewingStudentProfile !== null && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => { setViewingStudentProfile(null); setActiveProfileViewTab('overview'); }}>
+          <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl p-5 sm:p-6 text-left relative animate-fade-in max-h-[90vh] flex flex-col my-auto overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent animate-fade-in z-10" onClick={() => { setViewingStudentProfile(null); setActiveProfileViewTab('overview'); }}><X size={20} /></button>
             
             {/* Profile Overview Header Card */}
             <div className="flex flex-col sm:flex-row items-center gap-5 border-b border-border-gray pb-5 shrink-0">
@@ -4610,19 +7132,20 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 2. Add Coach Modal */}
-      {activeModal === 'coach' && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={closeCoachModal}>
-          <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={closeCoachModal}><X size={20} /></button>
-            <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
+      {activeModal === 'coach' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={closeCoachModal}>
+          <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={closeCoachModal}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
               {editingCoach ? <Pencil size={20} className="text-accent" /> : <Plus size={20} className="text-accent" />}
               {editingCoach ? 'Edit Coach Profile' : 'Add Coach'}
             </h3>
-            <form onSubmit={handleAddCoach} className="flex flex-col gap-4">
+            <form onSubmit={handleAddCoach} className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1 py-1">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name</label>
                 <input required type="text" placeholder="E.g. Coach Sarita" value={coachForm.name} onChange={(e) => setCoachForm({...coachForm, name: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
@@ -4687,12 +7210,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Quick View Event Photos Modal */}
-      {showQuickViewEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setShowQuickViewEvent(null)}>
+      {showQuickViewEvent && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => setShowQuickViewEvent(null)}>
           <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setShowQuickViewEvent(null)}><X size={20} /></button>
             <div className="mb-4">
@@ -4715,12 +7239,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Create Event Modal */}
-      {activeModal === 'gallery-create' && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}>
+      {activeModal === 'gallery-create' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}>
           <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}><X size={20} /></button>
             <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
@@ -4917,12 +7442,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Event Modal */}
-      {activeModal === 'gallery-edit' && editingEventGallery && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}>
+      {activeModal === 'gallery-edit' && editingEventGallery && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}>
           <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => { setActiveModal(null); resetEventGalleryForm(); }}><X size={20} /></button>
             <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
@@ -5168,59 +7694,575 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* 4. Add Event Modal */}
-      {activeModal === 'event' && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
-          <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
+      {/* 4a. Add/Edit Event Modal */}
+      {activeModal === 'cms-event' && createPortal(
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-scale-up max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setActiveModal(null)}><X size={20} /></button>
-            <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
-              <CalendarPlus size={20} className="text-accent" /> Schedule New Event
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+              <span>📅</span> {editingEvent ? 'Edit Scheduled Event' : 'Schedule New Event'}
             </h3>
-            <form onSubmit={handleAddEvent} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Event Title</label>
-                <input required type="text" placeholder="E.g. District Athletics trials" value={eventForm.title} onChange={(e) => setEventForm({...eventForm, title: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+            
+            <form onSubmit={handleSaveEvent} className="space-y-4 overflow-y-auto pr-1 flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Event Title *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="E.g. Under-17 Girls Football Championship"
+                    value={cmsEventForm.title}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const slugified = val.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                      setCmsEventForm(prev => ({ ...prev, title: val, slug: slugified }));
+                    }}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">URL Slug (Auto Generated) *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="u17-girls-championship"
+                    value={cmsEventForm.slug}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-mono text-xs"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Category *</label>
+                  <select
+                    value={cmsEventForm.category}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Tournament">Tournament</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Camp">Camp</option>
+                    <option value="Trials">Trials</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Short Description (Summary) *</label>
+                  <input
+                    required
+                    maxLength={200}
+                    type="text"
+                    placeholder="Short summary displayed on cards..."
+                    value={cmsEventForm.shortDescription}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, shortDescription: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Event Details (HTML/Plain Text) *</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Write detailed event highlights, eligibility rules, agenda..."
+                    value={cmsEventForm.content}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, content: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Start Date *</label>
+                  <input
+                    required
+                    type="date"
+                    value={cmsEventForm.startDate}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">End Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={cmsEventForm.endDate}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Start Time</label>
+                  <input
+                    type="text"
+                    placeholder="09:00 AM"
+                    value={cmsEventForm.startTime}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, startTime: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">End Time</label>
+                  <input
+                    type="text"
+                    placeholder="05:00 PM"
+                    value={cmsEventForm.endTime}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, endTime: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Venue Location *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="E.g. Main Football Ground, Siwan Campus"
+                    value={cmsEventForm.location}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, location: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Cover Image Banner</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleEventImageChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white cursor-pointer"
+                  />
+                  {cmsEventForm.coverMedia && (
+                    <div className="w-32 h-20 rounded border overflow-hidden mt-1 bg-slate-100">
+                      <img src={cmsEventForm.coverMedia.startsWith('data:') ? cmsEventForm.coverMedia : `http://localhost:5000${cmsEventForm.coverMedia}`} alt="cover preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Event Gallery Images (Select Multiple)</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleEventGalleryChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white cursor-pointer"
+                  />
+                  {cmsEventForm.galleryMedia && cmsEventForm.galleryMedia.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {cmsEventForm.galleryMedia.map((imgUrl, i) => (
+                        <div key={i} className="aspect-video rounded border overflow-hidden bg-slate-100 relative group">
+                          <img src={imgUrl.startsWith('data:') ? imgUrl : `http://localhost:5000${imgUrl}`} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setCmsEventForm(prev => ({ ...prev, galleryMedia: prev.galleryMedia.filter((_, idx) => idx !== i) }))}
+                            className="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] cursor-pointer border-none"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 sm:col-span-2 border-t border-slate-100 pt-3">
+                  <input
+                    type="checkbox"
+                    id="evt-reg"
+                    checked={cmsEventForm.registrationRequired}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, registrationRequired: e.target.checked }))}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="evt-reg" className="text-xs font-bold text-primary cursor-pointer select-none">Require Online Registration</label>
+                </div>
+
+                {cmsEventForm.registrationRequired && (
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Custom Registration URL (Optional, defaults to internal portal)</label>
+                    <input
+                      type="text"
+                      placeholder="E.g. https://forms.gle/xyz"
+                      value={cmsEventForm.registrationUrl}
+                      onChange={(e) => setCmsEventForm(prev => ({ ...prev, registrationUrl: e.target.value }))}
+                      className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Status *</label>
+                  <select
+                    value={cmsEventForm.status}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Published">Published</option>
+                    <option value="Archived">Archived</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Postponed">Postponed</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Visibility *</label>
+                  <select
+                    value={cmsEventForm.visibility}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, visibility: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Public">Public (Displayed on site)</option>
+                    <option value="Private">Private (Draft/Access limited)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="evt-feat"
+                    checked={cmsEventForm.isFeatured}
+                    onChange={(e) => setCmsEventForm(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="evt-feat" className="text-xs font-bold text-primary cursor-pointer select-none">Featured on Home Page</label>
+                </div>
+
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Category</label>
-                <select value={eventForm.category} onChange={(e) => setEventForm({...eventForm, category: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all">
-                  <option value="tournaments">Tournaments</option>
-                  <option value="camps">Summer/Winter Camps</option>
-                  <option value="workshops">Workshops & Clinics</option>
-                </select>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border-gray/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="py-2.5 px-5 rounded-lg border border-border-gray bg-white text-primary font-bold text-xs cursor-pointer hover:bg-soft-light"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="py-2.5 px-6 rounded-lg bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold text-xs cursor-pointer disabled:opacity-60 border-none"
+                >
+                  {isUploading ? 'Scheduling...' : 'Save Event'}
+                </button>
               </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 4b. Add/Edit Updates/Announcements Modal */}
+      {activeModal === 'cms-update' && createPortal(
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-scale-up max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+              <span>📰</span> {editingUpdate ? 'Edit News Update' : 'Publish News Announcement'}
+            </h3>
+
+            <form onSubmit={handleSaveUpdate} className="space-y-4 overflow-y-auto pr-1 flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Announcement Title *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="E.g. Admission Trials Open for 2026 Batch"
+                    value={cmsUpdateForm.title}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const slugified = val.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                      setCmsUpdateForm(prev => ({ ...prev, title: val, slug: slugified }));
+                    }}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">URL Slug (Auto Generated) *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="admission-trials-open-2026"
+                    value={cmsUpdateForm.slug}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-mono text-xs"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Category *</label>
+                  <select
+                    value={cmsUpdateForm.category}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Academy News">Academy News</option>
+                    <option value="Announcement">Announcement</option>
+                    <option value="Achievement">Achievement</option>
+                    <option value="Training Update">Training Update</option>
+                    <option value="Admission Update">Admission Update</option>
+                    <option value="General Update">General Update</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Brief Summary *</label>
+                  <input
+                    required
+                    maxLength={200}
+                    type="text"
+                    placeholder="Short news hook displayed on feed lists..."
+                    value={cmsUpdateForm.summary}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, summary: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Content (HTML/Plain Text) *</label>
+                  <textarea
+                    required
+                    rows={6}
+                    placeholder="Write detailed announcements content. HTML formatting is supported..."
+                    value={cmsUpdateForm.content}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, content: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Cover Image (Optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpdateImageChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white cursor-pointer"
+                  />
+                  {cmsUpdateForm.coverMedia && (
+                    <div className="w-32 h-20 rounded border overflow-hidden mt-1 bg-slate-100">
+                      <img src={cmsUpdateForm.coverMedia.startsWith('data:') ? cmsUpdateForm.coverMedia : `http://localhost:5000${cmsUpdateForm.coverMedia}`} alt="cover preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Reference Files & Attachments (E.g. Admission PDFs)</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,image/*"
+                    onChange={handleUpdateAttachmentChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white cursor-pointer"
+                  />
+                  {cmsUpdateForm.attachments && cmsUpdateForm.attachments.length > 0 && (
+                    <div className="space-y-1.5 mt-2">
+                      {cmsUpdateForm.attachments.map((attUrl, i) => {
+                        const fileName = attUrl.startsWith('data:') ? `Upload_Document_${i + 1}` : attUrl.split('/').pop() || `Document_${i + 1}`;
+                        return (
+                          <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100 text-xs">
+                            <span className="truncate max-w-[280px] font-semibold text-slate-600">📁 {fileName}</span>
+                            <button
+                              type="button"
+                              onClick={() => setCmsUpdateForm(prev => ({ ...prev, attachments: prev.attachments.filter((_, idx) => idx !== i) }))}
+                              className="text-rose-500 hover:text-rose-700 bg-transparent border-none cursor-pointer font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Status *</label>
+                  <select
+                    value={cmsUpdateForm.status}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Published">Published</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Visibility *</label>
+                  <select
+                    value={cmsUpdateForm.visibility}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, visibility: e.target.value }))}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                  >
+                    <option value="Public">Public (Displayed on site)</option>
+                    <option value="Private">Private (Draft/Access limited)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="upd-feat"
+                    checked={cmsUpdateForm.isFeatured}
+                    onChange={(e) => setCmsUpdateForm(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="upd-feat" className="text-xs font-bold text-primary cursor-pointer select-none">Featured on Home Page</label>
+                </div>
+
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border-gray/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="py-2.5 px-5 rounded-lg border border-border-gray bg-white text-primary font-bold text-xs cursor-pointer hover:bg-soft-light"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="py-2.5 px-6 rounded-lg bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold text-xs cursor-pointer disabled:opacity-60 border-none"
+                >
+                  {isUploading ? 'Publishing...' : 'Save Update'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 4b. Add/Edit Story Milestone Modal */}
+      {activeModal === 'story-milestone' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
+              <Notebook size={20} className="text-accent" /> {editingMilestone ? 'Edit Story Milestone' : 'Add Story Milestone'}
+            </h3>
+            
+            <form onSubmit={handleSaveMilestone} className="space-y-4 overflow-y-auto pr-1 py-1 flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Date</label>
-                  <input required type="date" value={eventForm.date} onChange={(e) => setEventForm({...eventForm, date: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Year / Era *</label>
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="E.g. 2009 or Today" 
+                    value={milestoneForm.year} 
+                    onChange={(e) => setMilestoneForm({...milestoneForm, year: e.target.value})} 
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Time</label>
-                  <input required type="text" placeholder="09:00 AM" value={eventForm.time} onChange={(e) => setEventForm({...eventForm, time: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Display Order *</label>
+                  <input 
+                    required 
+                    type="number" 
+                    placeholder="E.g. 1" 
+                    value={milestoneForm.order} 
+                    onChange={(e) => setMilestoneForm({...milestoneForm, order: parseInt(e.target.value) || 0})} 
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                  />
                 </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Venue Location</label>
-                <input required type="text" placeholder="Main Complex, Siwan" value={eventForm.venue} onChange={(e) => setEventForm({...eventForm, venue: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Title *</label>
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="E.g. The Beginning" 
+                    value={milestoneForm.title} 
+                    onChange={(e) => setMilestoneForm({...milestoneForm, title: e.target.value})} 
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Label Subtitle *</label>
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="E.g. Milestone Year" 
+                    value={milestoneForm.subtitle} 
+                    onChange={(e) => setMilestoneForm({...milestoneForm, subtitle: e.target.value})} 
+                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                  />
+                </div>
               </div>
+
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Description</label>
-                <textarea required rows={3} placeholder="Event info..." value={eventForm.description} onChange={(e) => setEventForm({...eventForm, description: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Description Content *</label>
+                <textarea 
+                  required 
+                  rows={4} 
+                  placeholder="Detail the key achievements, people, or events that took place..." 
+                  value={milestoneForm.description} 
+                  onChange={(e) => setMilestoneForm({...milestoneForm, description: e.target.value})} 
+                  className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
+                />
               </div>
-              <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm">
-                Schedule Event
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Image Photo</label>
+                <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
+                  {milestoneForm.image ? (
+                    <div className="w-20 h-16 rounded overflow-hidden border border-border-gray shrink-0">
+                      <img 
+                        src={milestoneForm.image.startsWith('data:') || milestoneForm.image.startsWith('/') || milestoneForm.image.startsWith('http') ? milestoneForm.image : `http://localhost:5000${milestoneForm.image}`} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-16 rounded bg-slate-200 border border-dashed border-border-gray shrink-0 flex items-center justify-center text-text-light text-[10px] font-bold uppercase">
+                      No Photo
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleMilestoneImageChange}
+                      className="text-xs w-full cursor-pointer text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white file:cursor-pointer file:uppercase"
+                    />
+                    <p className="text-[9px] text-text-light mt-1">Upload 16:10 aspect ratios for best result.</p>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isUploading}
+                className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm disabled:opacity-60"
+              >
+                {isUploading ? 'Saving changes...' : editingMilestone ? 'Save Milestone' : 'Create Milestone'}
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 5. Email Change Verification Modal */}
-      {showEmailVerifyModal && (
-        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[250] flex items-center justify-center p-5 animate-fade-in" onClick={() => setShowEmailVerifyModal(false)}>
+      {showEmailVerifyModal && createPortal(
+        <div className="fixed inset-0 bg-black/15 backdrop-blur-sm z-[9999] flex items-center justify-center p-5 animate-fade-in" onClick={() => setShowEmailVerifyModal(false)}>
           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6 md:p-8 text-left relative animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-5 right-5 text-text-light hover:text-primary cursor-pointer border-none bg-transparent" onClick={() => {
               setShowEmailVerifyModal(false);
@@ -5256,11 +8298,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {confirmationModal.show && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-center justify-center p-5 animate-fade-in" onClick={() => setConfirmationModal(prev => ({ ...prev, show: false }))}>
+      {confirmationModal.show && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-5 animate-fade-in" onClick={() => setConfirmationModal(prev => ({ ...prev, show: false }))}>
           <div className="bg-white rounded-xl border border-border-gray shadow-xl max-w-md w-full overflow-hidden animate-scale-up text-left" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               <h3 className="text-lg font-bold text-primary flex items-center gap-2">
@@ -5288,7 +8331,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

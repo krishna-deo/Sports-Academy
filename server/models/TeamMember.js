@@ -6,7 +6,8 @@ const TeamMemberSchema = new mongoose.Schema({
   role: { type: String, required: true },
   bio: { type: String, required: true },
   image: { type: String, required: true },
-  objectPosition: { type: String }
+  objectPosition: { type: String },
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('TeamMember', TeamMemberSchema);

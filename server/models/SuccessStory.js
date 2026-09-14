@@ -11,7 +11,8 @@ const SuccessStorySchema = new mongoose.Schema({
   joined: { type: String, required: true },
   age: { type: Number, required: true },
   medals: { type: Number, default: 0 },
-  objectPosition: { type: String, default: 'center' }
+  objectPosition: { type: String, default: 'center' },
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SuccessStory', SuccessStorySchema);

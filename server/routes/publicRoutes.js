@@ -11,6 +11,37 @@ const SuccessStory = require('../models/SuccessStory');
 const Policy = require('../models/Policy');
 const Document = require('../models/Document');
 const Complaint = require('../models/Complaint');
+const StoryMilestone = require('../models/StoryMilestone');
+const Update = require('../models/Update');
+const Facility = require('../models/Facility');
+const EdgeCard = require('../models/EdgeCard');
+
+router.get('/facilities', async (req, res) => {
+  try {
+    const facilities = await Facility.find({ status: 'Active', isDeleted: { $ne: true } }).sort({ order: 1 });
+    res.json(facilities);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch facilities." });
+  }
+});
+
+router.get('/edge-cards', async (req, res) => {
+  try {
+    const cards = await EdgeCard.find({ status: 'Active', isDeleted: { $ne: true } }).sort({ order: 1 });
+    res.json(cards);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch RLBSA edge cards." });
+  }
+});
+
+router.get('/story-milestones', async (req, res) => {
+  try {
+    const milestones = await StoryMilestone.find({ isDeleted: { $ne: true } }).sort({ order: 1 });
+    res.json(milestones);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch story milestones." });
+  }
+});
 
 function sanitizeInput(str) {
   if (typeof str !== 'string') return str;
@@ -66,10 +97,158 @@ router.get('/gallery', (req, res, next) => {
 
 router.get('/events', async (req, res) => {
   try {
-    const events = await Event.find({}).sort({ date: 1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const category = req.query.category;
+    const featured = req.query.featured;
+
+    const query = { status: 'Published', visibility: 'Public' };
+    if (category) {
+      query.category = category;
+    }
+    if (featured === 'true') {
+      query.isFeatured = true;
+    }
+
+    const total = await Event.countDocuments(query);
+    const events = await Event.find(query)
+      .sort({ startDate: 1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      events,
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    console.error("Fetch events error:", err);
+    res.status(500).json({ error: "Failed to fetch events." });
+  }
+});
+
+router.get('/events/upcoming', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const query = { 
+      status: 'Published', 
+      visibility: 'Public', 
+      startDate: { $gte: today } 
+    };
+
+    const events = await Event.find(query).sort({ startDate: 1 });
     res.json(events);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch events." });
+    console.error("Fetch upcoming events error:", err);
+    res.status(500).json({ error: "Failed to fetch upcoming events." });
+  }
+});
+
+router.get('/events/tournaments', async (req, res) => {
+  try {
+    const query = { 
+      status: 'Published', 
+      visibility: 'Public', 
+      category: 'Tournament' 
+    };
+
+    const events = await Event.find(query).sort({ startDate: 1 });
+    res.json(events);
+  } catch (err) {
+    console.error("Fetch tournaments error:", err);
+    res.status(500).json({ error: "Failed to fetch tournaments." });
+  }
+});
+
+router.get('/events/camps-workshops', async (req, res) => {
+  try {
+    const query = { 
+      status: 'Published', 
+      visibility: 'Public', 
+      category: { $in: ['Camp', 'Workshop'] } 
+    };
+
+    const events = await Event.find(query).sort({ startDate: 1 });
+    res.json(events);
+  } catch (err) {
+    console.error("Fetch camps & workshops error:", err);
+    res.status(500).json({ error: "Failed to fetch camps & workshops." });
+  }
+});
+
+router.get('/events/:slug', async (req, res) => {
+  try {
+    const event = await Event.findOne({ slug: req.params.slug });
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+
+    if (event.status !== 'Published' || event.visibility !== 'Public') {
+      return res.status(403).json({ error: "Access denied to private or draft content." });
+    }
+
+    res.json(event);
+  } catch (err) {
+    console.error("Fetch event details error:", err);
+    res.status(500).json({ error: "Failed to fetch event details." });
+  }
+});
+
+router.get('/updates', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const category = req.query.category;
+    const featured = req.query.featured;
+
+    const query = { status: 'Published', visibility: 'Public' };
+    if (category) {
+      query.category = category;
+    }
+    if (featured === 'true') {
+      query.isFeatured = true;
+    }
+
+    const total = await Update.countDocuments(query);
+    const updates = await Update.find(query)
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      updates,
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    console.error("Fetch updates error:", err);
+    res.status(500).json({ error: "Failed to fetch updates." });
+  }
+});
+
+router.get('/updates/:slug', async (req, res) => {
+  try {
+    const update = await Update.findOne({ slug: req.params.slug });
+    if (!update) {
+      return res.status(404).json({ error: "Update not found." });
+    }
+
+    if (update.status !== 'Published' || update.visibility !== 'Public') {
+      return res.status(403).json({ error: "Access denied to private or draft content." });
+    }
+
+    res.json(update);
+  } catch (err) {
+    console.error("Fetch update details error:", err);
+    res.status(500).json({ error: "Failed to fetch update details." });
   }
 });
 
@@ -123,7 +302,7 @@ router.post('/enquiry', async (req, res) => {
 
 router.get('/team', async (req, res) => {
   try {
-    const team = await TeamMember.find({}).sort({ createdAt: 1 });
+    const team = await TeamMember.find({ isDeleted: { $ne: true } }).sort({ createdAt: 1 });
     res.json(team);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch founders and directors list." });
@@ -204,7 +383,7 @@ router.post('/compliance/complaints', async (req, res) => {
 
 router.get('/success-stories', async (req, res) => {
   try {
-    const stories = await SuccessStory.find({}).sort({ createdAt: 1 });
+    const stories = await SuccessStory.find({ isDeleted: { $ne: true } }).sort({ createdAt: 1 });
     res.json(stories);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch success stories." });
