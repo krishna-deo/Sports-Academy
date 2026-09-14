@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from '@phosphor-icons/react';
 import { teamMembers } from '../data/teamData';
 import { useHash } from '../hooks/useHash';
 import { getBioParagraphs } from '../utils/textUtils';
@@ -176,6 +177,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
   const [team, setTeam] = React.useState<any[]>(teamMembers);
   const [milestones, setMilestones] = React.useState<any[]>(defaultMilestones);
   const [facilities, setFacilities] = React.useState<any[]>(defaultFacilities);
+  const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     fetch('http://localhost:5000/api/public/story-milestones')
@@ -386,134 +388,254 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
         </>
       )}
 
-      {sub === 'vision-mission' && (
+      {(sub === 'outreach-program' || sub === 'outreach' || sub === 'vision-mission') && (
         <>
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
-              Vision & Mission
+          {/* Header Banner */}
+          <div className="text-center max-w-[850px] mx-auto mb-14">
+            <span className="text-accent text-xs font-black uppercase tracking-[0.2em] bg-accent/10 px-4 py-1.5 rounded-full mb-4 inline-block animate-fade-in">
+              Community Engagement &amp; Rural Scouting
+            </span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-primary mb-4 relative inline-block pb-4 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[70px] after:h-[3.5px] after:bg-accent animate-fade-in">
+              Outreach Program
             </h2>
-            <p className="text-text-light text-base md:text-lg">
-              Our guiding philosophies that drive student development and leadership styles.
+            <p className="text-text-light text-base md:text-lg leading-relaxed animate-fade-in font-medium">
+              Taking sports excellence, education, and healthcare guidance directly to underprivileged rural communities across Bihar.
             </p>
+
+            {/* Impact Counter Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
+                <span className="text-2xl md:text-3xl font-black text-primary block mb-0.5">50+</span>
+                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Villages Reached</span>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
+                <span className="text-2xl md:text-3xl font-black text-accent block mb-0.5">5,000+</span>
+                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Youth Engaged</span>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
+                <span className="text-2xl md:text-3xl font-black text-primary block mb-0.5">100%</span>
+                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Free Training &amp; Kits</span>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
+                <span className="text-2xl md:text-3xl font-black text-accent block mb-0.5">20+</span>
+                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">School Camps</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-24 mb-24 max-w-[1100px] mx-auto">
-            {/* ROW 1: MISSION */}
-            <RevealRow id="mission-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
-              {(isVisible) => (
-                <>
-                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
-                    <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
-                      About Us
-                    </span>
-                    <h3 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
-                      Our Mission
-                    </h3>
-                    <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
-                      RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.
-                    </p>
-                    <a
-                      href="#/about/story"
-                      className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
-                    >
-                      Learn More
-                    </a>
-                  </div>
+          {/* 5-PHOTO SHOWCASE GALLERY GRID (5 Photos Together) */}
+          <div className="max-w-[1240px] mx-auto mb-16">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg md:text-xl font-black text-primary flex items-center gap-2">
+                <span>📸 Outreach Program Gallery</span>
+                <span className="text-xs font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full uppercase">5 Key Initiatives</span>
+              </h3>
+              <span className="text-xs font-bold text-text-light hidden sm:inline-block">Click photo to expand</span>
+            </div>
 
-                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
-                    <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3] border border-slate-100 bg-[#082142]/5">
-                      {/* Top-left rounded compound shape like the mockup */}
-                      <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden">
-                        <img 
-                          src="/images/hero2.jpg" 
-                          alt="Our Mission Team" 
-                          className="w-full h-full object-cover rounded-tl-[5rem]" 
-                        />
-                      </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                {
+                  id: 'outreach-1',
+                  image: '/images/about_rlbsa.jpeg',
+                  tag: '01. Grassroots Scouting',
+                  caption: 'Village Talent Identification',
+                  desc: 'Discovering hidden athletic potential in remote rural areas.'
+                },
+                {
+                  id: 'outreach-2',
+                  image: '/images/hero1.jpeg',
+                  tag: '02. Athletic Camps',
+                  caption: 'Free Sports Coaching',
+                  desc: 'Professional training workshops for underprivileged youth.'
+                },
+                {
+                  id: 'outreach-3',
+                  image: '/images/hero2.jpg',
+                  tag: '03. Campus Exposure',
+                  caption: 'Academy Infrastructure Visit',
+                  desc: 'Providing village children access to turf fields and gear.'
+                },
+                {
+                  id: 'outreach-4',
+                  image: '/images/program_handball.png',
+                  tag: '04. Team Sports',
+                  caption: 'Handball & Football Drives',
+                  desc: 'Fostering teamwork, discipline, and competitive spirit.'
+                },
+                {
+                  id: 'outreach-5',
+                  image: '/images/education_card.jpg',
+                  tag: '05. Education & Life Skills',
+                  caption: 'Literacy & Mentorship',
+                  desc: 'Combining athletic training with formal schooling support.'
+                }
+              ].map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setPreviewImage(item.image)}
+                  className="group relative bg-white rounded-xl overflow-hidden border border-border-gray/70 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-[280px]"
+                >
+                  <div className="relative h-[180px] w-full overflow-hidden bg-primary shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.caption}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-2.5 left-2.5 bg-primary/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2.5 py-1 rounded uppercase tracking-wider shadow-sm border border-white/20">
+                      {item.tag}
                     </div>
                   </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* ROW 2: VISION */}
-            <RevealRow id="vision-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
-              {(isVisible) => (
-                <>
-                  {/* Left Side: Compound Images overlay block */}
-                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 lg:order-1`}>
-                    <div className="relative w-full aspect-[4/3] flex items-center justify-center">
-                      
-                      {/* Arch-shaped first image */}
-                      <div className="w-[45%] h-[85%] rounded-t-full overflow-hidden shadow-lg border-4 border-white bg-slate-100 shrink-0">
-                        <img 
-                          src="/images/about_rlbsa.jpeg" 
-                          alt="Our Vision Athlete" 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                      
-                      {/* Standard round second image offset */}
-                      <div className="w-[45%] h-[80%] rounded-xl overflow-hidden shadow-lg border-4 border-white bg-slate-100 shrink-0 mt-16 -ml-8">
-                        <img 
-                          src="/images/hero1.jpeg" 
-                          alt="Youth Sports Training" 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-
+                  <div className="p-3.5 flex flex-col justify-between flex-grow text-left bg-white">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-primary group-hover:text-accent transition-colors line-clamp-1">
+                        {item.caption}
+                      </h4>
+                      <p className="text-[11px] text-text-light leading-snug mt-1 font-medium line-clamp-2">
+                        {item.desc}
+                      </p>
                     </div>
-                  </div>
-
-                  {/* Right Side: Text details */}
-                  <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 lg:order-2`}>
-                    <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
-                      What We Do
+                    <span className="text-[10px] font-bold text-accent uppercase tracking-wider mt-2 block">
+                      🔍 Tap to View
                     </span>
-                    <h3 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
-                      Our Vision
-                    </h3>
-                    <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
-                      To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.
-                    </p>
-                    <a
-                      href="#/about/what-we-do"
-                      className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
-                    >
-                      Our Programs
-                    </a>
                   </div>
-                </>
-              )}
-            </RevealRow>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-primary mb-10">Our Core Values</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-8 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
-                <div className="text-3xl mb-4">🏆</div>
-                <h4 className="text-lg font-bold text-primary mb-2">Excellence</h4>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Constantly pushing technical limits to refine stroke, positioning, speed, and endurance.
+          {/* DETAILED PROGRAM DESCRIPTION SECTION */}
+          <div className="max-w-[1140px] mx-auto bg-white border border-border-gray/70 rounded-2xl p-8 md:p-12 shadow-sm mb-16 text-left">
+            <div className="max-w-[900px] mx-auto">
+              <span className="text-[11px] font-black text-accent uppercase tracking-[0.2em] mb-2 block">
+                Empowering Rural Communities
+              </span>
+              <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-6 leading-tight">
+                Transforming Lives Beyond the Boundary Lines
+              </h3>
+
+              <div className="space-y-5 text-text-light text-sm md:text-base leading-relaxed font-medium">
+                <p>
+                  Rani Laxmibai Sports Academy (RLBSA) operates a dedicated, multi-faceted <strong className="text-primary font-bold">Grassroots Outreach Program</strong> tailored specifically for young boys and girls in rural Bihar. In many surrounding villages, children face severe financial challenges, lack of basic sports equipment, and traditional societal norms that hinder participation in organized sports.
                 </p>
-              </div>
-              <div className="bg-white p-8 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
-                <div className="text-3xl mb-4">🤝</div>
-                <h4 className="text-lg font-bold text-primary mb-2">Integrity</h4>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Fair play, respect for opponents, and honesty under pressure are non-negotiable principles.
+
+                <p>
+                  Our outreach team visits remote schools, village sports clubs, and local communities to host open athletic trials, handball clinics, and football talent identification camps. We provide <strong className="text-primary font-bold">100% free sports equipment, jerseys, and footwear</strong> to ensure no child is denied the chance to train due to poverty.
                 </p>
-              </div>
-              <div className="bg-white p-8 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
-                <div className="text-3xl mb-4">⚡</div>
-                <h4 className="text-lg font-bold text-primary mb-2">Dedication</h4>
-                <p className="text-text-light text-sm leading-relaxed">
-                  Understanding that physical gains and gold medals are outputs of steady daily discipline.
+
+                <p>
+                  Beyond athletic coaching, the RLBSA Outreach Program actively promotes <strong className="text-primary font-bold">Girl Child Empowerment &amp; Gender Equality</strong>. By mentoring young female athletes and engaging directly with village elders and parents, we break generational stigmas and demonstrate how sports can open doors to higher education, government sports jobs, and national representation.
+                </p>
+
+                <p>
+                  Children selected during outreach drives earn full scholarships to join RLBSA's residential or daycare programs—receiving comprehensive sports training, standard academic schooling, daily protein-rich meals, and medical supervision.
                 </p>
               </div>
             </div>
           </div>
+
+          {/* 4 INITIATIVE PILLARS CARDS */}
+          <div className="max-w-[1140px] mx-auto mb-16">
+            <div className="text-center mb-10">
+              <h3 className="text-2xl font-extrabold text-primary mb-2">Core Pillars of Our Outreach</h3>
+              <p className="text-text-light text-sm">Key focus areas driving impact across rural Siwan and neighboring districts.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-2xl mb-4 font-black">
+                  🎯
+                </div>
+                <h4 className="text-base font-bold text-primary mb-2">Talent Identification</h4>
+                <p className="text-text-light text-xs leading-relaxed font-medium">
+                  Organizing physical fitness assessments and open trials in rural school grounds to spot raw athletic talent early.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
+                <div className="w-12 h-12 rounded-lg bg-accent/15 text-accent flex items-center justify-center text-2xl mb-4 font-black">
+                  👧
+                </div>
+                <h4 className="text-base font-bold text-primary mb-2">Female Leadership</h4>
+                <p className="text-text-light text-xs leading-relaxed font-medium">
+                  Creating safe spaces for rural girls to play sports, build confidence, and become role models for their villages.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
+                <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-4 font-black">
+                  👟
+                </div>
+                <h4 className="text-base font-bold text-primary mb-2">Free Kit Distribution</h4>
+                <p className="text-text-light text-xs leading-relaxed font-medium">
+                  Providing free running shoes, sports apparel, balls, and gear directly to underprivileged young athletes.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
+                <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4 font-black">
+                  🥗
+                </div>
+                <h4 className="text-base font-bold text-primary mb-2">Health &amp; Nutrition</h4>
+                <p className="text-text-light text-xs leading-relaxed font-medium">
+                  Conducting health checkups, hygiene awareness workshops, and distributing nutritional meal supplements.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CALL TO ACTION BANNER */}
+          <div className="max-w-[1140px] mx-auto bg-primary text-white rounded-2xl p-8 md:p-12 text-center relative overflow-hidden shadow-lg">
+            <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+            <span className="bg-accent text-primary text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider mb-4 inline-block">
+              JOIN OUR MISSION
+            </span>
+            <h3 className="text-2xl md:text-4xl font-extrabold mb-4 leading-tight">
+              Help Us Reach More Rural Athletes in Bihar
+            </h3>
+            <p className="text-white/80 text-sm md:text-base max-w-[700px] mx-auto mb-8 font-medium">
+              Partner with RLBSA to sponsor sports kits, fund village camps, or support residential scholarships for promising young athletes.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <a
+                href="#/contact"
+                className="bg-accent hover:bg-white text-primary font-extrabold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-all border-none cursor-pointer"
+              >
+                Get In Touch
+              </a>
+              <a
+                href="#/donate"
+                className="bg-white/10 hover:bg-white/20 text-white font-extrabold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              >
+                Support An Athlete
+              </a>
+            </div>
+          </div>
+
+          {/* LIGHTBOX PREVIEW MODAL */}
+          {previewImage && (
+            <div
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in"
+              onClick={() => setPreviewImage(null)}
+            >
+              <div
+                className="relative max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl p-2 text-left"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setPreviewImage(null)}
+                  className="absolute top-4 right-4 bg-black/60 hover:bg-black text-white p-2 rounded-full cursor-pointer z-10 transition-all border-none"
+                >
+                  <X size={20} />
+                </button>
+                <img
+                  src={previewImage}
+                  alt="Outreach Program Preview"
+                  className="w-full h-auto max-h-[80vh] object-contain rounded-xl bg-black"
+                />
+              </div>
+            </div>
+          )}
         </>
       )}
 
