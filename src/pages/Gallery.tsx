@@ -28,6 +28,17 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
     'celebrations': 'Celebrations',
   };
 
+  const formatMediaUrl = (input: any): string => {
+    if (!input) return "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+    const urlStr = typeof input === 'string' ? input : (input.path || input.url || input.secure_url || '');
+    if (!urlStr) return "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+    if (urlStr.startsWith('http://') || urlStr.startsWith('https://') || urlStr.startsWith('data:')) {
+      return urlStr;
+    }
+    const cleanPath = urlStr.startsWith('/') ? urlStr : `/${urlStr}`;
+    return `http://localhost:5000${cleanPath}`;
+  };
+
   useEffect(() => {
     setLoading(true);
     let category = '';
@@ -75,10 +86,11 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                 });
               } else if (event.photos && event.photos.length > 0) {
                 event.photos.forEach((photo: any, index: number) => {
+                  const photoPath = typeof photo === 'string' ? photo : (photo.path || photo.url || photo.secure_url || '');
                   items.push({
                     id: `photo-${event._id}-${index}`,
                     type: 'photo',
-                    path: photo.path,
+                    path: photoPath,
                     name: `${event.name} - Photo ${index + 1}`,
                     eventName: event.name,
                     category: event.category,
@@ -347,9 +359,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                   const currentItems = unifiedMedia.slice(startIndex, startIndex + mediaPerPage);
                   
                   return currentItems.map((item) => {
-                    const thumbUrl = item.type === 'video'
-                      ? (item.coverImage && (item.coverImage.startsWith('http') || item.coverImage.startsWith('data:')) ? item.coverImage : `http://localhost:5000${item.coverImage}`)
-                      : (item.path && (item.path.startsWith('http') || item.path.startsWith('data:')) ? item.path : `http://localhost:5000${item.path}`);
+                    const thumbUrl = formatMediaUrl(item.type === 'video' ? item.coverImage : item.path);
 
                     return (
                       <div 
@@ -452,9 +462,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {events.map((event) => {
-                  const coverUrl = event.coverImage 
-                    ? (event.coverImage.startsWith('http') ? event.coverImage : `http://localhost:5000${event.coverImage}`) 
-                    : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop";
+                  const coverUrl = formatMediaUrl(event.coverImage);
                   
                   return (
                     <div 
@@ -587,7 +595,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {selectedEvent.photos.map((photo: any, index: number) => {
-              const photoUrl = photo.path && (photo.path.startsWith('http') || photo.path.startsWith('data:')) ? photo.path : `http://localhost:5000${photo.path}`;
+              const photoUrl = formatMediaUrl(photo);
               
               return (
                 <div 
@@ -616,14 +624,14 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
       {/* Lightbox Slideshow Modal */}
       {lightboxIndex !== null && selectedEvent?.photos && (
         <div 
-          className="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[999] flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] flex items-center justify-center p-3 md:p-6 animate-fade-in select-none"
           onClick={() => setLightboxIndex(null)}
         >
           {/* Close button */}
           <button 
-            className="absolute top-6 right-6 bg-white/10 hover:bg-red-500 hover:text-white text-white rounded-full p-3 transition-all duration-300 z-[1000] cursor-pointer border border-white/15 shadow-lg hover:scale-110 active:scale-95 outline-none"
+            className="absolute top-5 right-5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all cursor-pointer border border-white/10 z-[1000]"
             onClick={() => setLightboxIndex(null)}
-            aria-label="Close lightbox"
+            aria-label="Close modal"
           >
             <X size={20} weight="bold" />
           </button>
@@ -643,10 +651,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
             onClick={(e) => e.stopPropagation()}
           >
             {(() => {
-              const currentPath = selectedEvent.photos[lightboxIndex]?.path || '';
-              const srcUrl = currentPath && (currentPath.startsWith('http') || currentPath.startsWith('data:'))
-                ? currentPath
-                : `http://localhost:5000${currentPath}`;
+              const srcUrl = formatMediaUrl(selectedEvent.photos[lightboxIndex]);
               return (
                 <img 
                   src={srcUrl} 
