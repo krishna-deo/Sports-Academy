@@ -8163,9 +8163,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             <form onSubmit={handleSaveMilestone} className="space-y-4 overflow-y-auto pr-1 py-1 flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Year / Era *</label>
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Year / Era</label>
                   <input 
-                    required 
                     type="text" 
                     placeholder="E.g. 2009 or Today" 
                     value={milestoneForm.year} 
@@ -8188,9 +8187,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Title *</label>
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Title</label>
                   <input 
-                    required 
                     type="text" 
                     placeholder="E.g. The Beginning" 
                     value={milestoneForm.title} 
@@ -8199,9 +8197,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Label Subtitle *</label>
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Label Subtitle</label>
                   <input 
-                    required 
                     type="text" 
                     placeholder="E.g. Milestone Year" 
                     value={milestoneForm.subtitle} 

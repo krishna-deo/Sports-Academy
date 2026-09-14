@@ -252,74 +252,17 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
     <section className="py-20 px-5 max-w-[1380px] mx-auto animate-fade-in">
       {sub === 'story' && (
         <>
-          {/* Hero Banner Section */}
-          <div className="max-w-[1100px] mx-auto relative h-[250px] md:h-[380px] rounded-xl overflow-hidden mb-16 shadow-lg border border-slate-100 select-none">
-            <img 
-              src="/images/hero2.jpg" 
-              alt="RLBSA Our Story Banner" 
-              className="w-full h-full object-cover" 
-            />
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#082142]/85 via-[#082142]/35 to-transparent"></div>
-            
-            {/* Title Lockup in the center */}
-            <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6">
-              <h2 className="text-4xl md:text-6xl font-black text-white tracking-wider uppercase italic drop-shadow-md">
-                Our Story
-              </h2>
-              <div className="w-16 h-1 bg-[#00a896] mt-4 rounded-full shadow"></div>
-            </div>
+          {/* Centered Heading */}
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
+              Our Story
+            </h2>
+            <p className="text-text-light text-base md:text-lg animate-fade-in">
+              The inspiring journey of Rani Laxmibai Sports Academy in identifying, nurturing, and empowering rural youth in Bihar through sports and education.
+            </p>
           </div>
 
-          {/* Intro & Collage Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-24 max-w-[1100px] mx-auto text-left">
-            {/* Left side info: width 5 columns */}
-            <div className="lg:col-span-5 space-y-6">
-              <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] bg-[#e6f7f5] px-3.5 py-1.5 rounded-full inline-block">
-                Grassroots Legacy
-              </span>
-              <p className="text-[#082142] text-xl md:text-[23px] font-black leading-snug">
-                At Rani Laxmibai Sports Academy, we are passionate about identifying and nurturing rural sports talent, empowering youth athletes to achieve national glory and transform their communities.
-              </p>
-              <p className="text-slate-500 text-sm leading-relaxed font-medium">
-                We believe that every child in rural India, regardless of gender or economic background, deserves a platform to showcase their potential. What started as a modest coaching program in Siwan has grown into a regional center of athletic excellence, giving underprivileged youth a pathway to state, national, and professional success.
-              </p>
-            </div>
-
-            {/* Right side collage: width 7 columns */}
-            <div className="lg:col-span-7">
-              <div className="grid grid-cols-3 gap-3 relative h-[380px] md:h-[450px]">
-                {/* Column 1 */}
-                <div className="w-full space-y-3 flex flex-col justify-between h-full">
-                  <div className="w-full h-[55%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
-                    <img src="/images/hero1.jpeg" alt="Story collage 1" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                  <div className="w-full h-[41%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
-                    <img src="/images/player_rahul.png" alt="Story collage 2" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                </div>
-
-                {/* Column 2 (Offset/Centered column) */}
-                <div className="w-full space-y-3 flex flex-col justify-center h-full">
-                  <div className="w-full h-[80%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
-                    <img src="/images/about_rlbsa.jpeg" alt="Story collage 3" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                </div>
-
-                {/* Column 3 */}
-                <div className="w-full space-y-3 flex flex-col justify-between h-full">
-                  <div className="w-full h-[43%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
-                    <img src="/images/hero2.jpg" alt="Story collage 4" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                  <div className="w-full h-[53%] rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
-                    <img src="/images/hero1.jpeg" alt="Story collage 5" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Alternating Story Rows */}
+          {/* Alternating Story Rows (Milestones) */}
           <div className="space-y-24 max-w-[1100px] mx-auto mb-20">
             {milestones.map((item, idx) => {
               const isEven = idx % 2 === 1; // Alternating layout
