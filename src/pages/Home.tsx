@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar, Newspaper } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
 import { successStories as initialSuccessStories } from '../data/sportsData';
@@ -9,7 +9,6 @@ export const Home: React.FC = () => {
   const [successPlayers, setSuccessPlayers] = React.useState<any[]>(initialSuccessStories);
   const [team, setTeam] = React.useState<any[]>(teamMembers);
   const [homeEvents, setHomeEvents] = React.useState<any[]>([]);
-  const [homeUpdates, setHomeUpdates] = React.useState<any[]>([]);
   const [edgeCards, setEdgeCards] = React.useState<any[]>([]);
 
   React.useEffect(() => {
@@ -39,15 +38,6 @@ export const Home: React.FC = () => {
         }
       })
       .catch(err => console.error("Error loading home page events:", err));
-
-    fetch('http://localhost:5000/api/public/updates?limit=2')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.updates)) {
-          setHomeUpdates(data.updates);
-        }
-      })
-      .catch(err => console.error("Error loading home page updates:", err));
 
     fetch('http://localhost:5000/api/public/edge-cards')
       .then(res => res.json())
