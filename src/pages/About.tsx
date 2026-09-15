@@ -257,7 +257,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
               Our Story
             </h2>
-            <p className="text-text-light text-base md:text-lg animate-fade-in">
+            <p className="text-text-light text-sm md:text-base animate-fade-in">
               The inspiring journey of Rani Laxmibai Sports Academy in identifying, nurturing, and empowering rural youth in Bihar through sports and education.
             </p>
           </div>
@@ -266,8 +266,6 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           <div className="space-y-24 max-w-[1100px] mx-auto mb-20">
             {milestones.map((item, idx) => {
               const isEven = idx % 2 === 1; // Alternating layout
-              const yearColor = isEven ? 'text-[#082142]' : 'text-[#00a896]';
-              const titleColor = isEven ? 'text-[#00a896]' : 'text-[#082142]';
               
               return (
                 <RevealRow 
@@ -277,27 +275,17 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                 >
                   {(isVisible) => {
                     const detailsBlock = (
-                      <div className={`w-full md:w-1/2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 translate-x-12' : 'opacity-0 -translate-x-12'} order-2 md:order-none`}>
-                        <div className={`text-4xl font-black ${yearColor} mb-3`}>{item.year}</div>
-                        <h3 className={`text-2.5xl font-black ${titleColor} mb-4`}>{item.title}</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-semibold">
-                          {item.description}
-                        </p>
-                        {item.year.toLowerCase() === 'today' && (
-                          <div className="mt-6">
-                            <a 
-                              href="#/donate" 
-                              className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider transition-colors duration-300 border-none shadow-md"
-                            >
-                              Support Our Mission
-                            </a>
-                          </div>
-                        )}
+                      <div className={`w-full md:w-[56%] lg:w-[58%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 translate-x-12' : 'opacity-0 -translate-x-12'} order-2 md:order-none`}>
+                        <div className="text-slate-600 text-sm md:text-base leading-relaxed font-normal space-y-3 text-justify">
+                          {item.description.split('\n').filter(Boolean).map((para: string, pIdx: number) => (
+                            <p key={pIdx}>{para}</p>
+                          ))}
+                        </div>
                       </div>
                     );
 
                     const imageBlock = (
-                      <div className={`w-full md:w-1/2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 -translate-x-12' : 'opacity-0 translate-x-12'} order-1 md:order-none`}>
+                      <div className={`w-full md:w-[40%] lg:w-[38%] max-w-[420px] mx-auto transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 -translate-x-12' : 'opacity-0 translate-x-12'} order-1 md:order-none`}>
                         <div className="rounded-xl overflow-hidden shadow-md aspect-[16/10] border border-slate-100 bg-[#082142]/5">
                           <img 
                             src={item.image.startsWith('http') || item.image.startsWith('/images') || item.image.startsWith('/uploads') ? item.image : `http://localhost:5000${item.image}`} 
@@ -328,6 +316,124 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               );
             })}
           </div>
+
+          {/* VISION & MISSION SECTION (Positioned right below all story milestones) */}
+          <div className="mt-28 pt-16 border-t border-border-gray/60 max-w-[1100px] mx-auto">
+            <div className="text-center max-w-[700px] mx-auto mb-16">
+              <h3 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
+                Vision &amp; Mission
+              </h3>
+              <p className="text-text-light text-sm md:text-base animate-fade-in">
+                The core philosophies that drive our athlete development, community upliftment, and long-term goals.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-20 mb-16">
+              {/* MISSION ROW */}
+              <RevealRow id="mission-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
+                {(isVisible) => (
+                  <>
+                    <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+                      <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
+                        Our Purpose
+                      </span>
+                      <h4 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
+                        Our Mission
+                      </h4>
+                      <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
+                        RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.
+                      </p>
+                      <a
+                        href="#/about/outreach-program"
+                        className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
+                      >
+                        Explore Outreach Program
+                      </a>
+                    </div>
+
+                    <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+                      <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3] border border-slate-100 bg-[#082142]/5">
+                        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden">
+                          <img 
+                            src="/images/hero2.jpg" 
+                            alt="Our Mission Team" 
+                            className="w-full h-full object-cover rounded-tl-[5rem]" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </RevealRow>
+
+              {/* VISION ROW */}
+              <RevealRow id="vision-row" className="flex flex-col lg:flex-row items-center justify-between gap-12 text-left">
+                {(isVisible) => (
+                  <>
+                    {/* Left Side: Single Image shape matching Mission */}
+                    <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'} order-2 lg:order-1`}>
+                      <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3] border border-slate-100 bg-[#082142]/5">
+                        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden">
+                          <img 
+                            src="/images/about_rlbsa.jpeg" 
+                            alt="Our Vision Athlete" 
+                            className="w-full h-full object-cover rounded-tr-[5rem]" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side: Text details */}
+                    <div className={`w-full lg:w-[48%] transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'} order-1 lg:order-2`}>
+                      <span className="text-[10px] font-black text-[#00a896] uppercase tracking-[0.2em] mb-2.5 block">
+                        Our Future
+                      </span>
+                      <h4 className="text-3xl md:text-4xl font-black text-[#082142] mb-5 leading-tight">
+                        Our Vision
+                      </h4>
+                      <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
+                        To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.
+                      </p>
+                      <a
+                        href="#/about/what-we-do"
+                        className="inline-flex items-center gap-2 bg-[#082142] hover:bg-[#00a896] text-white hover:text-white font-bold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-colors duration-300 border-none cursor-pointer"
+                      >
+                        Our Operations
+                      </a>
+                    </div>
+                  </>
+                )}
+              </RevealRow>
+            </div>
+
+            {/* CORE VALUES */}
+            <div className="text-center pt-8">
+              <h4 className="text-2xl font-bold text-primary mb-8">Our Core Values</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-7 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
+                  <div className="text-3xl mb-3">🏆</div>
+                  <h5 className="text-base font-bold text-primary mb-2">Excellence</h5>
+                  <p className="text-text-light text-xs leading-relaxed">
+                    Constantly pushing technical limits to refine stroke, positioning, speed, and endurance.
+                  </p>
+                </div>
+                <div className="bg-white p-7 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
+                  <div className="text-3xl mb-3">🤝</div>
+                  <h5 className="text-base font-bold text-primary mb-2">Integrity</h5>
+                  <p className="text-text-light text-xs leading-relaxed">
+                    Fair play, respect for opponents, and honesty under pressure are non-negotiable principles.
+                  </p>
+                </div>
+                <div className="bg-white p-7 rounded-xl border border-border-gray text-center hover:shadow-md transition-all">
+                  <div className="text-3xl mb-3">⚡</div>
+                  <h5 className="text-base font-bold text-primary mb-2">Dedication</h5>
+                  <p className="text-text-light text-xs leading-relaxed">
+                    Understanding that physical gains and gold medals are outputs of steady daily discipline.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
@@ -335,9 +441,6 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
         <>
           {/* Header Banner */}
           <div className="text-center max-w-[850px] mx-auto mb-14">
-            <span className="text-accent text-xs font-black uppercase tracking-[0.2em] bg-accent/10 px-4 py-1.5 rounded-full mb-4 inline-block animate-fade-in">
-              Community Engagement &amp; Rural Scouting
-            </span>
             <h2 className="text-3xl md:text-5xl font-extrabold text-primary mb-4 relative inline-block pb-4 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[70px] after:h-[3.5px] after:bg-accent animate-fade-in">
               Outreach Program
             </h2>

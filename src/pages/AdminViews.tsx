@@ -1258,8 +1258,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
   const handleSaveMilestone = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!milestoneForm.year || !milestoneForm.title || !milestoneForm.subtitle || !milestoneForm.description) {
-      alert("Please fill in all required fields.");
+    if (!milestoneForm.description || !milestoneForm.description.trim()) {
+      alert("Please write the paragraph description content.");
       return;
     }
     
@@ -1270,13 +1270,20 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         : 'http://localhost:5000/api/admin/story-milestones';
       const method = editingMilestone ? 'PUT' : 'POST';
       
+      const payload = {
+        ...milestoneForm,
+        year: milestoneForm.year || '',
+        title: milestoneForm.title || '',
+        subtitle: milestoneForm.subtitle || ''
+      };
+
       const response = await fetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify(milestoneForm)
+        body: JSON.stringify(payload)
       });
       
       const data = await response.json();
@@ -8161,75 +8168,38 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             </h3>
             
             <form onSubmit={handleSaveMilestone} className="space-y-4 overflow-y-auto pr-1 py-1 flex-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Year / Era</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. 2009 or Today" 
-                    value={milestoneForm.year} 
-                    onChange={(e) => setMilestoneForm({...milestoneForm, year: e.target.value})} 
-                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Display Order *</label>
-                  <input 
-                    required 
-                    type="number" 
-                    placeholder="E.g. 1" 
-                    value={milestoneForm.order} 
-                    onChange={(e) => setMilestoneForm({...milestoneForm, order: parseInt(e.target.value) || 0})} 
-                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Title</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. The Beginning" 
-                    value={milestoneForm.title} 
-                    onChange={(e) => setMilestoneForm({...milestoneForm, title: e.target.value})} 
-                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Label Subtitle</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. Milestone Year" 
-                    value={milestoneForm.subtitle} 
-                    onChange={(e) => setMilestoneForm({...milestoneForm, subtitle: e.target.value})} 
-                    className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                  />
-                </div>
-              </div>
-
+              {/* 1. Paragraph Content */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Description Content *</label>
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Paragraph Content *</label>
                 <textarea 
                   required 
-                  rows={4} 
-                  placeholder="Detail the key achievements, people, or events that took place..." 
+                  rows={5} 
+                  placeholder="Write the milestone story paragraphs, key highlights, or journey details..." 
                   value={milestoneForm.description} 
                   onChange={(e) => setMilestoneForm({...milestoneForm, description: e.target.value})} 
                   className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
                 />
               </div>
 
+              {/* 2. Related Image Photo */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Milestone Image Photo</label>
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Related Image Photo</label>
                 <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
                   {milestoneForm.image ? (
-                    <div className="w-20 h-16 rounded overflow-hidden border border-border-gray shrink-0">
+                    <div className="w-20 h-16 rounded overflow-hidden border border-border-gray shrink-0 relative group">
                       <img 
                         src={milestoneForm.image.startsWith('data:') || milestoneForm.image.startsWith('/') || milestoneForm.image.startsWith('http') ? milestoneForm.image : `http://localhost:5000${milestoneForm.image}`} 
                         alt="Preview" 
                         className="w-full h-full object-cover" 
                       />
+                      <button
+                        type="button"
+                        onClick={() => setMilestoneForm({...milestoneForm, image: ''})}
+                        className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-600 transition-colors cursor-pointer border-none"
+                        title="Remove Image"
+                      >
+                        <X size={10} />
+                      </button>
                     </div>
                   ) : (
                     <div className="w-20 h-16 rounded bg-slate-200 border border-dashed border-border-gray shrink-0 flex items-center justify-center text-text-light text-[10px] font-bold uppercase">
@@ -8243,15 +8213,28 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       onChange={handleMilestoneImageChange}
                       className="text-xs w-full cursor-pointer text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white file:cursor-pointer file:uppercase"
                     />
-                    <p className="text-[9px] text-text-light mt-1">Upload 16:10 aspect ratios for best result.</p>
+                    <p className="text-[9px] text-text-light mt-1">Select an image photo for this milestone.</p>
                   </div>
                 </div>
+              </div>
+
+              {/* 3. Display Order */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Display Order *</label>
+                <input 
+                  required 
+                  type="number" 
+                  placeholder="E.g. 1" 
+                  value={milestoneForm.order} 
+                  onChange={(e) => setMilestoneForm({...milestoneForm, order: parseInt(e.target.value) || 0})} 
+                  className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                />
               </div>
 
               <button 
                 type="submit" 
                 disabled={isUploading}
-                className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm disabled:opacity-60"
+                className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm disabled:opacity-60 border-none"
               >
                 {isUploading ? 'Saving changes...' : editingMilestone ? 'Save Milestone' : 'Create Milestone'}
               </button>

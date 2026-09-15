@@ -237,7 +237,7 @@ export const Home: React.FC = () => {
       setCurrentMember((prev) => (prev + 1) % team.length);
     }, 5000); // Auto-slide every 5 seconds
     return () => clearInterval(timer);
-  }, [currentMember, team.length]);
+  }, [team.length]);
 
 
   const cards = [
@@ -500,10 +500,11 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Founders & Directors Section */}
-      <section className="py-24 px-5 bg-white w-full border-b border-border-gray/50 overflow-hidden select-none">
+      <section className="py-10 md:py-12 px-5 bg-white w-full border-b border-border-gray/50 overflow-hidden select-none">
         <div className="max-w-[1380px] mx-auto">
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+          {/* Section Header with increased gap below subheading */}
+          <div className="text-center max-w-[700px] mx-auto mb-10 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-2.5 relative inline-block pb-2.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               Founders & Directors
             </h2>
             <p className="text-text-light text-base md:text-lg">
@@ -511,34 +512,34 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          {/* Slider Outer Wrapper */}
+          {/* Slider Outer Wrapper (Balanced Medium-Large Centered Width) */}
           <div 
             ref={teamRef}
-            className={`relative max-w-[1380px] mx-auto px-5 sm:px-8 md:px-10 transition-all duration-[1000ms] ease-out transform ${
+            className={`relative max-w-[1140px] mx-auto px-10 sm:px-14 md:px-16 transition-all duration-[1000ms] ease-out transform ${
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
-            {/* Sliding Buttons (Visible on desktop/tablet, hidden on mobile) */}
+            {/* Sliding Buttons placed OUTSIDE the card */}
             <button 
               onClick={() => setCurrentMember((prev) => (prev - 1 + team.length) % team.length)}
-              className="hidden sm:flex absolute left-6 sm:left-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="hidden sm:flex absolute -left-3 sm:-left-6 md:-left-12 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white shadow-md border border-border-gray/50 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-30 hover:scale-105 active:scale-95 text-primary group cursor-pointer"
               aria-label="Previous Member"
             >
-              <CaretLeft className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
+              <CaretLeft className="w-4 h-4 sm:w-5 sm:h-5" weight="bold" />
             </button>
 
             <button 
               onClick={() => setCurrentMember((prev) => (prev + 1) % team.length)}
-              className="hidden sm:flex absolute right-6 sm:right-10 top-[150px] sm:top-1/2 -translate-y-1/2 w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-white/90 opacity-75 hover:opacity-100 shadow-md border border-border-gray/30 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-20 hover:scale-105 active:scale-95 text-primary group"
+              className="hidden sm:flex absolute -right-3 sm:-right-6 md:-right-12 top-1/2 -translate-y-1/2 w-9 sm:w-12 h-9 sm:h-12 rounded-full bg-white shadow-md border border-border-gray/50 hover:bg-primary hover:text-white items-center justify-center transition-all duration-300 z-30 hover:scale-105 active:scale-95 text-primary group cursor-pointer"
               aria-label="Next Member"
             >
-              <CaretRight className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" weight="bold" />
+              <CaretRight className="w-4 h-4 sm:w-5 sm:h-5" weight="bold" />
             </button>
 
             <div 
               ref={foundersScrollRef}
               onScroll={handleFoundersScroll}
-              className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[460px] md:min-h-[380px] sm:px-0 sm:mx-0"
+              className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[420px] md:min-h-[350px] sm:px-0 sm:mx-0"
             >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
@@ -546,7 +547,7 @@ export const Home: React.FC = () => {
                   <a
                     href={`#/about/founders?member=${member.id}`}
                     key={idx}
-                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-5 last:mr-5 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[480px] sm:min-h-[440px] md:min-h-[360px] hover:-translate-y-1.5 cursor-pointer block group ${
+                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-5 last:mr-5 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[440px] sm:min-h-[380px] md:min-h-[330px] shadow-sm hover:shadow-md cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -555,7 +556,7 @@ export const Home: React.FC = () => {
                     }`}
                   >
                     {/* Left Column: Photo */}
-                    <div className="w-full sm:w-[340px] md:w-[400px] h-[240px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
+                    <div className="w-full sm:w-[310px] md:w-[360px] h-[240px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
                       <img 
                         src={member.image} 
                         alt={member.name} 
@@ -566,15 +567,15 @@ export const Home: React.FC = () => {
                       <div className="absolute inset-0 bg-gradient-to-l from-black/15 via-transparent to-transparent pointer-events-none" />
                     </div>
 
-                    {/* Right Column: Member Details (Vertically Aligned) */}
-                    <div className="flex-grow p-6 sm:p-12 md:p-16 flex flex-col justify-center text-left">
-                      <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary mb-2 leading-tight">
+                    {/* Right Column: Member Details */}
+                    <div className="flex-grow p-6 sm:p-9 md:p-12 flex flex-col justify-center text-left">
+                      <h3 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2 leading-tight">
                         {member.name}
                       </h3>
-                      <span className="text-[11px] md:text-[12.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-4 block leading-none">
+                      <span className="text-[11px] md:text-[12px] font-extrabold text-accent tracking-[0.15em] uppercase mb-3.5 block leading-none">
                         {member.role}
                       </span>
-                      <div className="text-text-light text-sm sm:text-base md:text-lg leading-relaxed max-w-[580px] space-y-3 text-left font-normal">
+                      <div className="text-text-light text-sm sm:text-base leading-relaxed max-w-[560px] space-y-3 text-left font-normal">
                         {getBioParagraphs(member.bio).map((paragraph, idx) => (
                           <p key={idx}>{paragraph}</p>
                         ))}
@@ -622,10 +623,10 @@ export const Home: React.FC = () => {
 
 
       {/* The RLBSA Edge Section */}
-      <section ref={edgeRef} className="py-24 bg-soft-light/40 w-full border-b border-border-gray/50 overflow-hidden">
+      <section ref={edgeRef} className="py-10 md:py-12 bg-soft-light/40 w-full border-b border-border-gray/50 overflow-hidden">
         <div className="max-w-[1380px] mx-auto px-5">
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+          <div className="text-center max-w-[700px] mx-auto mb-6 md:mb-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-2.5 relative inline-block pb-2.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               RLBSA Edge
             </h2>
             <p className="text-text-light text-base md:text-lg">
@@ -873,10 +874,10 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Success Testimonials Section */}
-      <section ref={storiesRef} className="py-24 bg-soft-light w-full border-t border-border-gray/30 overflow-hidden">
+      <section ref={storiesRef} className="py-10 md:py-12 bg-soft-light w-full border-t border-border-gray/30 overflow-hidden">
         <div className="max-w-[1380px] mx-auto px-5">
-          <div className="text-center max-w-[700px] mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
+          <div className="text-center max-w-[700px] mx-auto mb-6 md:mb-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-2.5 relative inline-block pb-2.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent">
               Success Stories
             </h2>
             <p className="text-text-light text-base md:text-lg">
@@ -887,7 +888,7 @@ export const Home: React.FC = () => {
           <div 
             ref={successStoriesScrollRef}
             onScroll={handleSuccessStoriesScroll}
-            className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar"
+            className="flex overflow-x-auto md:grid md:grid-cols-4 gap-3.5 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar"
           >
             {successPlayers.map((player, idx) => {
               const delays = ['delay-0', 'delay-200', 'delay-400', 'delay-600'];
@@ -896,12 +897,12 @@ export const Home: React.FC = () => {
                 <a
                   href={`#/academy/success-stories?player=${player.id}`}
                   key={idx}
-                  className={`flex-shrink-0 w-[85vw] max-w-[320px] md:w-auto snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-md overflow-hidden border border-border-gray/30 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-[1000ms] ease-out transform ${delayClass} ${
+                  className={`flex-shrink-0 w-[88vw] max-w-[340px] md:w-full snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-300 transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
                   }`}
                 >
-                  {/* Image Section */}
-                  <div className="h-[340px] overflow-hidden relative bg-soft-light">
+                  {/* Compact Clean Photo Block */}
+                  <div className="h-[210px] overflow-hidden relative bg-soft-light">
                     <img
                       src={player.image}
                       alt={player.name}
@@ -909,14 +910,27 @@ export const Home: React.FC = () => {
                     />
                   </div>
 
-                  {/* Details Section */}
-                  <div className="p-6 flex flex-col justify-center flex-grow text-left">
-                    <h3 className="text-xl font-extrabold text-primary mb-1 group-hover:text-accent transition-colors">
-                      {player.name}
-                    </h3>
-                    <span className="text-xs font-bold text-accent uppercase tracking-wider block">
-                      {player.sport}
-                    </span>
+                  {/* Clean Normal Text Details (No background colors or description boxes) */}
+                  <div className="p-4 flex flex-col justify-between flex-grow text-left space-y-2.5 bg-white">
+                    <div>
+                      {/* Name */}
+                      <h3 className="text-base font-extrabold text-primary group-hover:text-accent transition-colors tracking-tight">
+                        {player.name}
+                      </h3>
+                      
+                      {/* Achievement / Level */}
+                      <p className="text-xs font-medium text-text-light mt-0.5 line-clamp-1">
+                        {player.achievement}
+                      </p>
+                    </div>
+
+                    {/* Sport & Medals Details */}
+                    <div className="pt-2 border-t border-border-gray/40 text-xs flex justify-between items-center">
+                      <span className="font-bold text-primary">{player.sport}</span>
+                      <span className="font-semibold text-text-light">
+                        Medals: <span className="font-extrabold text-accent">{player.medals || 10}</span>
+                      </span>
+                    </div>
                   </div>
                 </a>
               );

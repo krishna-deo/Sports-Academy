@@ -2413,8 +2413,8 @@ router.get('/story-milestones', async (req, res) => {
 
 router.post('/story-milestones', async (req, res) => {
   let { year, title, subtitle, description, image, order } = req.body;
-  if (!year || !title || !subtitle || !description) {
-    return res.status(400).json({ error: "Missing required fields." });
+  if (!description) {
+    return res.status(400).json({ error: "Description content is required." });
   }
   
   if (image && image.startsWith('data:image/')) {
@@ -2427,9 +2427,9 @@ router.post('/story-milestones', async (req, res) => {
   
   try {
     const milestone = new StoryMilestone({
-      year: sanitizeInput(year).trim(),
-      title: sanitizeInput(title).trim(),
-      subtitle: sanitizeInput(subtitle).trim(),
+      year: year ? sanitizeInput(year).trim() : '',
+      title: title ? sanitizeInput(title).trim() : '',
+      subtitle: subtitle ? sanitizeInput(subtitle).trim() : '',
       description: sanitizeInput(description).trim(),
       image: image || '/images/hero1.jpeg',
       order: Number(order) || 0
