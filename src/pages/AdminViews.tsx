@@ -5277,9 +5277,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       <div className="p-5 text-left">
                         <h3 className="text-sm font-extrabold text-primary mb-1">{member.name}</h3>
                         <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{member.role}</span>
-                        <div className="text-text-light text-[11px] leading-relaxed space-y-1 line-clamp-4 font-normal">
+                        <div className="text-text-light text-[11px] leading-relaxed space-y-1 line-clamp-4 font-normal text-justify">
                           {getBioParagraphs(member.bio).map((paragraph, idx) => (
-                            <p key={idx}>{paragraph}</p>
+                            <p key={idx} className="text-justify">{paragraph}</p>
                           ))}
                         </div>
                       </div>

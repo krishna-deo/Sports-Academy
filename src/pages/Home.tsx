@@ -575,9 +575,9 @@ export const Home: React.FC = () => {
                       <span className="text-[11px] md:text-[12px] font-extrabold text-accent tracking-[0.15em] uppercase mb-3.5 block leading-none">
                         {member.role}
                       </span>
-                      <div className="text-text-light text-sm sm:text-base leading-relaxed max-w-[560px] space-y-3 text-left font-normal">
+                      <div className="text-text-light text-sm sm:text-base leading-relaxed max-w-[560px] space-y-3 text-justify font-normal">
                         {getBioParagraphs(member.bio).map((paragraph, idx) => (
-                          <p key={idx}>{paragraph}</p>
+                          <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
                       </div>
                     </div>
@@ -972,9 +972,8 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            
-            {/* Column 1: Upcoming Events */}
+          <div className="max-w-[1100px] mx-auto">
+            {/* Upcoming Events */}
             <div className="space-y-6">
               <div className="flex justify-between items-center border-b border-border-gray/60 pb-3">
                 <h3 className="text-lg font-black text-primary flex items-center gap-2">
@@ -994,7 +993,7 @@ export const Home: React.FC = () => {
                   No upcoming events scheduled. Check back later.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {homeEvents.map((evt) => {
                     const evtCover = evt.coverMedia 
                       ? (evt.coverMedia.startsWith('http') || evt.coverMedia.startsWith('/images') || evt.coverMedia.startsWith('/uploads') ? evt.coverMedia : `http://localhost:5000${evt.coverMedia}`)
@@ -1040,7 +1039,7 @@ export const Home: React.FC = () => {
                 </div>
               )}
               
-              <div className="pt-2">
+              <div className="pt-4 text-center">
                 <a 
                   href="#/events/all"
                   className="inline-block bg-primary hover:bg-accent text-white hover:text-primary transition-all text-xs font-bold py-2.5 px-6 rounded-md shadow-sm border-none cursor-pointer"
@@ -1049,85 +1048,6 @@ export const Home: React.FC = () => {
                 </a>
               </div>
             </div>
-
-            {/* Column 2: Latest Announcements / Updates */}
-            <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-border-gray/60 pb-3">
-                <h3 className="text-lg font-black text-primary flex items-center gap-2">
-                  <Newspaper size={20} className="text-[#00a896]" />
-                  Latest Updates
-                </h3>
-                <a 
-                  href="#/updates" 
-                  className="text-xs font-bold text-accent hover:underline uppercase tracking-wider"
-                >
-                  All Updates &rarr;
-                </a>
-              </div>
-
-              {homeUpdates.length === 0 ? (
-                <div className="py-12 px-6 border border-dashed border-border-gray rounded-lg text-center bg-soft-light/20 text-text-light text-xs">
-                  No announcements published recently.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {homeUpdates.map((upd) => {
-                    const updCover = upd.coverMedia 
-                      ? (upd.coverMedia.startsWith('http') || upd.coverMedia.startsWith('/images') || upd.coverMedia.startsWith('/uploads') ? upd.coverMedia : `http://localhost:5000${upd.coverMedia}`)
-                      : null;
-
-                    return (
-                      <div 
-                        key={upd._id}
-                        className="bg-white border border-border-gray/50 rounded-lg p-4 flex gap-4 hover:shadow-md transition-shadow group"
-                      >
-                        {updCover && (
-                          <div className="w-24 h-24 rounded-md overflow-hidden shrink-0 bg-soft-light">
-                            <img src={updCover} alt={upd.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
-                          </div>
-                        )}
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div>
-                            <span className="text-[9px] font-black uppercase text-[#00a896] tracking-wider block mb-1">
-                              {upd.category}
-                            </span>
-                            <h4 className="text-sm font-bold text-primary leading-snug line-clamp-1 group-hover:text-accent transition-colors">
-                              {upd.title}
-                            </h4>
-                            <p className="text-xs text-text-light line-clamp-1 mt-1 leading-relaxed">
-                              {upd.summary}
-                            </p>
-                          </div>
-                          
-                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mt-2">
-                            <span className="flex items-center gap-1">
-                              <Calendar size={13} className="text-accent" />
-                              {new Date(upd.publishedAt || upd.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                            </span>
-                            <a 
-                              href={`#/updates/${upd.slug}`}
-                              className="text-primary hover:text-accent font-bold"
-                            >
-                              Read More &rarr;
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="pt-2">
-                <a 
-                  href="#/updates"
-                  className="inline-block bg-white hover:bg-soft-light border border-border-gray text-primary transition-all text-xs font-bold py-2.5 px-6 rounded-md shadow-sm cursor-pointer"
-                >
-                  View All Updates
-                </a>
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
