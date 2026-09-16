@@ -405,7 +405,7 @@ export const Home: React.FC = () => {
 
                     <div className={`overflow-hidden transition-all duration-700 ease-in-out ${isActive ? 'max-h-[120px] opacity-100 mt-2' : 'max-h-0 opacity-0 pointer-events-none'
                       }`}>
-                      <p className="text-white/80 text-xs leading-relaxed font-semibold">
+                      <p className="text-white/80 text-xs leading-relaxed font-semibold text-justify">
                         {card.description}
                       </p>
                       <span className="text-[10px] font-bold text-accent mt-3 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -446,7 +446,7 @@ export const Home: React.FC = () => {
                       </div>
                       <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">{card.tag}</span>
                       <h3 className="text-xl font-extrabold tracking-tight mb-2">{card.title}</h3>
-                      <p className="text-white/80 text-xs leading-relaxed font-semibold mb-2">
+                      <p className="text-white/80 text-xs leading-relaxed font-semibold mb-2 text-justify">
                         {card.description}
                       </p>
                       <span className="text-[10px] font-bold text-accent flex items-center gap-1">
@@ -944,6 +944,17 @@ export const Home: React.FC = () => {
               </>
             )}
           </button>
+
+          {/* Centered View More Button for Success Stories */}
+          <div className="text-center mt-12">
+            <a
+              href="#/academy/success-stories"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/95 text-white hover:text-accent font-bold py-3 px-8 rounded-full shadow-md transition-all duration-300 hover:shadow-lg scale-100 hover:scale-105 active:scale-95 text-sm uppercase tracking-wider"
+            >
+              View All Success Stories
+              <span>&rarr;</span>
+            </a>
+          </div>
         </div>
       </section>
 

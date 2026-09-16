@@ -236,13 +236,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     academicInfo: '',
     achievements: [] as any[], // array of { title, competition, position, year, description }
     status: 'Active',
-    showOnPublicWebsite: false
+    showOnPublicWebsite: true
   });
   const [studentPhotoFile, setStudentPhotoFile] = useState<File | null>(null);
   const [studentPhotoPreview, setStudentPhotoPreview] = useState<string>('');
   const [studentDocFiles, setStudentDocFiles] = useState<{ file: File; name: string }[]>([]);
   const [deletedDocuments, setDeletedDocuments] = useState<string[]>([]);
-  const [coachForm, setCoachForm] = useState({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+  const [coachForm, setCoachForm] = useState({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
   const [editingCoach, setEditingCoach] = useState<any | null>(null);
   const [openCoachDropdown, setOpenCoachDropdown] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({ name: '', email: '', username: '' });
@@ -345,6 +345,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
   const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach'>('story');
+  const cropperBoxRef = React.useRef<HTMLDivElement>(null);
 
   // Facilities CMS States
   const defaultFacilitiesList = [
@@ -654,6 +655,63 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
   }, [activeTab]);
 
+  // Outreach Program Management State
+  const [outreachData, setOutreachData] = useState<any>(null);
+  const [isSavingOutreach, setIsSavingOutreach] = useState<boolean>(false);
+  const [outreachSuccessMsg, setOutreachSuccessMsg] = useState<string>('');
+
+  const fetchOutreachData = async () => {
+    try {
+      const token = localStorage.getItem('rlbsa_admin_token');
+      const res = await fetch('http://localhost:5000/api/admin/outreach', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOutreachData(data);
+      }
+    } catch (err) {
+      console.error("Error fetching outreach data:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'outreach') {
+      fetchOutreachData();
+    }
+  }, [activeTab]);
+
+  const handleSaveOutreach = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!outreachData) return;
+    setIsSavingOutreach(true);
+    setOutreachSuccessMsg('');
+    try {
+      const token = localStorage.getItem('rlbsa_admin_token');
+      const res = await fetch('http://localhost:5000/api/admin/outreach', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(outreachData)
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        setOutreachSuccessMsg(result.message || 'Outreach Program updated successfully!');
+        if (result.outreach) setOutreachData(result.outreach);
+        setTimeout(() => setOutreachSuccessMsg(''), 4000);
+      } else {
+        alert(result.error || 'Failed to save outreach program.');
+      }
+    } catch (err) {
+      console.error("Save outreach error:", err);
+      alert("Server error when saving outreach program.");
+    } finally {
+      setIsSavingOutreach(false);
+    }
+  };
+
   const handleSaveEdgeCard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!edgeCardForm.title || !edgeCardForm.tag || !edgeCardForm.description) {
@@ -899,7 +957,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       academicInfo: '',
       achievements: [],
       status: 'Active',
-      showOnPublicWebsite: false
+      showOnPublicWebsite: true
     });
     setActiveStudentFormTab('personal');
 
@@ -1510,10 +1568,36 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      const vw = croppingTarget === 'student' ? 300 : 400;
-      const vh = 300;
-      const cw = croppingTarget === 'student' ? 600 : 800;
-      const ch = 600;
+      // Target resolution per entity
+      let cw = 600;
+      let ch = 800; // default for team & coach (3:4 portrait)
+      if (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') {
+        cw = 800;
+        ch = 600; // (4:3 landscape)
+      } else if (croppingTarget === 'student') {
+        cw = 600;
+        ch = 600; // (1:1 square)
+      }
+
+      // Measure actual viewport container box size in UI
+      const boxEl = cropperBoxRef.current;
+      const boxW = boxEl ? boxEl.clientWidth : ((croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 440 : croppingTarget === 'student' ? 360 : 340);
+      const boxH = boxEl ? boxEl.clientHeight : ((croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 330 : croppingTarget === 'student' ? 360 : 453);
+
+      const nw = img.naturalWidth;
+      const nh = img.naturalHeight;
+
+      // Base contain scale inside viewport box (fits entire original image without auto-cutting edges)
+      const sBase = Math.min(boxW / nw, boxH / nh);
+      const sTotal = sBase * cropZoom;
+
+      // Rendered dimensions inside container
+      const rw = nw * sTotal;
+      const rh = nh * sTotal;
+
+      // Top-left corner of rendered image inside container
+      const imgLeftInBox = (boxW - rw) / 2 + cropPosition.x;
+      const imgTopInBox = (boxH - rh) / 2 + cropPosition.y;
 
       const canvas = document.createElement('canvas');
       canvas.width = cw;
@@ -1522,16 +1606,17 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       if (!ctx) return;
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, cw, ch);
-      const baseScale = Math.max(vw / img.naturalWidth, vh / img.naturalHeight);
-      const S_final = baseScale * cropZoom;
-      const M = cw / vw;
-      const dw = img.naturalWidth * S_final * M;
-      const dh = img.naturalHeight * S_final * M;
-      const dx = cropPosition.x * M;
-      const dy = cropPosition.y * M;
-      ctx.drawImage(img, dx, dy, dw, dh);
+
+      // Destination mapping onto target canvas for smooth zoom-in & zoom-out support
+      const dx = (imgLeftInBox / boxW) * cw;
+      const dy = (imgTopInBox / boxH) * ch;
+      const dw = (rw / boxW) * cw;
+      const dh = (rh / boxH) * ch;
+
+      ctx.drawImage(img, 0, 0, nw, nh, dx, dy, dw, dh);
+
       try {
-        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.90);
         if (croppingTarget === 'student') {
           fetch(croppedBase64)
             .then(res => res.blob())
@@ -1541,11 +1626,15 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               setStudentPhotoPreview(croppedBase64);
             });
         } else if (croppingTarget === 'team') {
-          setTeamForm({ ...teamForm, image: croppedBase64 });
+          setTeamForm(prev => ({ ...prev, image: croppedBase64 }));
         } else if (croppingTarget === 'coach') {
-          setCoachForm({ ...coachForm, avatar: croppedBase64 });
+          setCoachForm(prev => ({ ...prev, avatar: croppedBase64 }));
+        } else if (croppingTarget === 'facility') {
+          setFacilityForm(prev => ({ ...prev, image: croppedBase64 }));
+        } else if (croppingTarget === 'edge') {
+          setEdgeCardForm(prev => ({ ...prev, image: croppedBase64 }));
         } else {
-          setStoryForm({ ...storyForm, image: croppedBase64 });
+          setStoryForm(prev => ({ ...prev, image: croppedBase64 }));
         }
         setShowCropperModal(false);
       } catch (err) {
@@ -1606,7 +1695,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       academicInfo: '',
       achievements: [],
       status: 'Active',
-      showOnPublicWebsite: false
+      showOnPublicWebsite: true
     });
     setStudentPhotoFile(null);
     setStudentPhotoPreview('');
@@ -1644,7 +1733,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       academicInfo: student.education?.academicInfo || '',
       achievements: student.achievements || [],
       status: student.status || 'Active',
-      showOnPublicWebsite: student.showOnPublicWebsite || false
+      showOnPublicWebsite: student.showOnPublicWebsite !== undefined ? student.showOnPublicWebsite : true
     });
     setStudentPhotoPreview(student.avatar && student.avatar.startsWith('/') ? `http://localhost:5000${student.avatar}` : student.avatar || '');
     setStudentPhotoFile(null);
@@ -1655,10 +1744,17 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
   const handleSaveStudent = async (e: React.FormEvent, forceStatus?: string) => {
     e.preventDefault();
-    if (!studentForm.fullName.trim() || !studentForm.dateOfBirth || !studentForm.primarySport || !studentForm.admissionDate) {
-      alert("Please fill in all required fields.");
+    const fullName = (studentForm.fullName || '').trim();
+    const dob = studentForm.dateOfBirth || studentForm.dob;
+    const primarySport = (studentForm.primarySport || '').trim();
+    const admissionDate = studentForm.admissionDate;
+
+    if (!fullName || !dob || !primarySport || !admissionDate) {
+      alert("Please fill in all required fields (Full Name, Date of Birth, Primary Sport, Admission Date).");
       return;
     }
+
+    const formatNA = (val: any) => (val && typeof val === 'string' && val.trim() ? val.trim() : 'NA');
 
     const isEdit = !!editingStudentProfile;
     const url = isEdit 
@@ -1670,35 +1766,35 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     try {
       const formData = new FormData();
       
-      formData.append('fullName', studentForm.fullName);
-      formData.append('dateOfBirth', studentForm.dateOfBirth);
-      formData.append('gender', studentForm.gender);
-      formData.append('bloodGroup', studentForm.bloodGroup);
-      formData.append('phone', studentForm.phone);
-      formData.append('email', studentForm.email);
-      formData.append('address', studentForm.address);
+      formData.append('fullName', fullName);
+      formData.append('dateOfBirth', dob);
+      formData.append('gender', studentForm.gender || 'girl');
+      formData.append('bloodGroup', formatNA(studentForm.bloodGroup));
+      formData.append('phone', formatNA(studentForm.phone || studentForm.studentPhone));
+      formData.append('email', formatNA(studentForm.email || studentForm.studentEmail));
+      formData.append('address', formatNA(studentForm.address));
       
-      formData.append('guardianName', studentForm.guardianName);
-      formData.append('guardianRelationship', studentForm.guardianRelationship);
-      formData.append('guardianPhone', studentForm.guardianPhone);
-      formData.append('guardianEmergency', studentForm.guardianEmergency);
-      formData.append('guardianAddress', studentForm.guardianAddress);
+      formData.append('guardianName', formatNA(studentForm.guardianName || studentForm.fatherName));
+      formData.append('guardianRelationship', formatNA(studentForm.guardianRelationship));
+      formData.append('guardianPhone', formatNA(studentForm.guardianPhone));
+      formData.append('guardianEmergency', formatNA(studentForm.guardianEmergency || studentForm.emergencyContact));
+      formData.append('guardianAddress', formatNA(studentForm.guardianAddress));
       
-      formData.append('admissionDate', studentForm.admissionDate);
-      formData.append('primarySport', studentForm.primarySport);
-      formData.append('batch', studentForm.batch);
-      formData.append('coach', studentForm.coach);
-      formData.append('residency', studentForm.residency);
-      formData.append('hostelRoom', studentForm.hostelRoom);
+      formData.append('admissionDate', admissionDate);
+      formData.append('primarySport', primarySport);
+      formData.append('batch', formatNA(studentForm.batch));
+      formData.append('coach', formatNA(studentForm.coach));
+      formData.append('residency', studentForm.residency || 'resident');
+      formData.append('hostelRoom', formatNA(studentForm.hostelRoom));
       
-      formData.append('schoolName', studentForm.schoolName);
-      formData.append('className', studentForm.className);
-      formData.append('academicInfo', studentForm.academicInfo);
+      formData.append('schoolName', formatNA(studentForm.schoolName));
+      formData.append('className', formatNA(studentForm.className || studentForm.classStandard));
+      formData.append('academicInfo', formatNA(studentForm.academicInfo));
       
-      formData.append('status', forceStatus || studentForm.status);
-      formData.append('showOnPublicWebsite', String(studentForm.showOnPublicWebsite));
-      formData.append('secondarySports', JSON.stringify(studentForm.secondarySports));
-      formData.append('achievements', JSON.stringify(studentForm.achievements));
+      formData.append('status', forceStatus || studentForm.status || 'Active');
+      formData.append('showOnPublicWebsite', String(studentForm.showOnPublicWebsite !== false));
+      formData.append('secondarySports', JSON.stringify(studentForm.secondarySports || []));
+      formData.append('achievements', JSON.stringify(studentForm.achievements || []));
 
       if (studentPhotoFile) {
         formData.append('avatar', studentPhotoFile);
@@ -1731,6 +1827,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         setActiveModal(null);
         resetStudentForm();
         fetchStudents();
+        if (data.student) {
+          setViewingStudentProfile(data.student);
+        }
       } else {
         alert(data.error || "Failed to save student record.");
       }
@@ -1746,26 +1845,38 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const closeCoachModal = () => {
     setActiveModal(null);
     setEditingCoach(null);
-    setCoachForm({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+    setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
   };
 
   const handleEditCoachClick = (coach: any) => {
     setEditingCoach(coach);
+    let expY = coach.experienceYears !== undefined ? String(coach.experienceYears) : '';
+    let expM = coach.experienceMonths !== undefined ? String(coach.experienceMonths) : '0';
+    if (!expY && coach.experience) {
+      const matchY = coach.experience.match(/(\d+)\s*Years?/i);
+      if (matchY) expY = matchY[1];
+      const matchM = coach.experience.match(/(\d+)\s*Months?/i);
+      if (matchM) expM = matchM[1];
+    }
     setCoachForm({
-      name: coach.name,
-      role: coach.role,
-      specialization: coach.specialization || '',
-      experience: coach.experience ? coach.experience.replace(' Years Coaching', '') : '',
-      bio: coach.bio,
-      avatar: coach.avatar
+      name: coach.name || '',
+      role: coach.role || '',
+      experienceYears: expY || '0',
+      experienceMonths: expM || '0',
+      certificationStatus: coach.certificationStatus || 'SAI Certified / Elite License',
+      avatar: coach.avatar || '👨‍🏫'
     });
     setActiveModal('coach');
   };
 
   const handleAddCoach = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!coachForm.name.trim() || !coachForm.role.trim() || coachForm.experienceYears === '' || coachForm.experienceMonths === '' || !coachForm.certificationStatus.trim()) {
+      alert("All fields (Full Name, Role Title, Experience Years & Months, and Certification Status) are compulsory.");
+      return;
+    }
     if (!coachForm.avatar || coachForm.avatar === '👨‍🏫') {
-      alert("Please upload and crop a profile photo for the coach.");
+      alert("Please choose and crop a profile photo for the coach (Aspect Ratio 3:4).");
       return;
     }
 
@@ -1775,6 +1886,14 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       : 'http://localhost:5000/api/admin/coaches';
     const method = isEdit ? 'PUT' : 'POST';
 
+    const y = parseInt(String(coachForm.experienceYears)) || 0;
+    const m = parseInt(String(coachForm.experienceMonths)) || 0;
+    let expStr = '';
+    if (y > 0 && m > 0) expStr = `${y} Years ${m} Months Coaching`;
+    else if (y > 0) expStr = `${y} Years Coaching`;
+    else if (m > 0) expStr = `${m} Months Coaching`;
+    else expStr = '0 Years Coaching';
+
     try {
       const response = await fetch(url, {
         method: method,
@@ -1783,9 +1902,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...coachForm,
-          specialization: coachForm.role, // Automatically default specialization to role title
-          experience: coachForm.experience + ' Years Coaching'
+          name: coachForm.name.trim(),
+          role: coachForm.role.trim(),
+          experienceYears: y,
+          experienceMonths: m,
+          experience: expStr,
+          certificationStatus: coachForm.certificationStatus.trim(),
+          avatar: coachForm.avatar
         })
       });
       const data = await response.json();
@@ -3167,8 +3290,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 className="px-3 py-2 border border-border-gray rounded bg-white text-xs text-primary font-semibold outline-none focus:border-primary transition-all cursor-pointer"
               >
                 <option value="">All Genders</option>
-                <option value="boy">Boys</option>
-                <option value="girl">Girls</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </select>
 
               {/* All Residencies Filter */}
@@ -3505,7 +3628,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             <button 
               onClick={() => {
                 setEditingCoach(null);
-                setCoachForm({ name: '', role: '', specialization: '', experience: '', bio: '', avatar: '👨‍🏫' });
+                setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
                 setActiveModal('coach');
               }}
               className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
@@ -3516,23 +3639,23 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {coaches.map((coach, idx) => (
-              <div key={idx} className="p-5 border border-border-gray rounded-xl flex gap-4 text-left hover:shadow-sm transition-all items-start relative group">
-                <div className="w-12 h-12 bg-border-gray rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+              <div key={idx} className="p-5 border border-border-gray rounded-xl flex gap-4 text-left hover:shadow-sm transition-all items-start relative group bg-white">
+                <div className="w-20 aspect-[3/4] bg-border-gray rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-border-gray">
                   {coach.avatar && (coach.avatar.startsWith('http') || coach.avatar.startsWith('/') || coach.avatar.startsWith('data:')) ? (
                     <img 
                       src={coach.avatar} 
                       alt={coach.name} 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover object-top" 
                     />
                   ) : (
                     <span className="text-2xl">{coach.avatar}</span>
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-primary text-base">{coach.name}</h4>
-                  <span className="text-xs font-bold text-accent uppercase tracking-wider block mt-0.5">{coach.role}</span>
-                  <span className="block text-[11px] text-text-light font-semibold italic mt-1">{coach.specialization} &bull; {coach.experience}</span>
-                  <p className="text-text-body text-xs mt-2.5 leading-relaxed">{coach.bio}</p>
+                  <h4 className="font-extrabold text-primary text-base">{coach.name}</h4>
+                  <span className="inline-block bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-bold py-0.5 px-2 rounded uppercase tracking-wider mt-1">{coach.role}</span>
+                  <span className="block text-[11px] text-emerald-700 font-bold mt-1">🛡️ {coach.certificationStatus || 'SAI Certified / Elite License'}</span>
+                  <span className="block text-[11px] text-indigo-700 font-bold mt-1">🎓 {coach.experience}</span>
                 </div>
                 <div className="absolute top-4 right-4 z-10">
                   <button
@@ -5192,7 +5315,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       })()}
 
       {/* OTHER PLACEHOLDER VIEWS */}
-      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance', 'facilities', 'rlbsa-edge'].includes(activeTab) && (
+      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance', 'facilities', 'rlbsa-edge', 'outreach'].includes(activeTab) && (
         <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left">
           <h3 className="text-base font-bold text-primary mb-2">Management Module</h3>
           <p className="text-text-light text-xs mb-6">Database configuration values for Category: <strong className="text-primary font-bold">{activeTab}</strong></p>
@@ -5206,6 +5329,567 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           </div>
         </div>
       )}
+
+      {/* OUTREACH PROGRAM MANAGEMENT */}
+      {activeTab === 'outreach' && (() => {
+        if (!outreachData) {
+          return (
+            <div className="bg-white p-12 rounded-xl border border-border-gray shadow-sm text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-text-light text-xs font-semibold">Loading Outreach Program configuration...</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex flex-col gap-6 text-left">
+            {/* Header Title Bar */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  <Megaphone size={24} className="text-accent" /> Outreach Program Management
+                </h2>
+                <p className="text-text-light text-xs mt-1">
+                  Manage all titles, images, impact statistics, initiatives, core pillars, and text content rendered on the public Outreach Program page.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleSaveOutreach()}
+                  disabled={isSavingOutreach}
+                  className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-6 rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md border-none flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSavingOutreach ? 'Saving Changes...' : '💾 Save All Changes'}
+                </button>
+              </div>
+            </div>
+
+            {/* Success Alert */}
+            {outreachSuccessMsg && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-xs font-bold flex items-center justify-between shadow-xs animate-fade-in">
+                <span>{outreachSuccessMsg}</span>
+                <button onClick={() => setOutreachSuccessMsg('')} className="text-emerald-800 bg-transparent border-none cursor-pointer">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* 1. Header Banner & Subtitle */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider border-b pb-2">
+                1. Main Page Header &amp; Subtitle
+              </h3>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Page Main Title
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.header?.title || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      header: { ...outreachData.header, title: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Outreach Program"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Header Subtitle / Tagline
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={outreachData.header?.subtitle || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      header: { ...outreachData.header, subtitle: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Taking sports excellence, education..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Impact Counter Cards (4 Stats) */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider border-b pb-2">
+                2. Impact Counter Cards (4 Metrics)
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {(outreachData.impactStats || []).map((stat: any, sIdx: number) => (
+                  <div key={sIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col gap-3">
+                    <span className="text-[10px] font-black text-accent uppercase">Metric #{sIdx + 1}</span>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Number / Value</label>
+                      <input
+                        type="text"
+                        value={stat.val || ''}
+                        onChange={(e) => {
+                          const updated = [...outreachData.impactStats];
+                          updated[sIdx].val = e.target.value;
+                          setOutreachData({ ...outreachData, impactStats: updated });
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded text-xs font-extrabold text-primary bg-white focus:border-primary outline-none"
+                        placeholder="50+"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Stat Label</label>
+                      <input
+                        type="text"
+                        value={stat.label || ''}
+                        onChange={(e) => {
+                          const updated = [...outreachData.impactStats];
+                          updated[sIdx].label = e.target.value;
+                          setOutreachData({ ...outreachData, impactStats: updated });
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded text-xs font-semibold text-slate-700 bg-white focus:border-primary outline-none"
+                        placeholder="Villages Reached"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Showcase Key Initiatives (Gallery Grid) */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
+                  3. Key Initiatives Gallery Cards ({outreachData.initiatives?.length || 0})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newInit = {
+                      id: `outreach-${Date.now()}`,
+                      tag: `0${(outreachData.initiatives?.length || 0) + 1}. New Drive`,
+                      caption: 'New Initiative Title',
+                      desc: 'Short description of this initiative',
+                      image: '/images/hero1.jpeg'
+                    };
+                    setOutreachData({
+                      ...outreachData,
+                      initiatives: [...(outreachData.initiatives || []), newInit]
+                    });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg border-none cursor-pointer flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add Initiative Card
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(outreachData.initiatives || []).map((init: any, iIdx: number) => (
+                  <div key={init.id || iIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-4">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded">
+                          Card #{iIdx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = outreachData.initiatives.filter((_: any, index: number) => index !== iIdx);
+                            setOutreachData({ ...outreachData, initiatives: updated });
+                          }}
+                          className="text-rose-600 hover:bg-rose-50 p-1 rounded border-none cursor-pointer"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
+
+                      {/* Image Preview & Upload */}
+                      <div className="relative h-[140px] w-full rounded-lg overflow-hidden bg-slate-200 border">
+                        <img
+                          src={init.image || '/images/hero1.jpeg'}
+                          alt={init.caption}
+                          className="w-full h-full object-cover"
+                        />
+                        <label className="absolute bottom-2 right-2 bg-primary/90 text-white text-[10px] font-bold px-2.5 py-1 rounded cursor-pointer shadow hover:bg-accent hover:text-primary transition-all">
+                          <span>📷 Change Image</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const updated = [...outreachData.initiatives];
+                                  updated[iIdx].image = reader.result as string;
+                                  setOutreachData({ ...outreachData, initiatives: updated });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-1">Image URL / Path</label>
+                        <input
+                          type="text"
+                          value={init.image || ''}
+                          onChange={(e) => {
+                            const updated = [...outreachData.initiatives];
+                            updated[iIdx].image = e.target.value;
+                            setOutreachData({ ...outreachData, initiatives: updated });
+                          }}
+                          className="w-full p-2 border border-slate-300 rounded text-xs font-semibold text-slate-700 bg-white focus:border-primary outline-none"
+                          placeholder="/images/hero1.jpeg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-1">Tag / Badge Label</label>
+                        <input
+                          type="text"
+                          value={init.tag || ''}
+                          onChange={(e) => {
+                            const updated = [...outreachData.initiatives];
+                            updated[iIdx].tag = e.target.value;
+                            setOutreachData({ ...outreachData, initiatives: updated });
+                          }}
+                          className="w-full p-2 border border-slate-300 rounded text-xs font-extrabold text-accent bg-white focus:border-primary outline-none"
+                          placeholder="01. Grassroots Scouting"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-1">Initiative Caption / Title</label>
+                        <input
+                          type="text"
+                          value={init.caption || ''}
+                          onChange={(e) => {
+                            const updated = [...outreachData.initiatives];
+                            updated[iIdx].caption = e.target.value;
+                            setOutreachData({ ...outreachData, initiatives: updated });
+                          }}
+                          className="w-full p-2 border border-slate-300 rounded text-xs font-extrabold text-primary bg-white focus:border-primary outline-none"
+                          placeholder="Village Talent Identification"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-1">Short Description</label>
+                        <textarea
+                          rows={2}
+                          value={init.desc || ''}
+                          onChange={(e) => {
+                            const updated = [...outreachData.initiatives];
+                            updated[iIdx].desc = e.target.value;
+                            setOutreachData({ ...outreachData, initiatives: updated });
+                          }}
+                          className="w-full p-2 border border-slate-300 rounded text-xs font-medium text-slate-700 bg-white focus:border-primary outline-none"
+                          placeholder="Discovering hidden athletic potential..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Detailed Description & Paragraphs */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider border-b pb-2">
+                4. Detailed Program Description Section
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Section Tagline
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.descriptionSection?.tagline || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      descriptionSection: { ...outreachData.descriptionSection, tagline: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-bold text-accent bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Empowering Rural Communities"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Section Main Heading
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.descriptionSection?.heading || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      descriptionSection: { ...outreachData.descriptionSection, heading: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-extrabold text-primary bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Transforming Lives Beyond the Boundary Lines"
+                  />
+                </div>
+              </div>
+
+              {/* Paragraphs list */}
+              <div className="flex flex-col gap-3 mt-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                    Program Story Paragraphs ({(outreachData.descriptionSection?.paragraphs || []).length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = [...(outreachData.descriptionSection?.paragraphs || []), 'New paragraph content...'];
+                      setOutreachData({
+                        ...outreachData,
+                        descriptionSection: { ...outreachData.descriptionSection, paragraphs: updated }
+                      });
+                    }}
+                    className="bg-primary hover:bg-primary-light text-white text-[11px] font-bold py-1 px-3 rounded border-none cursor-pointer flex items-center gap-1"
+                  >
+                    <Plus size={12} /> Add Paragraph
+                  </button>
+                </div>
+
+                {(outreachData.descriptionSection?.paragraphs || []).map((pText: string, pIdx: number) => (
+                  <div key={pIdx} className="flex gap-2 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <span className="text-xs font-bold text-slate-400 mt-2">#{pIdx + 1}</span>
+                    <textarea
+                      rows={3}
+                      value={pText}
+                      onChange={(e) => {
+                        const updated = [...outreachData.descriptionSection.paragraphs];
+                        updated[pIdx] = e.target.value;
+                        setOutreachData({
+                          ...outreachData,
+                          descriptionSection: { ...outreachData.descriptionSection, paragraphs: updated }
+                        });
+                      }}
+                      className="flex-1 p-2.5 border border-slate-300 rounded text-xs font-medium text-slate-800 bg-white focus:border-primary outline-none leading-relaxed"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = outreachData.descriptionSection.paragraphs.filter((_: any, index: number) => index !== pIdx);
+                        setOutreachData({
+                          ...outreachData,
+                          descriptionSection: { ...outreachData.descriptionSection, paragraphs: updated }
+                        });
+                      }}
+                      className="text-rose-600 hover:bg-rose-100 p-1.5 rounded border-none cursor-pointer mt-1"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Core Pillars of Outreach */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
+                  5. Core Pillars of Outreach ({(outreachData.pillars || []).length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newPillar = {
+                      id: `pillar-${Date.now()}`,
+                      icon: '🎯',
+                      title: 'New Core Pillar',
+                      desc: 'Description of key focus area'
+                    };
+                    setOutreachData({
+                      ...outreachData,
+                      pillars: [...(outreachData.pillars || []), newPillar]
+                    });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg border-none cursor-pointer flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add Core Pillar
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {(outreachData.pillars || []).map((pillar: any, pIdx: number) => (
+                  <div key={pillar.id || pIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        Pillar #{pIdx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = outreachData.pillars.filter((_: any, index: number) => index !== pIdx);
+                          setOutreachData({ ...outreachData, pillars: updated });
+                        }}
+                        className="text-rose-600 hover:bg-rose-50 p-1 rounded border-none cursor-pointer"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Emoji / Icon</label>
+                      <input
+                        type="text"
+                        value={pillar.icon || '🎯'}
+                        onChange={(e) => {
+                          const updated = [...outreachData.pillars];
+                          updated[pIdx].icon = e.target.value;
+                          setOutreachData({ ...outreachData, pillars: updated });
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded text-center text-lg font-bold bg-white focus:border-primary outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Pillar Title</label>
+                      <input
+                        type="text"
+                        value={pillar.title || ''}
+                        onChange={(e) => {
+                          const updated = [...outreachData.pillars];
+                          updated[pIdx].title = e.target.value;
+                          setOutreachData({ ...outreachData, pillars: updated });
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded text-xs font-extrabold text-primary bg-white focus:border-primary outline-none"
+                        placeholder="Talent Identification"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Description</label>
+                      <textarea
+                        rows={2}
+                        value={pillar.desc || ''}
+                        onChange={(e) => {
+                          const updated = [...outreachData.pillars];
+                          updated[pIdx].desc = e.target.value;
+                          setOutreachData({ ...outreachData, pillars: updated });
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded text-xs font-medium text-slate-700 bg-white focus:border-primary outline-none"
+                        placeholder="Organizing physical fitness assessments..."
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 6. Call To Action (CTA Banner) */}
+            <div className="bg-white p-6 rounded-xl border border-border-gray shadow-sm flex flex-col gap-4">
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider border-b pb-2">
+                6. Call To Action Banner
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Banner Tagline
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.cta?.tagline || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      cta: { ...outreachData.cta, tagline: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-bold text-accent bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="JOIN OUR MISSION"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Banner Heading
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.cta?.heading || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      cta: { ...outreachData.cta, heading: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-extrabold text-primary bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Help Us Reach More Rural Athletes in Bihar"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Banner Sub-text / Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={outreachData.cta?.description || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      cta: { ...outreachData.cta, description: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Partner with RLBSA to sponsor sports kits..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Primary Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.cta?.buttonText || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      cta: { ...outreachData.cta, buttonText: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-extrabold text-primary bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="Get In Touch"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Primary Button Link / Hash
+                  </label>
+                  <input
+                    type="text"
+                    value={outreachData.cta?.buttonLink || ''}
+                    onChange={(e) => setOutreachData({
+                      ...outreachData,
+                      cta: { ...outreachData.cta, buttonLink: e.target.value }
+                    })}
+                    className="w-full p-3 border border-border-gray rounded-lg text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:border-primary outline-none"
+                    placeholder="#/contact"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Floating Save Button */}
+            <div className="bg-white p-4 rounded-xl border border-border-gray shadow-md flex justify-end">
+              <button
+                onClick={() => handleSaveOutreach()}
+                disabled={isSavingOutreach}
+                className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-3.5 px-8 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg border-none flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSavingOutreach ? 'Saving Changes...' : '💾 Save All Outreach Changes'}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* FOUNDERS & DIRECTORS MANAGEMENT */}
       {activeTab === 'founders' && (() => {
@@ -5483,47 +6167,37 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Member Photo</label>
-                {teamForm.image ? (
-                  <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
-                    <img 
-                      src={teamForm.image} 
-                      alt="Cropped Member" 
-                      className="w-20 h-15 object-cover rounded border border-border-gray shadow-xs" 
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Member Photo (3:4 Portrait Ratio)</label>
+                <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
+                  {teamForm.image ? (
+                    <img src={teamForm.image} alt="Member" className="w-12 h-16 object-cover rounded border border-primary shrink-0 shadow-xs" />
+                  ) : (
+                    <div className="w-12 h-16 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('team');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-text-light file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
                     />
-                    <div className="text-left">
-                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready</span>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setCroppingTarget('team');
-                          setCropperSource('');
-                          setCropZoom(1);
-                          setCropPosition({ x: 0, y: 0 });
-                          setShowCropperModal(true);
-                        }}
-                        className="block mt-1.5 text-xs text-primary-light hover:text-accent font-bold cursor-pointer underline bg-transparent border-none p-0"
-                      >
-                        Change Photo
-                      </button>
-                    </div>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCroppingTarget('team');
-                      setCropperSource('');
-                      setCropZoom(1);
-                      setCropPosition({ x: 0, y: 0 });
-                      setShowCropperModal(true);
-                    }}
-                    className="w-full py-5 px-4 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-2 bg-soft-light hover:bg-white transition-all cursor-pointer group outline-none"
-                  >
-                    <Plus size={20} className="text-text-light group-hover:text-primary transition-colors" />
-                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (4:3)</span>
-                  </button>
-                )}
+                </div>
                 <input type="hidden" name="image" value={teamForm.image} required />
               </div>
               <div>
@@ -5646,47 +6320,37 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1.5">Athlete Photo</label>
-                {storyForm.image ? (
-                  <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
-                    <img 
-                      src={storyForm.image} 
-                      alt="Cropped Athlete" 
-                      className="w-20 h-15 object-cover rounded border border-border-gray shadow-xs" 
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1.5">Athlete Photo (4:3 Landscape Ratio)</label>
+                <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
+                  {storyForm.image ? (
+                    <img src={storyForm.image} alt="Athlete" className="w-16 h-12 object-cover rounded border border-primary shrink-0 shadow-xs" />
+                  ) : (
+                    <div className="w-16 h-12 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-base font-bold shrink-0 border border-slate-300">🏆</div>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('story');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-text-light file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
                     />
-                    <div className="text-left">
-                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready</span>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setCroppingTarget('story');
-                          setCropperSource('');
-                          setCropZoom(1);
-                          setCropPosition({ x: 0, y: 0 });
-                          setShowCropperModal(true);
-                        }}
-                        className="block mt-1.5 text-xs text-primary-light hover:text-accent font-bold cursor-pointer underline bg-transparent border-none p-0"
-                      >
-                        Change Photo
-                      </button>
-                    </div>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCroppingTarget('story');
-                      setCropperSource('');
-                      setCropZoom(1);
-                      setCropPosition({ x: 0, y: 0 });
-                      setShowCropperModal(true);
-                    }}
-                    className="w-full py-5 px-4 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-2 bg-soft-light hover:bg-white transition-all cursor-pointer group outline-none"
-                  >
-                    <Plus size={20} className="text-text-light group-hover:text-primary transition-colors" />
-                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (4:3)</span>
-                  </button>
-                )}
+                </div>
                 <input type="hidden" name="image" value={storyForm.image} required />
               </div>
               <div>
@@ -5811,11 +6475,46 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
               {cropperSource && (
                 <div className="space-y-4">
-                  <p className="text-xs font-bold text-primary">Drag image to adjust position & zoom slider:</p>
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <p className="text-xs font-bold text-primary">Drag image to position & scroll mouse wheel or slider to zoom:</p>
+                    <div className="flex items-center gap-1.5 bg-soft-light p-1 rounded-lg border border-border-gray">
+                      <button
+                        type="button"
+                        onClick={() => setCroppingTarget('story')}
+                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${croppingTarget === 'story' ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
+                      >
+                        4:3 Landscape
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCroppingTarget('student')}
+                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${croppingTarget === 'student' ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
+                      >
+                        1:1 Square
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCroppingTarget('coach')}
+                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${(croppingTarget === 'coach' || croppingTarget === 'team') ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
+                      >
+                        3:4 Portrait
+                      </button>
+                    </div>
+                  </div>
                   
-                  {/* Canvas Container */}
+                  {/* Canvas Container with Mouse Wheel Zoom */}
                   <div 
-                    className="w-full max-w-[440px] aspect-[4/3] mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none"
+                    ref={cropperBoxRef}
+                    className={`w-full mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none ${
+                      croppingTarget === 'student' ? 'max-w-[360px] aspect-[1/1]' :
+                      (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 'max-w-[440px] aspect-[4/3]' :
+                      'max-w-[340px] aspect-[3/4]'
+                    }`}
+                    onWheel={(e) => {
+                      e.preventDefault();
+                      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+                      setCropZoom(prev => Math.min(Math.max(parseFloat((prev + delta).toFixed(2)), 0.4), 3.5));
+                    }}
                     onMouseDown={(e) => {
                       setIsDragMoving(true);
                       setDragStartPoint({ x: e.clientX, y: e.clientY });
@@ -5862,19 +6561,39 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     </div>
                   </div>
 
-                  {/* Zoom Controls */}
-                  <div className="flex items-center gap-4 max-w-[440px] mx-auto bg-soft-light p-3 rounded-lg border border-border-gray">
-                    <span className="text-xs font-bold text-primary min-w-[50px]">Zoom:</span>
+                  {/* Zoom Controls & Quick Fit / Reset Buttons */}
+                  <div className={`flex flex-wrap items-center gap-3 mx-auto bg-soft-light p-3 rounded-lg border border-border-gray ${
+                    croppingTarget === 'student' ? 'max-w-[360px]' :
+                    croppingTarget === 'story' ? 'max-w-[440px]' :
+                    'max-w-[340px]'
+                  }`}>
+                    <span className="text-xs font-bold text-primary min-w-[45px]">Zoom:</span>
                     <input 
                       type="range" 
-                      min="1" 
-                      max="3" 
-                      step="0.05" 
+                      min="0.4" 
+                      max="3.5" 
+                      step="0.02" 
                       value={cropZoom} 
                       onChange={(e) => setCropZoom(parseFloat(e.target.value))} 
                       className="flex-1 accent-primary cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-text-light w-10 text-right">{Math.round(cropZoom * 100)}%</span>
+                    <span className="text-xs font-bold text-text-light w-12 text-right">{Math.round(cropZoom * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => { setCropZoom(0.7); setCropPosition({ x: 0, y: 0 }); }}
+                      className="text-[10px] font-bold text-primary bg-white border border-border-gray hover:bg-slate-100 px-2 py-1 rounded cursor-pointer transition-colors"
+                      title="Zoom out to show complete photo without cutting edges"
+                    >
+                      Fit Whole
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCropZoom(1); setCropPosition({ x: 0, y: 0 }); }}
+                      className="text-[10px] font-bold text-primary bg-white border border-border-gray hover:bg-slate-100 px-2 py-1 rounded cursor-pointer transition-colors"
+                      title="Reset position and zoom"
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
               )}
@@ -5972,9 +6691,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         const file = e.target.files?.[0];
                         if (file) {
                           const reader = new FileReader();
-                          reader.onload = () => {
-                            if (reader.result) {
-                              setFacilityForm({ ...facilityForm, image: reader.result as string });
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('facility');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
                             }
                           };
                           reader.readAsDataURL(file);
@@ -6126,9 +6849,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         const file = e.target.files?.[0];
                         if (file) {
                           const reader = new FileReader();
-                          reader.onload = () => {
-                            if (reader.result) {
-                              setEdgeCardForm({ ...edgeCardForm, image: reader.result as string });
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('edge');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
                             }
                           };
                           reader.readAsDataURL(file);
@@ -6271,8 +6998,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           onChange={(e) => setStudentForm({...studentForm, gender: e.target.value})} 
                           className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
                         >
-                          <option value="Girl">Girl</option>
-                          <option value="Boy">Boy</option>
+                          <option value="Female">Female</option>
+                          <option value="Male">Male</option>
                           <option value="Other">Other</option>
                         </select>
                       </div>
@@ -6317,25 +7044,34 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         />
                       </div>
                       <div className="flex flex-col gap-1 sm:col-span-2">
-                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Profile Photo</label>
-                        <div className="p-2 border border-border-gray rounded-lg bg-soft-light flex items-center gap-3">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Profile Photo (1:1 Square Ratio)</label>
+                        <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
                           {studentPhotoPreview ? (
-                            <img src={studentPhotoPreview} alt="Preview" className="w-10 h-10 rounded-full object-cover shrink-0 border border-primary" />
+                            <img src={studentPhotoPreview} alt="Preview" className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-primary shadow-xs" />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0 text-slate-500 text-base font-bold">🎓</div>
+                            <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center shrink-0 text-slate-500 text-lg font-bold border border-slate-300">🎓</div>
                           )}
-                          <div className="overflow-hidden flex-1">
+                          <div className="flex-1">
                             <input 
                               type="file" 
                               accept="image/*"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  setStudentPhotoFile(file);
-                                  setStudentPhotoPreview(URL.createObjectURL(file));
+                                  const reader = new FileReader();
+                                  reader.onload = (evt) => {
+                                    if (evt.target?.result) {
+                                      setCropperSource(evt.target.result as string);
+                                      setCroppingTarget('student');
+                                      setCropZoom(1);
+                                      setCropPosition({ x: 0, y: 0 });
+                                      setShowCropperModal(true);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
                                 }
                               }}
-                              className="text-[10px] text-text-light file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
+                              className="text-xs text-text-light file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
                             />
                           </div>
                         </div>
@@ -6803,13 +7539,48 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
               {/* Form submit footer - ALWAYS fixed at bottom of modal card */}
               <div className="pt-3 mt-2 border-t border-border-gray flex justify-between items-center shrink-0 bg-white overflow-x-hidden">
-                <button 
-                  type="button" 
-                  onClick={resetStudentForm} 
-                  className="bg-white hover:bg-slate-50 border border-border-gray text-primary font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer"
-                >
-                  Cancel
-                </button>
+                <div className="flex gap-2 items-center">
+                  <button 
+                    type="button" 
+                    onClick={resetStudentForm} 
+                    className="bg-white hover:bg-slate-50 border border-border-gray text-primary font-bold py-2 px-4 rounded-lg transition-all text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setStudentForm((prev: any) => ({
+                        ...prev,
+                        bloodGroup: prev.bloodGroup?.trim() ? prev.bloodGroup : 'NA',
+                        phone: prev.phone?.trim() ? prev.phone : (prev.studentPhone?.trim() ? prev.studentPhone : 'NA'),
+                        studentPhone: prev.studentPhone?.trim() ? prev.studentPhone : 'NA',
+                        email: prev.email?.trim() ? prev.email : (prev.studentEmail?.trim() ? prev.studentEmail : 'NA'),
+                        studentEmail: prev.studentEmail?.trim() ? prev.studentEmail : 'NA',
+                        address: prev.address?.trim() ? prev.address : 'NA',
+                        guardianName: prev.guardianName?.trim() ? prev.guardianName : (prev.fatherName?.trim() ? prev.fatherName : 'NA'),
+                        fatherName: prev.fatherName?.trim() ? prev.fatherName : 'NA',
+                        motherName: prev.motherName?.trim() ? prev.motherName : 'NA',
+                        guardianRelationship: prev.guardianRelationship?.trim() ? prev.guardianRelationship : 'NA',
+                        guardianPhone: prev.guardianPhone?.trim() ? prev.guardianPhone : 'NA',
+                        guardianEmergency: prev.guardianEmergency?.trim() ? prev.guardianEmergency : (prev.emergencyContact?.trim() ? prev.emergencyContact : 'NA'),
+                        emergencyContact: prev.emergencyContact?.trim() ? prev.emergencyContact : 'NA',
+                        guardianAddress: prev.guardianAddress?.trim() ? prev.guardianAddress : 'NA',
+                        batch: prev.batch?.trim() ? prev.batch : 'NA',
+                        coach: prev.coach?.trim() ? prev.coach : 'NA',
+                        hostelRoom: prev.hostelRoom?.trim() ? prev.hostelRoom : 'NA',
+                        schoolName: prev.schoolName?.trim() ? prev.schoolName : 'NA',
+                        className: prev.className?.trim() ? prev.className : (prev.classStandard?.trim() ? prev.classStandard : 'NA'),
+                        classStandard: prev.classStandard?.trim() ? prev.classStandard : 'NA',
+                        academicInfo: prev.academicInfo?.trim() ? prev.academicInfo : 'NA',
+                      }));
+                    }}
+                    className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold py-2 px-3 rounded-lg transition-all text-xs cursor-pointer"
+                    title="Fill all empty/unfilled form fields with NA"
+                  >
+                    Auto-fill NA
+                  </button>
+                </div>
                 <div className="flex gap-2">
                   {activeStudentFormTab !== 'personal' && (
                     <button 
@@ -7156,34 +7927,44 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               {editingCoach ? <Pencil size={20} className="text-accent" /> : <Plus size={20} className="text-accent" />}
               {editingCoach ? 'Edit Coach Profile' : 'Add Coach'}
             </h3>
-            <form onSubmit={handleAddCoach} className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1 py-1">
+            <form onSubmit={handleAddCoach} className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1 py-1 hide-scrollbar">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name</label>
-                <input required type="text" placeholder="E.g. Coach Sarita" value={coachForm.name} onChange={(e) => setCoachForm({...coachForm, name: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name *</label>
+                <input required type="text" placeholder="E.g. Coach Sarita" value={coachForm.name} onChange={(e) => setCoachForm({...coachForm, name: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
               </div>
+
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Role Title</label>
-                <input required type="text" placeholder="E.g. Head Athletics Coach" value={coachForm.role} onChange={(e) => setCoachForm({...coachForm, role: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Role Title *</label>
+                <input required type="text" placeholder="E.g. Head Athletics Coach" value={coachForm.role} onChange={(e) => setCoachForm({...coachForm, role: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Experience (Years) *</label>
+                  <input required type="number" min="0" max="50" placeholder="E.g. 4" value={coachForm.experienceYears} onChange={(e) => setCoachForm({...coachForm, experienceYears: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Experience (Months) *</label>
+                  <input required type="number" min="0" max="11" placeholder="E.g. 6" value={coachForm.experienceMonths} onChange={(e) => setCoachForm({...coachForm, experienceMonths: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Experience (Years)</label>
-                <input required type="number" min="1" max="40" placeholder="E.g. 10" value={coachForm.experience} onChange={(e) => setCoachForm({...coachForm, experience: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Certification Status *</label>
+                <input required type="text" placeholder="E.g. SAI Certified / Elite License" value={coachForm.certificationStatus} onChange={(e) => setCoachForm({...coachForm, certificationStatus: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Bio Description</label>
-                <textarea required rows={3} placeholder="Coach profile info..." value={coachForm.bio} onChange={(e) => setCoachForm({...coachForm, bio: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all" />
-              </div>
+
               <div>
-                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo</label>
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 3:4) *</label>
                 {coachForm.avatar && (coachForm.avatar.startsWith('http') || coachForm.avatar.startsWith('/') || coachForm.avatar.startsWith('data:')) ? (
                   <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
                     <img 
                       src={coachForm.avatar} 
                       alt="Cropped Coach" 
-                      className="w-20 h-15 object-cover rounded border border-border-gray shadow-xs" 
+                      className="w-16 aspect-[3/4] object-cover rounded-lg border border-border-gray shadow-xs" 
                     />
                     <div className="text-left">
-                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready</span>
+                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready (3:4)</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -7195,7 +7976,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         }}
                         className="block mt-1.5 text-xs text-primary-light hover:text-accent font-bold cursor-pointer underline bg-transparent border-none p-0"
                       >
-                        Change Photo
+                        Change / Adjust Photo
                       </button>
                     </div>
                   </div>
@@ -7212,11 +7993,11 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     className="w-full py-5 px-4 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-2 bg-soft-light hover:bg-white transition-all cursor-pointer group outline-none"
                   >
                     <Plus size={20} className="text-text-light group-hover:text-primary transition-colors" />
-                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (4:3)</span>
+                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (3:4)</span>
                   </button>
                 )}
               </div>
-              <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm">
+              <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-2 rounded-lg cursor-pointer text-sm shadow-md">
                 {editingCoach ? 'Update Profile' : 'Save Record'}
               </button>
             </form>

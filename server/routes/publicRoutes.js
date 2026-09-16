@@ -15,6 +15,113 @@ const StoryMilestone = require('../models/StoryMilestone');
 const Update = require('../models/Update');
 const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
+const OutreachProgram = require('../models/OutreachProgram');
+
+const defaultOutreach = {
+  header: {
+    title: 'Outreach Program',
+    subtitle: 'Taking sports excellence, education, and healthcare guidance directly to underprivileged rural communities across Bihar.'
+  },
+  impactStats: [
+    { val: '50+', label: 'Villages Reached' },
+    { val: '5,000+', label: 'Youth Engaged' },
+    { val: '100%', label: 'Free Training & Kits' },
+    { val: '20+', label: 'School Camps' }
+  ],
+  initiatives: [
+    {
+      id: 'outreach-1',
+      tag: '01. Grassroots Scouting',
+      caption: 'Village Talent Identification',
+      desc: 'Discovering hidden athletic potential in remote rural areas.',
+      image: '/images/about_rlbsa.jpeg'
+    },
+    {
+      id: 'outreach-2',
+      tag: '02. Athletic Camps',
+      caption: 'Free Sports Coaching',
+      desc: 'Professional training workshops for underprivileged youth.',
+      image: '/images/hero1.jpeg'
+    },
+    {
+      id: 'outreach-3',
+      tag: '03. Campus Exposure',
+      caption: 'Academy Infrastructure Visit',
+      desc: 'Providing village children access to turf fields and gear.',
+      image: '/images/hero2.jpg'
+    },
+    {
+      id: 'outreach-4',
+      tag: '04. Team Sports',
+      caption: 'Handball & Football Drives',
+      desc: 'Fostering teamwork, discipline, and competitive spirit.',
+      image: '/images/program_handball.png'
+    },
+    {
+      id: 'outreach-5',
+      tag: '05. Education & Life Skills',
+      caption: 'Literacy & Mentorship',
+      desc: 'Combining athletic training with formal schooling support.',
+      image: '/images/education_card.jpg'
+    }
+  ],
+  descriptionSection: {
+    tagline: 'Empowering Rural Communities',
+    heading: 'Transforming Lives Beyond the Boundary Lines',
+    paragraphs: [
+      "Rani Laxmibai Sports Academy (RLBSA) operates a dedicated, multi-faceted Grassroots Outreach Program tailored specifically for young boys and girls in rural Bihar. In many surrounding villages, children face severe financial challenges, lack of basic sports equipment, and traditional societal norms that hinder participation in organized sports.",
+      "Our outreach team visits remote schools, village sports clubs, and local communities to host open athletic trials, handball clinics, and football talent identification camps. We provide 100% free sports equipment, jerseys, and footwear to ensure no child is denied the chance to train due to poverty.",
+      "Beyond athletic coaching, the RLBSA Outreach Program actively promotes Girl Child Empowerment & Gender Equality. By mentoring young female athletes and engaging directly with village elders and parents, we break generational stigmas and demonstrate how sports can open doors to higher education, government sports jobs, and national representation.",
+      "Children selected during outreach drives earn full scholarships to join RLBSA's residential or daycare programs—receiving comprehensive sports training, standard academic schooling, daily protein-rich meals, and medical supervision."
+    ]
+  },
+  pillars: [
+    {
+      id: 'pillar-1',
+      icon: '🎯',
+      title: 'Talent Identification',
+      desc: 'Organizing physical fitness assessments and open trials in rural school grounds to spot raw athletic talent early.'
+    },
+    {
+      id: 'pillar-2',
+      icon: '👧',
+      title: 'Female Leadership',
+      desc: 'Creating safe spaces for rural girls to play sports, build confidence, and become role models for their villages.'
+    },
+    {
+      id: 'pillar-3',
+      icon: '👟',
+      title: 'Free Kit Distribution',
+      desc: 'Providing free running shoes, sports apparel, balls, and gear directly to underprivileged young athletes.'
+    },
+    {
+      id: 'pillar-4',
+      icon: '🥗',
+      title: 'Health & Nutrition',
+      desc: 'Conducting health checkups, hygiene awareness workshops, and distributing nutritional meal supplements.'
+    }
+  ],
+  cta: {
+    tagline: 'JOIN OUR MISSION',
+    heading: 'Help Us Reach More Rural Athletes in Bihar',
+    description: 'Partner with RLBSA to sponsor sports kits, fund village camps, or support residential scholarships for promising young athletes.',
+    buttonText: 'Get In Touch',
+    buttonLink: '#/contact'
+  }
+};
+
+router.get('/outreach', async (req, res) => {
+  try {
+    let outreach = await OutreachProgram.findOne({});
+    if (!outreach) {
+      outreach = await OutreachProgram.create(defaultOutreach);
+    }
+    res.json(outreach);
+  } catch (err) {
+    console.error("Fetch outreach error:", err);
+    res.json(defaultOutreach);
+  }
+});
 
 router.get('/facilities', async (req, res) => {
   try {

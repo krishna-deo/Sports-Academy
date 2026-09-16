@@ -211,38 +211,37 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-[1100px] mx-auto">
             {coaches.map((coach, idx) => (
               <div 
                 key={idx} 
                 onClick={() => handleCoachCardClick(coach)}
-                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-lg hover:-translate-y-2 transition-all duration-300 cursor-pointer"
+                className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col max-w-[270px] w-full mx-auto"
               >
-                <div className="h-[220px] bg-soft-light flex items-center justify-center text-7xl border-b border-border-gray relative">
-                  <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-2.5 rounded">
+                <div className="aspect-[4/4.2] bg-soft-light flex items-center justify-center text-6xl border-b border-border-gray relative overflow-hidden shrink-0">
+                  <span className="absolute top-2.5 left-2.5 bg-primary text-white text-[9px] font-bold py-0.5 px-2 rounded shadow-md z-10">
                     {coach.experience}
                   </span>
                   {coach.avatar && (coach.avatar.startsWith('http') || coach.avatar.startsWith('/') || coach.avatar.startsWith('data:')) ? (
                     <img 
                       src={coach.avatar} 
                       alt={coach.name} 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover object-top" 
                     />
                   ) : (
                     coach.avatar
                   )}
                 </div>
-                <div className="p-6">
-                  <h3 className="text-base font-bold text-primary mb-1">{coach.name}</h3>
-                  <p className="text-xs font-bold text-accent uppercase tracking-wider mb-2">
-                    {coach.role}
-                  </p>
-                  <p className="text-xs text-text-light font-semibold italic mb-3">
-                    {coach.specialization}
-                  </p>
-                  <p className="text-xs text-text-body leading-relaxed">
-                    {coach.bio}
-                  </p>
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-primary mb-1 tracking-tight">{coach.name}</h3>
+                    <span className="inline-block bg-amber-100 text-amber-900 border border-amber-200 text-[9px] font-bold py-0.5 px-2 rounded uppercase tracking-wider mb-1.5">
+                      {coach.role}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-semibold text-emerald-700">
+                    <span className="flex items-center gap-1 font-bold">🛡️ {coach.certificationStatus || 'SAI Certified / Elite License'}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -252,8 +251,11 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
 
       {sub === 'students' && (() => {
         const filteredStudents = students.filter(student => {
-          const sGender = student.gender || 'girl';
-          if (genderFilter !== 'all' && sGender !== genderFilter) {
+          const sGender = (student.gender || 'girl').toLowerCase();
+          if (genderFilter === 'boy' && sGender !== 'boy' && sGender !== 'male') {
+            return false;
+          }
+          if (genderFilter === 'girl' && sGender !== 'girl' && sGender !== 'female') {
             return false;
           }
           const sResidency = student.residency || 'resident';
@@ -303,8 +305,8 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   >
                     <span className="flex items-center gap-2">
                       {genderFilter === 'all' && '🌍 All Athletes'}
-                      {genderFilter === 'boy' && '👦 Boys Section'}
-                      {genderFilter === 'girl' && '👧 Girls Section'}
+                      {genderFilter === 'boy' && '👦 Male'}
+                      {genderFilter === 'girl' && '👧 Female'}
                     </span>
                     <CaretDown size={14} className={`transition-transform duration-200 text-primary-light ${isGenderDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -328,7 +330,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                         }}
                         className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${genderFilter === 'boy' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
                       >
-                        👦 Boys Section
+                        👦 Male
                       </button>
                       <button
                         type="button"
@@ -338,7 +340,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                         }}
                         className={`w-full py-3 px-4.5 text-xs font-bold text-left hover:bg-soft-light transition-colors cursor-pointer border-none block ${genderFilter === 'girl' ? 'text-accent bg-soft-light/40' : 'text-primary'}`}
                       >
-                        👧 Girls Section
+                        👧 Female
                       </button>
                     </div>
                   )}
@@ -412,12 +414,12 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-[1100px] mx-auto">
                 {filteredStudents.map((student, idx) => (
                   <div 
                     key={idx} 
                     onClick={() => handleStudentCardClick(student)}
-                    className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-6 text-center group relative cursor-pointer"
+                    className="bg-white rounded-xl border border-border-gray overflow-hidden hover:shadow-2xl hover:-translate-y-2.5 hover:border-accent/30 transition-all duration-300 flex flex-col items-center p-5 text-center group relative cursor-pointer max-w-[270px] w-full mx-auto"
                   >
                     {/* top highlight gradient strip */}
                     <div className={`absolute top-0 left-0 right-0 h-1.5 ${(student.residency || 'resident') === 'resident' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
@@ -502,11 +504,11 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                             <h3 className="text-3xl font-extrabold text-primary mb-4">
                               {player.name}
                             </h3>
-                            <p className="text-text-light text-base leading-relaxed mb-4">
+                            <p className="text-text-light text-base leading-relaxed mb-4 text-justify">
                               {player.description}
                             </p>
                             {sub === 'success-stories' && (
-                              <div className="pl-3 border-l-2 border-accent/60 italic text-sm text-text-light/95 leading-relaxed mb-6 font-medium">
+                              <div className="pl-3 border-l-2 border-accent/60 italic text-sm text-text-light/95 leading-relaxed mb-6 font-medium text-justify">
                                 "{player.quote}"
                               </div>
                             )}
@@ -540,11 +542,11 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                             <h3 className="text-3xl font-extrabold text-primary mb-4">
                               {player.name}
                             </h3>
-                            <p className="text-text-light text-base leading-relaxed mb-4">
+                            <p className="text-text-light text-base leading-relaxed mb-4 text-justify">
                               {player.description}
                             </p>
                             {sub === 'success-stories' && (
-                              <div className="pl-3 border-l-2 border-accent/60 italic text-sm text-text-light/95 leading-relaxed mb-6 font-medium">
+                              <div className="pl-3 border-l-2 border-accent/60 italic text-sm text-text-light/95 leading-relaxed mb-6 font-medium text-justify">
                                 "{player.quote}"
                               </div>
                             )}
@@ -607,7 +609,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                   <p className="text-xs font-bold text-accent uppercase tracking-wider mb-3">
                     {cert.authority}
                   </p>
-                  <p className="text-text-light text-sm leading-relaxed">
+                  <p className="text-text-light text-sm leading-relaxed text-justify">
                     {cert.description}
                   </p>
                 </div>
@@ -650,7 +652,7 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                       isOpen ? 'max-h-[300px] border-t border-border-gray' : 'max-h-0'
                     }`}
                   >
-                    <div className="p-6 text-sm md:text-[15px] leading-relaxed text-text-light">
+                    <div className="p-6 text-sm md:text-[15px] leading-relaxed text-text-light text-justify">
                       {faq.answer}
                     </div>
                   </div>
@@ -778,83 +780,84 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
           onClick={handleCloseCoachModal}
         >
           <div 
-            className="bg-white rounded-xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:h-[450px]" 
+            className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full overflow-hidden animate-scale-up relative flex flex-col md:flex-row h-auto md:min-h-[420px]" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left side: Photo - 38% width */}
-            <div className="w-full md:w-[38%] h-64 md:h-full relative bg-soft-light flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray">
+            {/* Left side: Photo - 3:4 ratio - 40% width */}
+            <div className="w-full md:w-[40%] aspect-[3/4] relative bg-slate-900 flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-border-gray overflow-hidden">
               {selectedCoach.avatar && (selectedCoach.avatar.startsWith('http') || selectedCoach.avatar.startsWith('/') || selectedCoach.avatar.startsWith('data:')) ? (
                 <img 
                   src={selectedCoach.avatar} 
                   alt={selectedCoach.name} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover object-top" 
                 />
               ) : (
                 <span className="text-8xl">{selectedCoach.avatar || '👨‍🏫'}</span>
               )}
               {/* Experience badge */}
-              <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1 px-3 rounded shadow-md z-10">
+              <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold py-1.5 px-3 rounded-md shadow-md z-10">
                 {selectedCoach.experience}
               </span>
             </div>
 
-            {/* Right side: Details - 62% width */}
-            <div className="w-full md:w-[62%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto h-full">
+            {/* Right side: Details - 60% width */}
+            <div className="w-full md:w-[60%] p-6 md:p-8 flex flex-col justify-between relative overflow-y-auto">
               {/* Close button */}
               <button 
                 onClick={handleCloseCoachModal}
-                className="absolute top-4 right-4 text-text-light hover:text-primary hover:bg-soft-light transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
+                className="absolute top-4 right-4 text-slate-400 hover:text-primary hover:bg-slate-100 transition-all p-1.5 rounded-full cursor-pointer border-none bg-transparent outline-none z-10"
               >
                 <X size={20} />
               </button>
 
               <div className="space-y-4">
-                {/* Header section with Name & Badge */}
+                {/* 1. Coach Name (Bigger) */}
                 <div>
-                  <h3 className="text-2xl font-black text-primary tracking-tight mb-1.5">{selectedCoach.name}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-accent text-primary text-[10px] font-black py-0.5 px-2.5 rounded uppercase tracking-wider">
-                      {selectedCoach.role}
-                    </span>
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold py-0.5 px-2.5 rounded uppercase">
-                      {selectedCoach.specialization}
-                    </span>
-                  </div>
+                  <h3 className="text-3xl md:text-4xl font-black text-primary tracking-tight mb-2">
+                    {selectedCoach.name}
+                  </h3>
+                  {/* 2. Game / Role Badge */}
+                  <span className="inline-block border border-amber-300 text-amber-900 bg-amber-50/40 text-xs font-bold py-1 px-3 rounded-md uppercase tracking-wider shadow-xs">
+                    {selectedCoach.role}
+                  </span>
                 </div>
 
-                {/* Stats Dashboard for Coaches */}
-                <div className="grid grid-cols-2 gap-3.5 pt-3">
-                  <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xl shrink-0">🎓</div>
+                {/* 3. Experience & 4. Certification Status (Clean white cards without heavy background colors) */}
+                <div className="space-y-3 pt-2">
+                  {/* Experience Card */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl shrink-0 text-slate-700">
+                      🎓
+                    </div>
                     <div className="text-left">
-                      <span className="block text-[9px] font-bold text-indigo-800 uppercase tracking-wider leading-none">Experience</span>
-                      <span className="text-sm font-black text-indigo-700">{selectedCoach.experience}</span>
+                      <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                        Experience
+                      </span>
+                      <span className="text-sm font-extrabold text-slate-800">
+                        {selectedCoach.experience}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="bg-emerald-50/40 border border-emerald-100 p-3 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-xl shrink-0">🛡️</div>
-                    <div className="text-left">
-                      <span className="block text-[9px] font-bold text-emerald-800 uppercase tracking-wider leading-none">Certification Status</span>
-                      <span className="text-sm font-black text-emerald-700">SAI Certified / Elite License</span>
+                  {/* Certification Status Card */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl shrink-0 text-slate-700">
+                      🛡️
                     </div>
-                  </div>
-                </div>
-
-                {/* Bio / Speach box */}
-                <div className="pt-2">
-                  <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Coach Bio & Training Philosophy</span>
-                  <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl relative overflow-hidden">
-                    <span className="absolute -right-2 -bottom-4 text-primary/[0.04] text-8xl font-black italic select-none">RLS</span>
-                    <p className="text-xs text-text-body leading-relaxed font-semibold italic relative z-10">
-                      "{selectedCoach.bio}"
-                    </p>
+                    <div className="text-left">
+                      <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                        Certification Status
+                      </span>
+                      <span className="text-sm font-extrabold text-slate-800">
+                        {selectedCoach.certificationStatus || 'SAI Certified / Elite License'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="mt-4 pt-3.5 border-t border-border-gray/50 flex justify-end">
+              <div className="mt-8 pt-4 border-t border-border-gray/50 flex justify-end">
                 <button
                   onClick={handleCloseCoachModal}
                   className="px-6 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-md uppercase tracking-wider"

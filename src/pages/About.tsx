@@ -177,7 +177,19 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
   const [team, setTeam] = React.useState<any[]>(teamMembers);
   const [milestones, setMilestones] = React.useState<any[]>(defaultMilestones);
   const [facilities, setFacilities] = React.useState<any[]>(defaultFacilities);
+  const [outreachData, setOutreachData] = React.useState<any>(null);
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/outreach')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.header) {
+          setOutreachData(data);
+        }
+      })
+      .catch(err => console.error("Error loading outreach program data:", err));
+  }, []);
 
   React.useEffect(() => {
     fetch('http://localhost:5000/api/public/story-milestones')
@@ -442,45 +454,42 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           {/* Header Banner */}
           <div className="text-center max-w-[850px] mx-auto mb-14">
             <h2 className="text-3xl md:text-5xl font-extrabold text-primary mb-4 relative inline-block pb-4 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[70px] after:h-[3.5px] after:bg-accent animate-fade-in">
-              Outreach Program
+              {outreachData?.header?.title || 'Outreach Program'}
             </h2>
             <p className="text-text-light text-base md:text-lg leading-relaxed animate-fade-in font-medium">
-              Taking sports excellence, education, and healthcare guidance directly to underprivileged rural communities across Bihar.
+              {outreachData?.header?.subtitle || 'Taking sports excellence, education, and healthcare guidance directly to underprivileged rural communities across Bihar.'}
             </p>
 
             {/* Impact Counter Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
-              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
-                <span className="text-2xl md:text-3xl font-black text-primary block mb-0.5">50+</span>
-                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Villages Reached</span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
-                <span className="text-2xl md:text-3xl font-black text-accent block mb-0.5">5,000+</span>
-                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Youth Engaged</span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
-                <span className="text-2xl md:text-3xl font-black text-primary block mb-0.5">100%</span>
-                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">Free Training &amp; Kits</span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
-                <span className="text-2xl md:text-3xl font-black text-accent block mb-0.5">20+</span>
-                <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">School Camps</span>
-              </div>
+              {(outreachData?.impactStats?.length ? outreachData.impactStats : [
+                { val: '50+', label: 'Villages Reached' },
+                { val: '5,000+', label: 'Youth Engaged' },
+                { val: '100%', label: 'Free Training & Kits' },
+                { val: '20+', label: 'School Camps' }
+              ]).map((stat: any, idx: number) => (
+                <div key={idx} className="bg-white p-4 rounded-xl border border-border-gray shadow-xs text-center">
+                  <span className={`text-2xl md:text-3xl font-black block mb-0.5 ${idx % 2 === 1 ? 'text-accent' : 'text-primary'}`}>{stat.val}</span>
+                  <span className="text-[11px] font-bold text-text-light uppercase tracking-wider">{stat.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* 5-PHOTO SHOWCASE GALLERY GRID (5 Photos Together) */}
+          {/* SHOWCASE GALLERY GRID */}
           <div className="max-w-[1240px] mx-auto mb-16">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg md:text-xl font-black text-primary flex items-center gap-2">
                 <span>📸 Outreach Program Gallery</span>
-                <span className="text-xs font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full uppercase">5 Key Initiatives</span>
+                <span className="text-xs font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full uppercase">
+                  {(outreachData?.initiatives?.length || 5)} Key Initiatives
+                </span>
               </h3>
               <span className="text-xs font-bold text-text-light hidden sm:inline-block">Click photo to expand</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
+              {(outreachData?.initiatives?.length ? outreachData.initiatives : [
                 {
                   id: 'outreach-1',
                   image: '/images/about_rlbsa.jpeg',
@@ -516,9 +525,9 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   caption: 'Literacy & Mentorship',
                   desc: 'Combining athletic training with formal schooling support.'
                 }
-              ].map((item) => (
+              ]).map((item: any) => (
                 <div
-                  key={item.id}
+                  key={item.id || item._id}
                   onClick={() => setPreviewImage(item.image)}
                   className="group relative bg-white rounded-xl overflow-hidden border border-border-gray/70 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-[280px]"
                 >
@@ -528,9 +537,11 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                       alt={item.caption}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute top-2.5 left-2.5 bg-primary/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2.5 py-1 rounded uppercase tracking-wider shadow-sm border border-white/20">
-                      {item.tag}
-                    </div>
+                    {item.tag && (
+                      <div className="absolute top-2.5 left-2.5 bg-primary/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2.5 py-1 rounded uppercase tracking-wider shadow-sm border border-white/20">
+                        {item.tag}
+                      </div>
+                    )}
                   </div>
                   <div className="p-3.5 flex flex-col justify-between flex-grow text-left bg-white">
                     <div>
@@ -554,33 +565,26 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           <div className="max-w-[1140px] mx-auto bg-white border border-border-gray/70 rounded-2xl p-8 md:p-12 shadow-sm mb-16 text-left">
             <div className="max-w-[900px] mx-auto">
               <span className="text-[11px] font-black text-accent uppercase tracking-[0.2em] mb-2 block">
-                Empowering Rural Communities
+                {outreachData?.descriptionSection?.tagline || 'Empowering Rural Communities'}
               </span>
               <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-6 leading-tight">
-                Transforming Lives Beyond the Boundary Lines
+                {outreachData?.descriptionSection?.heading || 'Transforming Lives Beyond the Boundary Lines'}
               </h3>
 
               <div className="space-y-5 text-text-light text-sm md:text-base leading-relaxed font-medium">
-                <p>
-                  Rani Laxmibai Sports Academy (RLBSA) operates a dedicated, multi-faceted <strong className="text-primary font-bold">Grassroots Outreach Program</strong> tailored specifically for young boys and girls in rural Bihar. In many surrounding villages, children face severe financial challenges, lack of basic sports equipment, and traditional societal norms that hinder participation in organized sports.
-                </p>
-
-                <p>
-                  Our outreach team visits remote schools, village sports clubs, and local communities to host open athletic trials, handball clinics, and football talent identification camps. We provide <strong className="text-primary font-bold">100% free sports equipment, jerseys, and footwear</strong> to ensure no child is denied the chance to train due to poverty.
-                </p>
-
-                <p>
-                  Beyond athletic coaching, the RLBSA Outreach Program actively promotes <strong className="text-primary font-bold">Girl Child Empowerment &amp; Gender Equality</strong>. By mentoring young female athletes and engaging directly with village elders and parents, we break generational stigmas and demonstrate how sports can open doors to higher education, government sports jobs, and national representation.
-                </p>
-
-                <p>
-                  Children selected during outreach drives earn full scholarships to join RLBSA's residential or daycare programs—receiving comprehensive sports training, standard academic schooling, daily protein-rich meals, and medical supervision.
-                </p>
+                {(outreachData?.descriptionSection?.paragraphs?.length ? outreachData.descriptionSection.paragraphs : [
+                  "Rani Laxmibai Sports Academy (RLBSA) operates a dedicated, multi-faceted Grassroots Outreach Program tailored specifically for young boys and girls in rural Bihar. In many surrounding villages, children face severe financial challenges, lack of basic sports equipment, and traditional societal norms that hinder participation in organized sports.",
+                  "Our outreach team visits remote schools, village sports clubs, and local communities to host open athletic trials, handball clinics, and football talent identification camps. We provide 100% free sports equipment, jerseys, and footwear to ensure no child is denied the chance to train due to poverty.",
+                  "Beyond athletic coaching, the RLBSA Outreach Program actively promotes Girl Child Empowerment & Gender Equality. By mentoring young female athletes and engaging directly with village elders and parents, we break generational stigmas and demonstrate how sports can open doors to higher education, government sports jobs, and national representation.",
+                  "Children selected during outreach drives earn full scholarships to join RLBSA's residential or daycare programs—receiving comprehensive sports training, standard academic schooling, daily protein-rich meals, and medical supervision."
+                ]).map((pText: string, pIdx: number) => (
+                  <p key={pIdx}>{pText}</p>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* 4 INITIATIVE PILLARS CARDS */}
+          {/* INITIATIVE PILLARS CARDS */}
           <div className="max-w-[1140px] mx-auto mb-16">
             <div className="text-center mb-10">
               <h3 className="text-2xl font-extrabold text-primary mb-2">Core Pillars of Our Outreach</h3>
@@ -588,45 +592,50 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-2xl mb-4 font-black">
-                  🎯
-                </div>
-                <h4 className="text-base font-bold text-primary mb-2">Talent Identification</h4>
-                <p className="text-text-light text-xs leading-relaxed font-medium">
-                  Organizing physical fitness assessments and open trials in rural school grounds to spot raw athletic talent early.
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-lg bg-accent/15 text-accent flex items-center justify-center text-2xl mb-4 font-black">
-                  👧
-                </div>
-                <h4 className="text-base font-bold text-primary mb-2">Female Leadership</h4>
-                <p className="text-text-light text-xs leading-relaxed font-medium">
-                  Creating safe spaces for rural girls to play sports, build confidence, and become role models for their villages.
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-4 font-black">
-                  👟
-                </div>
-                <h4 className="text-base font-bold text-primary mb-2">Free Kit Distribution</h4>
-                <p className="text-text-light text-xs leading-relaxed font-medium">
-                  Providing free running shoes, sports apparel, balls, and gear directly to underprivileged young athletes.
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4 font-black">
-                  🥗
-                </div>
-                <h4 className="text-base font-bold text-primary mb-2">Health &amp; Nutrition</h4>
-                <p className="text-text-light text-xs leading-relaxed font-medium">
-                  Conducting health checkups, hygiene awareness workshops, and distributing nutritional meal supplements.
-                </p>
-              </div>
+              {(outreachData?.pillars?.length ? outreachData.pillars : [
+                {
+                  id: 'pillar-1',
+                  icon: '🎯',
+                  title: 'Talent Identification',
+                  desc: 'Organizing physical fitness assessments and open trials in rural school grounds to spot raw athletic talent early.'
+                },
+                {
+                  id: 'pillar-2',
+                  icon: '👧',
+                  title: 'Female Leadership',
+                  desc: 'Creating safe spaces for rural girls to play sports, build confidence, and become role models for their villages.'
+                },
+                {
+                  id: 'pillar-3',
+                  icon: '👟',
+                  title: 'Free Kit Distribution',
+                  desc: 'Providing free running shoes, sports apparel, balls, and gear directly to underprivileged young athletes.'
+                },
+                {
+                  id: 'pillar-4',
+                  icon: '🥗',
+                  title: 'Health & Nutrition',
+                  desc: 'Conducting health checkups, hygiene awareness workshops, and distributing nutritional meal supplements.'
+                }
+              ]).map((pillar: any, pIdx: number) => {
+                const colorClasses = [
+                  'bg-primary/10 text-primary',
+                  'bg-accent/15 text-accent',
+                  'bg-emerald-50 text-emerald-600',
+                  'bg-amber-50 text-amber-600'
+                ];
+                return (
+                  <div key={pillar.id || pIdx} className="bg-white p-6 rounded-xl border border-border-gray text-left hover:shadow-md transition-all">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl mb-4 font-black ${colorClasses[pIdx % colorClasses.length]}`}>
+                      {pillar.icon || '🎯'}
+                    </div>
+                    <h4 className="text-base font-bold text-primary mb-2">{pillar.title}</h4>
+                    <p className="text-text-light text-xs leading-relaxed font-medium">
+                      {pillar.desc}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -634,20 +643,20 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
           <div className="max-w-[1140px] mx-auto bg-primary text-white rounded-2xl p-8 md:p-12 text-center relative overflow-hidden shadow-lg">
             <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
             <span className="bg-accent text-primary text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider mb-4 inline-block">
-              JOIN OUR MISSION
+              {outreachData?.cta?.tagline || 'JOIN OUR MISSION'}
             </span>
             <h3 className="text-2xl md:text-4xl font-extrabold mb-4 leading-tight">
-              Help Us Reach More Rural Athletes in Bihar
+              {outreachData?.cta?.heading || 'Help Us Reach More Rural Athletes in Bihar'}
             </h3>
             <p className="text-white/80 text-sm md:text-base max-w-[700px] mx-auto mb-8 font-medium">
-              Partner with RLBSA to sponsor sports kits, fund village camps, or support residential scholarships for promising young athletes.
+              {outreachData?.cta?.description || 'Partner with RLBSA to sponsor sports kits, fund village camps, or support residential scholarships for promising young athletes.'}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
-                href="#/contact"
+                href={outreachData?.cta?.buttonLink || '#/contact'}
                 className="bg-accent hover:bg-white text-primary font-extrabold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow transition-all border-none cursor-pointer"
               >
-                Get In Touch
+                {outreachData?.cta?.buttonText || 'Get In Touch'}
               </a>
               <a
                 href="#/donate"
@@ -717,7 +726,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Athletic Development</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Sports Training</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
                       Providing top-tier professional coaching in multiple fields including Football, Handball, Rugby, and Athletics. The academy offers structured training regimes, regular physical fitness audits, and full sponsorship for representing the state and nation in high-profile competitions.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -739,7 +748,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Academic Excellence</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Education & Academic Support</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
                       Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -775,7 +784,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Dietary Health</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Food & Nutrition</h3>
-                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6">
+                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6 text-justify">
                       Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -797,7 +806,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Residential Boarding</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Hostel & Accommodation</h3>
-                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6">
+                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6 text-justify">
                       Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -833,7 +842,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Safe Transit</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Transportation</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
                       Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -855,7 +864,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Future Planning</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Career & Athlete Development</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
                       Guiding our student-athletes towards bright future careers inside and outside of professional sports. We organize regular career counseling workshops, university admission assistance, vocational training programs, and job placement support.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -891,7 +900,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Championship Bound</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Tournament & Competition Preparation</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6">
+                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
                       Getting our trainees physically, tactically, and mentally prepared for high-stakes tournaments. We conduct simulated match plays, video analysis of opponents, sports psychology counseling, and special game-strategy briefings.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">

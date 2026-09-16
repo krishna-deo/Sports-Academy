@@ -113,33 +113,41 @@ export const coachesList: CoachItem[] = [
   {
     name: "Coach Rajesh Sen",
     role: "Head Football Coach",
-    specialization: "A-Licensed Youth Coach, Former State Captain",
-    experience: "15+ Years Coaching",
-    bio: "Coach Rajesh focuses on tactical positions and player physical conditioning frameworks.",
+    specialization: "Head Football Coach",
+    experienceYears: 15,
+    experienceMonths: 0,
+    experience: "15 Years Coaching",
+    certificationStatus: "A-Licensed / SAI Certified",
     avatar: "👨‍🏫"
   },
   {
     name: "Coach Sarita Devi",
     role: "Handball Coordinator",
-    specialization: "National Handball Medalist, SAI Certified Coach",
-    experience: "8+ Years Coaching",
-    bio: "Sarita is highly passionate about promoting handball in schools and training young girls for state-level selections.",
+    specialization: "Handball Coordinator",
+    experienceYears: 8,
+    experienceMonths: 6,
+    experience: "8 Years 6 Months Coaching",
+    certificationStatus: "SAI Certified / Elite License",
     avatar: "👩‍🏫"
   },
   {
     name: "Coach Vikram Rathore",
     role: "Senior Athletics Director",
-    specialization: "NIS Athletics Coach, Former Decathlete",
-    experience: "12+ Years Coaching",
-    bio: "Vikram specializes in running biomechanics, explosive speed development, and endurance mapping.",
+    specialization: "Senior Athletics Director",
+    experienceYears: 12,
+    experienceMonths: 0,
+    experience: "12 Years Coaching",
+    certificationStatus: "NIS Certified Senior Director",
     avatar: "👨‍🏫"
   },
   {
     name: "Coach Alan Mercer",
     role: "Rugby Technical Lead",
-    specialization: "IRB Level 2 Certified Trainer",
-    experience: "10+ Years Coaching",
-    bio: "Alan is focused on introducing rugby to young learners, emphasizing safety protocols and game logic.",
+    specialization: "Rugby Technical Lead",
+    experienceYears: 10,
+    experienceMonths: 4,
+    experience: "10 Years 4 Months Coaching",
+    certificationStatus: "IRB Level 2 Certified",
     avatar: "👨‍🏫"
   }
 ];

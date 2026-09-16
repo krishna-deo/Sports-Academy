@@ -55,6 +55,7 @@ const AuditLog = require('../models/AuditLog');
 const StoryMilestone = require('../models/StoryMilestone');
 const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
+const OutreachProgram = require('../models/OutreachProgram');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
@@ -320,7 +321,14 @@ router.get('/students', async (req, res) => {
       query.primarySport = { $regex: new RegExp(`^${sport}$`, 'i') };
     }
     if (gender) {
-      query.gender = gender;
+      const gLower = gender.toLowerCase();
+      if (gLower === 'male' || gLower === 'boy') {
+        query.gender = { $in: ['male', 'boy', 'Male', 'Boy'] };
+      } else if (gLower === 'female' || gLower === 'girl') {
+        query.gender = { $in: ['female', 'girl', 'Female', 'Girl'] };
+      } else {
+        query.gender = gender;
+      }
     }
     if (residency) {
       query.residency = residency;
@@ -539,6 +547,11 @@ router.post('/students', studentUpload, async (req, res) => {
       }
     }
 
+    const sanitizeOrDefault = (val) => {
+      if (!val || typeof val !== 'string' || !val.trim()) return 'NA';
+      return sanitizeInput(val).trim();
+    };
+
     const student = new Student({
       id: studentId,
       studentId: studentId,
@@ -546,30 +559,30 @@ router.post('/students', studentUpload, async (req, res) => {
       name: sanitizeInput(fullName).trim(),
       dateOfBirth: new Date(dateOfBirth),
       gender: gender.toLowerCase(),
-      bloodGroup: bloodGroup ? sanitizeInput(bloodGroup).trim() : '',
+      bloodGroup: sanitizeOrDefault(bloodGroup),
       contact: {
-        phone: phone ? sanitizeInput(phone).trim() : '',
-        email: email ? sanitizeInput(email).trim().toLowerCase() : '',
-        address: address ? sanitizeInput(address).trim() : ''
+        phone: sanitizeOrDefault(phone),
+        email: email ? sanitizeInput(email).trim().toLowerCase() : 'NA',
+        address: sanitizeOrDefault(address)
       },
       guardian: {
-        name: guardianName ? sanitizeInput(guardianName).trim() : '',
-        relationship: guardianRelationship ? sanitizeInput(guardianRelationship).trim() : '',
-        phone: guardianPhone ? sanitizeInput(guardianPhone).trim() : '',
-        emergencyContact: guardianEmergency ? sanitizeInput(guardianEmergency).trim() : '',
-        address: guardianAddress ? sanitizeInput(guardianAddress).trim() : ''
+        name: sanitizeOrDefault(guardianName),
+        relationship: sanitizeOrDefault(guardianRelationship),
+        phone: sanitizeOrDefault(guardianPhone),
+        emergencyContact: sanitizeOrDefault(guardianEmergency),
+        address: sanitizeOrDefault(guardianAddress)
       },
       primarySport: sanitizeInput(primarySport).trim(),
       sport: sanitizeInput(primarySport).trim(),
       secondarySports: parsedSecondarySports,
-      batch: batch ? sanitizeInput(batch).trim() : '',
-      coach: coach ? sanitizeInput(coach).trim() : '',
+      batch: sanitizeOrDefault(batch),
+      coach: sanitizeOrDefault(coach),
       residency: residency.toLowerCase(),
-      hostelRoom: hostelRoom ? sanitizeInput(hostelRoom).trim() : '',
+      hostelRoom: sanitizeOrDefault(hostelRoom),
       education: {
-        schoolName: schoolName ? sanitizeInput(schoolName).trim() : '',
-        className: className ? sanitizeInput(className).trim() : '',
-        academicInfo: academicInfo ? sanitizeInput(academicInfo).trim() : ''
+        schoolName: sanitizeOrDefault(schoolName),
+        className: sanitizeOrDefault(className),
+        academicInfo: sanitizeOrDefault(academicInfo)
       },
       achievements: parsedAchievements,
       documents: documentItems,
@@ -577,7 +590,7 @@ router.post('/students', studentUpload, async (req, res) => {
       joined: new Date(admissionDate).toISOString().split('T')[0],
       status: status || 'Active',
       avatar: photoPath,
-      showOnPublicWebsite: showOnPublicWebsite === 'true' || showOnPublicWebsite === true
+      showOnPublicWebsite: showOnPublicWebsite !== undefined ? (showOnPublicWebsite === 'true' || showOnPublicWebsite === true) : true
     });
 
     await student.save();
@@ -716,36 +729,44 @@ router.put('/students/:id', studentUpload, async (req, res) => {
       }
     }
 
+    const sanitizeOrDefault = (val) => {
+      if (!val || typeof val !== 'string' || !val.trim()) return 'NA';
+      return sanitizeInput(val).trim();
+    };
+
     if (fullName) {
       student.fullName = sanitizeInput(fullName).trim();
       student.name = sanitizeInput(fullName).trim();
     }
     if (dateOfBirth) student.dateOfBirth = new Date(dateOfBirth);
     if (gender) student.gender = gender.toLowerCase();
-    if (bloodGroup !== undefined) student.bloodGroup = sanitizeInput(bloodGroup).trim();
+    if (bloodGroup !== undefined) student.bloodGroup = sanitizeOrDefault(bloodGroup);
     
-    if (phone !== undefined) student.contact.phone = sanitizeInput(phone).trim();
-    if (email !== undefined) student.contact.email = sanitizeInput(email).trim().toLowerCase();
-    if (address !== undefined) student.contact.address = sanitizeInput(address).trim();
+    if (!student.contact) student.contact = {};
+    if (phone !== undefined) student.contact.phone = sanitizeOrDefault(phone);
+    if (email !== undefined) student.contact.email = email && email.trim() ? sanitizeInput(email).trim().toLowerCase() : 'NA';
+    if (address !== undefined) student.contact.address = sanitizeOrDefault(address);
 
-    if (guardianName !== undefined) student.guardian.name = sanitizeInput(guardianName).trim();
-    if (guardianRelationship !== undefined) student.guardian.relationship = sanitizeInput(guardianRelationship).trim();
-    if (guardianPhone !== undefined) student.guardian.phone = sanitizeInput(guardianPhone).trim();
-    if (guardianEmergency !== undefined) student.guardian.emergencyContact = sanitizeInput(guardianEmergency).trim();
-    if (guardianAddress !== undefined) student.guardian.address = sanitizeInput(guardianAddress).trim();
+    if (!student.guardian) student.guardian = {};
+    if (guardianName !== undefined) student.guardian.name = sanitizeOrDefault(guardianName);
+    if (guardianRelationship !== undefined) student.guardian.relationship = sanitizeOrDefault(guardianRelationship);
+    if (guardianPhone !== undefined) student.guardian.phone = sanitizeOrDefault(guardianPhone);
+    if (guardianEmergency !== undefined) student.guardian.emergencyContact = sanitizeOrDefault(guardianEmergency);
+    if (guardianAddress !== undefined) student.guardian.address = sanitizeOrDefault(guardianAddress);
 
     if (primarySport) {
       student.primarySport = sanitizeInput(primarySport).trim();
       student.sport = sanitizeInput(primarySport).trim();
     }
-    if (batch !== undefined) student.batch = sanitizeInput(batch).trim();
-    if (coach !== undefined) student.coach = sanitizeInput(coach).trim();
+    if (batch !== undefined) student.batch = sanitizeOrDefault(batch);
+    if (coach !== undefined) student.coach = sanitizeOrDefault(coach);
     if (residency) student.residency = residency.toLowerCase();
-    if (hostelRoom !== undefined) student.hostelRoom = sanitizeInput(hostelRoom).trim();
+    if (hostelRoom !== undefined) student.hostelRoom = sanitizeOrDefault(hostelRoom);
 
-    if (schoolName !== undefined) student.education.schoolName = sanitizeInput(schoolName).trim();
-    if (className !== undefined) student.education.className = sanitizeInput(className).trim();
-    if (academicInfo !== undefined) student.education.academicInfo = sanitizeInput(academicInfo).trim();
+    if (!student.education) student.education = {};
+    if (schoolName !== undefined) student.education.schoolName = sanitizeOrDefault(schoolName);
+    if (className !== undefined) student.education.className = sanitizeOrDefault(className);
+    if (academicInfo !== undefined) student.education.academicInfo = sanitizeOrDefault(academicInfo);
 
     if (admissionDate) {
       student.admissionDate = new Date(admissionDate);
@@ -846,16 +867,26 @@ router.get('/students/documents/:filename', async (req, res) => {
 
 // Coaches CRUD
 router.post('/coaches', async (req, res) => {
-  let { name, role, specialization, experience, bio, avatar } = req.body;
-  if (!name || !role || !experience) {
-    return res.status(400).json({ error: "Required fields (name, role, experience) are missing." });
+  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, avatar } = req.body;
+  if (!name || !role || !certificationStatus || !avatar) {
+    return res.status(400).json({ error: "All required fields (name, role, experience, certificationStatus, avatar) are compulsory." });
   }
 
   name = sanitizeInput(name).trim();
   role = sanitizeInput(role).trim();
-  specialization = specialization ? sanitizeInput(specialization).trim() : role;
-  experience = sanitizeInput(experience).trim();
-  bio = bio ? sanitizeInput(bio).trim() : '';
+  certificationStatus = sanitizeInput(certificationStatus).trim();
+  const y = parseInt(experienceYears) || 0;
+  const m = parseInt(experienceMonths) || 0;
+
+  if (!experience) {
+    if (y > 0 && m > 0) experience = `${y} Years ${m} Months Coaching`;
+    else if (y > 0) experience = `${y} Years Coaching`;
+    else if (m > 0) experience = `${m} Months Coaching`;
+    else experience = '0 Years Coaching';
+  } else {
+    experience = sanitizeInput(experience).trim();
+  }
+
   avatar = avatar ? sanitizeInput(avatar).trim() : '👨‍🏫';
 
   if (avatar && avatar.startsWith('data:image/')) {
@@ -867,7 +898,17 @@ router.post('/coaches', async (req, res) => {
   }
 
   try {
-    const newCoach = new Coach({ name, role, specialization, experience, bio, avatar });
+    const newCoach = new Coach({
+      name,
+      role,
+      specialization: role,
+      experienceYears: y,
+      experienceMonths: m,
+      experience,
+      certificationStatus,
+      bio: '',
+      avatar
+    });
     await newCoach.save();
     res.status(201).json({ success: true, coach: newCoach });
   } catch (err) {
@@ -877,9 +918,9 @@ router.post('/coaches', async (req, res) => {
 });
 
 router.put('/coaches/:name', async (req, res) => {
-  let { name, role, specialization, experience, bio, avatar } = req.body;
-  if (!name || !role || !experience) {
-    return res.status(400).json({ error: "Required fields (name, role, experience) are missing." });
+  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, avatar } = req.body;
+  if (!name || !role || !certificationStatus || !avatar) {
+    return res.status(400).json({ error: "All required fields (name, role, experience, certificationStatus, avatar) are compulsory." });
   }
 
   try {
@@ -888,9 +929,21 @@ router.put('/coaches/:name', async (req, res) => {
 
     coach.name = sanitizeInput(name).trim();
     coach.role = sanitizeInput(role).trim();
-    coach.specialization = specialization ? sanitizeInput(specialization).trim() : role;
-    coach.experience = sanitizeInput(experience).trim();
-    coach.bio = bio ? sanitizeInput(bio).trim() : '';
+    coach.specialization = coach.role;
+    coach.certificationStatus = sanitizeInput(certificationStatus).trim();
+
+    const y = parseInt(experienceYears) || 0;
+    const m = parseInt(experienceMonths) || 0;
+    coach.experienceYears = y;
+    coach.experienceMonths = m;
+    if (experience) {
+      coach.experience = sanitizeInput(experience).trim();
+    } else {
+      if (y > 0 && m > 0) coach.experience = `${y} Years ${m} Months Coaching`;
+      else if (y > 0) coach.experience = `${y} Years Coaching`;
+      else if (m > 0) coach.experience = `${m} Months Coaching`;
+      else coach.experience = '0 Years Coaching';
+    }
 
     if (avatar && avatar !== coach.avatar) {
       avatar = sanitizeInput(avatar).trim();
@@ -2825,6 +2878,197 @@ router.put('/edge-cards/:id/restore', async (req, res) => {
   } catch (err) {
     console.error("Restore edge card error:", err);
     res.status(500).json({ error: "Failed to restore edge card." });
+  }
+});
+
+// Outreach Program Admin Routes
+const defaultOutreachData = {
+  header: {
+    title: 'Outreach Program',
+    subtitle: 'Taking sports excellence, education, and healthcare guidance directly to underprivileged rural communities across Bihar.'
+  },
+  impactStats: [
+    { val: '50+', label: 'Villages Reached' },
+    { val: '5,000+', label: 'Youth Engaged' },
+    { val: '100%', label: 'Free Training & Kits' },
+    { val: '20+', label: 'School Camps' }
+  ],
+  initiatives: [
+    {
+      id: 'outreach-1',
+      tag: '01. Grassroots Scouting',
+      caption: 'Village Talent Identification',
+      desc: 'Discovering hidden athletic potential in remote rural areas.',
+      image: '/images/about_rlbsa.jpeg'
+    },
+    {
+      id: 'outreach-2',
+      tag: '02. Athletic Camps',
+      caption: 'Free Sports Coaching',
+      desc: 'Professional training workshops for underprivileged youth.',
+      image: '/images/hero1.jpeg'
+    },
+    {
+      id: 'outreach-3',
+      tag: '03. Campus Exposure',
+      caption: 'Academy Infrastructure Visit',
+      desc: 'Providing village children access to turf fields and gear.',
+      image: '/images/hero2.jpg'
+    },
+    {
+      id: 'outreach-4',
+      tag: '04. Team Sports',
+      caption: 'Handball & Football Drives',
+      desc: 'Fostering teamwork, discipline, and competitive spirit.',
+      image: '/images/program_handball.png'
+    },
+    {
+      id: 'outreach-5',
+      tag: '05. Education & Life Skills',
+      caption: 'Literacy & Mentorship',
+      desc: 'Combining athletic training with formal schooling support.',
+      image: '/images/education_card.jpg'
+    }
+  ],
+  descriptionSection: {
+    tagline: 'Empowering Rural Communities',
+    heading: 'Transforming Lives Beyond the Boundary Lines',
+    paragraphs: [
+      "Rani Laxmibai Sports Academy (RLBSA) operates a dedicated, multi-faceted Grassroots Outreach Program tailored specifically for young boys and girls in rural Bihar. In many surrounding villages, children face severe financial challenges, lack of basic sports equipment, and traditional societal norms that hinder participation in organized sports.",
+      "Our outreach team visits remote schools, village sports clubs, and local communities to host open athletic trials, handball clinics, and football talent identification camps. We provide 100% free sports equipment, jerseys, and footwear to ensure no child is denied the chance to train due to poverty.",
+      "Beyond athletic coaching, the RLBSA Outreach Program actively promotes Girl Child Empowerment & Gender Equality. By mentoring young female athletes and engaging directly with village elders and parents, we break generational stigmas and demonstrate how sports can open doors to higher education, government sports jobs, and national representation.",
+      "Children selected during outreach drives earn full scholarships to join RLBSA's residential or daycare programs—receiving comprehensive sports training, standard academic schooling, daily protein-rich meals, and medical supervision."
+    ]
+  },
+  pillars: [
+    {
+      id: 'pillar-1',
+      icon: '🎯',
+      title: 'Talent Identification',
+      desc: 'Organizing physical fitness assessments and open trials in rural school grounds to spot raw athletic talent early.'
+    },
+    {
+      id: 'pillar-2',
+      icon: '👧',
+      title: 'Female Leadership',
+      desc: 'Creating safe spaces for rural girls to play sports, build confidence, and become role models for their villages.'
+    },
+    {
+      id: 'pillar-3',
+      icon: '👟',
+      title: 'Free Kit Distribution',
+      desc: 'Providing free running shoes, sports apparel, balls, and gear directly to underprivileged young athletes.'
+    },
+    {
+      id: 'pillar-4',
+      icon: '🥗',
+      title: 'Health & Nutrition',
+      desc: 'Conducting health checkups, hygiene awareness workshops, and distributing nutritional meal supplements.'
+    }
+  ],
+  cta: {
+    tagline: 'JOIN OUR MISSION',
+    heading: 'Help Us Reach More Rural Athletes in Bihar',
+    description: 'Partner with RLBSA to sponsor sports kits, fund village camps, or support residential scholarships for promising young athletes.',
+    buttonText: 'Get In Touch',
+    buttonLink: '#/contact'
+  }
+};
+
+router.get('/outreach', async (req, res) => {
+  try {
+    let outreach = await OutreachProgram.findOne({});
+    if (!outreach) {
+      outreach = await OutreachProgram.create(defaultOutreachData);
+    }
+    res.json(outreach);
+  } catch (err) {
+    console.error("Fetch admin outreach error:", err);
+    res.status(500).json({ error: "Failed to fetch outreach program details." });
+  }
+});
+
+router.put('/outreach', async (req, res) => {
+  try {
+    let outreach = await OutreachProgram.findOne({});
+    if (!outreach) {
+      outreach = new OutreachProgram(defaultOutreachData);
+    }
+
+    const { header, impactStats, initiatives, descriptionSection, pillars, cta } = req.body;
+
+    if (header) {
+      outreach.header = {
+        title: header.title || outreach.header.title,
+        subtitle: header.subtitle || outreach.header.subtitle
+      };
+    }
+
+    if (Array.isArray(impactStats)) {
+      outreach.impactStats = impactStats.map(s => ({
+        val: s.val || '',
+        label: s.label || ''
+      }));
+    }
+
+    if (Array.isArray(initiatives)) {
+      const processedInitiatives = [];
+      for (let i = 0; i < initiatives.length; i++) {
+        const init = initiatives[i];
+        let imageUrl = init.image || '';
+        if (imageUrl && imageUrl.startsWith('data:')) {
+          try {
+            imageUrl = await saveBase64File(imageUrl, 'outreach');
+          } catch (e) {
+            console.error("Error saving initiative image:", e);
+          }
+        }
+        processedInitiatives.push({
+          id: init.id || `outreach-${Date.now()}-${i}`,
+          tag: init.tag || '',
+          caption: init.caption || '',
+          desc: init.desc || '',
+          image: imageUrl
+        });
+      }
+      outreach.initiatives = processedInitiatives;
+    }
+
+    if (descriptionSection) {
+      outreach.descriptionSection = {
+        tagline: descriptionSection.tagline || '',
+        heading: descriptionSection.heading || '',
+        paragraphs: Array.isArray(descriptionSection.paragraphs) ? descriptionSection.paragraphs : []
+      };
+    }
+
+    if (Array.isArray(pillars)) {
+      outreach.pillars = pillars.map((p, idx) => ({
+        id: p.id || `pillar-${Date.now()}-${idx}`,
+        icon: p.icon || '🎯',
+        title: p.title || '',
+        desc: p.desc || ''
+      }));
+    }
+
+    if (cta) {
+      outreach.cta = {
+        tagline: cta.tagline || '',
+        heading: cta.heading || '',
+        description: cta.description || '',
+        buttonText: cta.buttonText || '',
+        buttonLink: cta.buttonLink || ''
+      };
+    }
+
+    await outreach.save();
+    if (typeof logAdminAction === 'function') {
+      await logAdminAction(req.admin?.username || 'admin', 'update-outreach', outreach._id, 'Updated Outreach Program content');
+    }
+    res.json({ success: true, message: "Outreach Program content updated successfully!", outreach });
+  } catch (err) {
+    console.error("Update outreach error:", err);
+    res.status(500).json({ error: "Failed to update outreach program details." });
   }
 });
 

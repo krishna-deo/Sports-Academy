@@ -52,6 +52,11 @@ connectDB().then(() => {
       }
     })
     .catch(err => console.error("Migration error for students schema:", err));
+
+  // Auto-heal/migrate public visibility for existing non-deleted students
+  Student.updateMany({ showOnPublicWebsite: { $ne: true }, isDeleted: false }, { $set: { showOnPublicWebsite: true } })
+    .then(r => { if (r.modifiedCount > 0) console.log(`Enabled public visibility for ${r.modifiedCount} existing students.`); })
+    .catch(err => console.error("Migration error for public visibility:", err));
 });
 
 // Middleware

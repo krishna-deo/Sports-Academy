@@ -32,6 +32,30 @@
     overflow-x: hidden;
   }
 
+  p {
+    text-align: justify;
+  }
+
+  .text-center p,
+  p.text-center {
+    text-align: center;
+  }
+
+  .text-left p,
+  p.text-left {
+    text-align: left;
+  }
+
+  .text-right p,
+  p.text-right {
+    text-align: right;
+  }
+
+  p.text-justify,
+  .text-justify {
+    text-align: justify !important;
+  }
+
   #root {
     width: 100%;
     max-width: 100%;

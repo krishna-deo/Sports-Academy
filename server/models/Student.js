@@ -14,7 +14,7 @@ const StudentSchema = new mongoose.Schema({
   studentId: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['boy', 'girl'], default: 'girl' },
+  gender: { type: String, enum: ['boy', 'girl', 'male', 'female', 'Boy', 'Girl', 'Male', 'Female'], default: 'female' },
   bloodGroup: { type: String, default: '' },
   contact: {
     phone: { type: String, default: '' },
@@ -58,7 +58,7 @@ const StudentSchema = new mongoose.Schema({
   admissionDate: { type: Date, required: true },
   status: { type: String, enum: ['Active', 'On Leave', 'Inactive', 'Graduated'], default: 'Active' },
   isDeleted: { type: Boolean, default: false },
-  showOnPublicWebsite: { type: Boolean, default: false }
+  showOnPublicWebsite: { type: Boolean, default: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Student', StudentSchema);

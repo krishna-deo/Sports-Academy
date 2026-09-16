@@ -20,7 +20,8 @@ import {
   X,
   ArrowLeft,
   Key,
-  ShieldCheck
+  ShieldCheck,
+  Megaphone
 } from '@phosphor-icons/react';
 import { AdminViews } from './AdminViews';
 
@@ -448,6 +449,7 @@ export const AdminLayout: React.FC = () => {
     { id: 'students', label: 'Students', icon: <GraduationCap size={20} /> },
     { id: 'facilities', label: 'Facilities', icon: <Buildings size={20} /> },
     { id: 'rlbsa-edge', label: 'RLBSA Edge', icon: <Trophy size={20} /> },
+    { id: 'outreach', label: 'Outreach Program', icon: <Megaphone size={20} /> },
     { id: 'events-updates', label: 'Events & Updates', icon: <Calendar size={20} /> },
     { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={20} /> },
     { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
