@@ -344,7 +344,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [dragStartPoint, setDragStartPoint] = useState({ x: 0, y: 0 });
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
-  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach'>('story');
+  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach' | 'facility' | 'edge'>('story');
   const cropperBoxRef = React.useRef<HTMLDivElement>(null);
 
   // Facilities CMS States

@@ -13,8 +13,11 @@ export interface CoachItem {
   name: string;
   role: string;
   specialization: string;
+  experienceYears?: number;
+  experienceMonths?: number;
   experience: string;
-  bio: string;
+  certificationStatus?: string;
+  bio?: string;
   avatar: string;
 }
 
