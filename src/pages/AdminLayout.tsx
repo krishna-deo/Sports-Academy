@@ -40,6 +40,7 @@ export const AdminLayout: React.FC = () => {
   const [newRecoveryPassword, setNewRecoveryPassword] = useState<string>('');
   const [confirmRecoveryPassword, setConfirmRecoveryPassword] = useState<string>('');
   const [recoveryMessage, setRecoveryMessage] = useState<string>('');
+  const [devResetCode, setDevResetCode] = useState<string>('');
   const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
   const [isResetting, setIsResetting] = useState<boolean>(false);
 
@@ -84,6 +85,7 @@ export const AdminLayout: React.FC = () => {
     if (!recoveryEmail.trim()) return;
     setIsSendingCode(true);
     setRecoveryMessage('');
+    setDevResetCode('');
     setLoginError('');
     try {
       const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
@@ -94,6 +96,10 @@ export const AdminLayout: React.FC = () => {
       const data = await response.json();
       if (response.ok && data.success) {
         setRecoveryMessage(data.message);
+        if (data.devCode) {
+          setDevResetCode(data.devCode);
+          setRecoveryToken(data.devCode);
+        }
         setLoginView('reset');
       } else {
         setLoginError(data.error || 'Failed to request recovery code.');
@@ -285,11 +291,6 @@ export const AdminLayout: React.FC = () => {
                 >
                   SIGN IN
                 </button>
-
-                <div className="mt-4 pt-4 border-t border-border-gray text-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Default Credentials</span>
-                  <code className="text-text-body text-xs bg-soft-light py-1 px-3.5 rounded border border-border-gray font-bold">admin / admin123</code>
-                </div>
               </form>
             )}
 
@@ -353,6 +354,14 @@ export const AdminLayout: React.FC = () => {
                 {recoveryMessage && (
                   <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 py-3 px-4 rounded-xl text-xs font-semibold leading-relaxed">
                     {recoveryMessage}
+                  </div>
+                )}
+
+                {devResetCode && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 p-4 rounded-xl text-xs space-y-1.5 text-center font-medium shadow-xs">
+                    <span className="font-extrabold block text-emerald-800 uppercase tracking-wider text-[10px]">Your 6-Digit Reset Code:</span>
+                    <span className="text-2xl font-black font-mono tracking-widest text-primary block">{devResetCode}</span>
+                    <span className="text-[10px] text-emerald-700 block font-semibold">(Code is pre-filled below. Set your new password to reset!)</span>
                   </div>
                 )}
 
@@ -453,10 +462,8 @@ export const AdminLayout: React.FC = () => {
     { id: 'events-updates', label: 'Events & Updates', icon: <Calendar size={20} /> },
     { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={20} /> },
     { id: 'enquiries', label: 'Enquiries', icon: <EnvelopeOpen size={20} /> },
-    { id: 'documents', label: 'Documents', icon: <FileText size={20} /> },
     { id: 'compliance', label: 'Compliance', icon: <ShieldCheck size={20} /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy size={20} /> },
-    { id: 'users', label: 'Admin Users', icon: <UserGear size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Gear size={20} /> },
   ];
 

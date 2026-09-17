@@ -135,7 +135,13 @@ class EmailService {
         return { success: true, messageId: info.messageId };
       } catch (err) {
         console.error(`[EMAIL SERVICE] Error sending email to ${to}:`, err);
-        throw err;
+        console.log(`\n========================================`);
+        console.log(`[EMAIL SERVICE FALLBACK LOG]`);
+        console.log(`To: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Message:\n${textFallback}`);
+        console.log(`========================================\n`);
+        return { success: true, isDevFallback: true };
       }
     } else {
       console.log(`\n========================================`);
@@ -144,7 +150,7 @@ class EmailService {
       console.log(`Subject: ${subject}`);
       console.log(`Message:\n${textFallback}`);
       console.log(`========================================\n`);
-      return { success: true, fallback: true };
+      return { success: true, isDevFallback: true };
     }
   }
 

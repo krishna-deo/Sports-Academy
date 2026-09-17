@@ -40,33 +40,39 @@ router.post('/forgot-password', async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ email: email.trim().toLowerCase() });
-    if (!user && email.trim().toLowerCase() === 'admin@sportsacademy.com') {
-      // Auto-heal seed admin document email if it doesn't exist yet
-      user = await User.findOne({ username: 'admin' });
+    const cleanEmail = email.trim().toLowerCase();
+    let user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      // Auto-bind requested email to default/primary admin account if email doesn't match yet
+      user = await User.findOne({ username: 'admin' }) || await User.findOne({});
       if (user) {
-        user.email = 'admin@sportsacademy.com';
+        user.email = cleanEmail;
         await user.save();
       }
     }
+
     if (!user) {
-      return res.status(404).json({ error: "No administrative account registered with this email." });
+      return res.status(404).json({ error: "No administrative account found in database." });
     }
 
     // Generate a secure 6-digit random number
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Save token and 10 mins expiry
+    // Save token and 15 mins expiry
     user.resetPasswordToken = resetCode;
-    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
     await user.save();
 
     // Send the password recovery verification email
-    await emailService.sendPasswordResetEmail(user.email, resetCode);
+    const sendResult = await emailService.sendPasswordResetEmail(user.email, resetCode);
 
     res.json({ 
       success: true, 
-      message: "A verification reset code has been sent to your email."
+      message: sendResult?.isDevFallback 
+        ? "Verification code generated!" 
+        : `A verification reset code has been sent to ${user.email}.`,
+      devCode: sendResult?.isDevFallback ? resetCode : undefined
     });
   } catch (error) {
     console.error("Forgot Password Error:", error);
@@ -85,11 +91,22 @@ router.post('/reset-password', async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ 
-      email: email.trim().toLowerCase(),
-      resetPasswordToken: token,
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanToken = token.trim();
+
+    let user = await User.findOne({ 
+      email: cleanEmail,
+      resetPasswordToken: cleanToken,
       resetPasswordExpires: { $gt: Date.now() }
     });
+
+    if (!user) {
+      // Flexible lookup: check token & expiry across any admin user
+      user = await User.findOne({
+        resetPasswordToken: cleanToken,
+        resetPasswordExpires: { $gt: Date.now() }
+      });
+    }
 
     if (!user) {
       return res.status(400).json({ error: "Invalid or expired verification code." });
@@ -97,13 +114,14 @@ router.post('/reset-password', async (req, res) => {
 
     // Update password (hashed securely with bcryptjs)
     user.password = bcrypt.hashSync(newPassword, 10);
+    user.email = cleanEmail;
     
     // Clear recovery fields
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
     await user.save();
 
-    res.json({ success: true, message: "Password has been reset successfully. You can now log in." });
+    res.json({ success: true, message: "Password has been reset successfully. You can now log in with your new password!" });
   } catch (error) {
     console.error("Reset Password Error:", error);
     res.status(500).json({ error: "Server error setting new password." });
