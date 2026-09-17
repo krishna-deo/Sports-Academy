@@ -42,6 +42,8 @@ export const AdminLayout: React.FC = () => {
   const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
   const [isResetting, setIsResetting] = useState<boolean>(false);
 
+  const [unreadEnquiriesCount, setUnreadEnquiriesCount] = useState<number>(0);
+
   // Check login state on mount
   useEffect(() => {
     const token = localStorage.getItem('rlbsa_admin_token');
@@ -49,6 +51,50 @@ export const AdminLayout: React.FC = () => {
       setIsAuthenticated(true);
     }
   }, []);
+
+  const fetchUnreadCount = async () => {
+    const token = localStorage.getItem('rlbsa_admin_token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/enquiries/unread-count', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadEnquiriesCount(data.unreadCount || 0);
+      }
+    } catch (err) {}
+  };
+
+  const markEnquiriesAsRead = async () => {
+    const token = localStorage.getItem('rlbsa_admin_token');
+    if (!token) return;
+    try {
+      await fetch('http://localhost:5000/api/admin/enquiries/mark-read', {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setUnreadEnquiriesCount(0);
+    } catch (err) {}
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const handleTabSelect = (tabId: string) => {
+    setActiveTab(tabId);
+    if (tabId === 'enquiries') {
+      markEnquiriesAsRead();
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -496,14 +542,26 @@ export const AdminLayout: React.FC = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3.5 py-3 px-3.5 rounded-lg text-[13.5px] font-semibold text-white/70 hover:bg-primary-light hover:text-white transition-all cursor-pointer text-left border-none ${activeTab === item.id ? 'bg-primary-light text-accent font-bold border-l-4 border-l-accent pl-2.5' : ''
+              onClick={() => handleTabSelect(item.id)}
+              className={`w-full flex items-center justify-between gap-3 py-3 px-3.5 rounded-lg text-[13.5px] font-semibold text-white/70 hover:bg-primary-light hover:text-white transition-all cursor-pointer text-left border-none ${activeTab === item.id ? 'bg-primary-light text-accent font-bold border-l-4 border-l-accent pl-2.5' : ''
                 }`}
             >
-              <span className={activeTab === item.id ? 'text-accent' : 'text-white/50'}>
-                {item.icon}
-              </span>
-              {isSidebarOpen && <span>{item.label}</span>}
+              <div className="flex items-center gap-3.5 min-w-0">
+                <span className={activeTab === item.id ? 'text-accent' : 'text-white/50'}>
+                  {item.icon}
+                </span>
+                {isSidebarOpen && <span className="truncate">{item.label}</span>}
+              </div>
+
+              {/* Red Unread Notification Badge */}
+              {item.id === 'enquiries' && unreadEnquiriesCount > 0 && (
+                <span className="relative flex items-center justify-center shrink-0 ml-auto">
+                  <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-5 min-w-[20px] px-1.5 bg-rose-500 text-white text-[10px] font-black items-center justify-center shadow-md border border-rose-400/50">
+                    {unreadEnquiriesCount}
+                  </span>
+                </span>
+              )}
             </button>
           ))}
 

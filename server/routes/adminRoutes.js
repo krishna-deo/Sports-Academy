@@ -1578,6 +1578,30 @@ router.get('/enquiries', async (req, res) => {
   }
 });
 
+router.get('/enquiries/unread-count', async (req, res) => {
+  try {
+    const count = await Enquiry.countDocuments({ isRead: { $ne: true } });
+    res.json({ unreadCount: count });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to count unread enquiries." });
+  }
+});
+
+router.put('/enquiries/mark-read', async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (id) {
+      await Enquiry.updateOne({ id }, { $set: { isRead: true } });
+    } else {
+      await Enquiry.updateMany({ isRead: { $ne: true } }, { $set: { isRead: true } });
+    }
+    const remainingUnread = await Enquiry.countDocuments({ isRead: { $ne: true } });
+    res.json({ success: true, unreadCount: remainingUnread });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to mark enquiries as read." });
+  }
+});
+
 router.delete('/enquiries/:id', async (req, res) => {
   try {
     const result = await Enquiry.findOneAndDelete({ id: req.params.id });

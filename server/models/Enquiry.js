@@ -7,7 +7,8 @@ const EnquirySchema = new mongoose.Schema({
   phone: { type: String, default: '' },
   subject: { type: String, default: 'General Inquiry' },
   message: { type: String, required: true },
-  date: { type: String, required: true }
+  date: { type: String, required: true },
+  isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Enquiry', EnquirySchema);

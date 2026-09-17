@@ -99,6 +99,7 @@ interface MockEnquiry {
   subject: string;
   message: string;
   date: string;
+  isRead?: boolean;
 }
 
 export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab }) => {
@@ -5136,7 +5137,14 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-extrabold text-primary text-base">{enq.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-primary text-base">{enq.name}</h4>
+                      {enq.isRead === false && (
+                        <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                          NEW
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-text-light font-semibold">{enq.date}</span>
                   </div>
                   <div className="flex gap-4 text-[11px] font-bold text-accent uppercase tracking-wider mt-1.5 mb-3 flex-wrap">
