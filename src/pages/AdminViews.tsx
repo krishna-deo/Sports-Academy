@@ -1528,18 +1528,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     setActiveModal('story-milestone');
   };
 
-  const handleMilestoneImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setMilestoneForm({ ...milestoneForm, image: event.target.result as string });
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   // Success Stories Action Handlers
   const fetchStories = async () => {
     if (!token) return;
