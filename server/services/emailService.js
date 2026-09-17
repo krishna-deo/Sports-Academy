@@ -195,6 +195,54 @@ class EmailService {
     const html = getHtmlTemplate("Email Change OTP Verification", "Email Verification OTP Code", htmlContent);
     return this.sendMail({ to: newEmail, subject, html, textFallback });
   }
+
+  /**
+   * Send New Website Enquiry Notification to Admin & Auto-Reply to User
+   */
+  async sendEnquiryNotificationEmail({ name, email, phone, subject, message, enquiryId }) {
+    const adminEmail = process.env.SMTP_USER || 'foundationrlbsa@gmail.com';
+    const emailSubject = `[RLBSA Enquiry ${enquiryId}] ${subject || 'New Contact Form Submission'}`;
+    const textFallback = `New Enquiry from ${name} (${email}): ${message}`;
+
+    const adminHtmlContent = `
+      <p>Hello Admin,</p>
+      <p>You have received a new inquiry from the website contact form:</p>
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:8px; margin:15px 0;">
+        <p style="margin:5px 0;"><strong>Enquiry ID:</strong> ${enquiryId}</p>
+        <p style="margin:5px 0;"><strong>Name:</strong> ${name}</p>
+        <p style="margin:5px 0;"><strong>Sender Email:</strong> ${email}</p>
+        <p style="margin:5px 0;"><strong>Phone:</strong> ${phone || 'Not provided'}</p>
+        <p style="margin:5px 0;"><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
+        <hr style="border:0; border-top:1px solid #cbd5e1; margin:10px 0;" />
+        <p style="margin:5px 0;"><strong>Message:</strong></p>
+        <p style="white-space:pre-wrap; margin:5px 0; color:#334155;">${message}</p>
+      </div>
+      <p>You can also review and respond to this message directly from the Admin Panel under Enquiries.</p>
+    `;
+
+    const adminHtml = getHtmlTemplate("New Website Enquiry Received", "New Website Contact Enquiry", adminHtmlContent);
+    
+    // 1. Send alert to Admin
+    await this.sendMail({ to: adminEmail, subject: emailSubject, html: adminHtml, textFallback });
+
+    // 2. Send acknowledgement auto-reply to Sender
+    const userSubject = `We received your message - Rani Laxmibai Sports Academy`;
+    const userTextFallback = `Dear ${name}, Thank you for contacting RLBSA. We have received your inquiry (${enquiryId}) and will get back to you shortly.`;
+    const userHtmlContent = `
+      <p>Dear <strong>${name}</strong>,</p>
+      <p>Thank you for reaching out to Rani Laxmibai Sports Academy.</p>
+      <p>We have successfully received your inquiry regarding <strong>${subject || 'General Inquiry'}</strong> (Reference ID: <strong>${enquiryId}</strong>).</p>
+      <div style="background:#f0fdf4; border:1px border-emerald-200; padding:15px; border-radius:8px; margin:15px 0;">
+        <p style="margin:0 0 10px 0; font-size:13px; color:#047857; font-weight:bold;">Summary of your submitted message:</p>
+        <p style="white-space:pre-wrap; margin:0; font-size:13px; color:#15803d;">"${message}"</p>
+      </div>
+      <p>Our administration team is reviewing your message and will respond to your email as soon as possible.</p>
+      <p>Warm regards,<br/><strong>Rani Laxmibai Sports Academy Team</strong></p>
+    `;
+
+    const userHtml = getHtmlTemplate("Enquiry Confirmation", "Message Received Confirmation", userHtmlContent);
+    await this.sendMail({ to: email, subject: userSubject, html: userHtml, textFallback: userTextFallback });
+  }
 }
 
 module.exports = new EmailService();

@@ -17,6 +17,7 @@ const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
+const emailService = require('../services/emailService');
 
 const defaultVisionMission = {
   missionPurpose: 'Our Purpose',
@@ -435,6 +436,17 @@ router.post('/enquiry', async (req, res) => {
       date: new Date().toISOString().split('T')[0]
     });
     await newEnquiry.save();
+
+    // Trigger email notification to Admin & Auto-reply to Sender
+    emailService.sendEnquiryNotificationEmail({
+      name,
+      email,
+      phone,
+      subject,
+      message,
+      enquiryId: newEnquiry.id
+    }).catch(err => console.error("Enquiry Email notification error:", err));
+
     res.status(201).json({ success: true, message: "Enquiry submitted successfully.", data: newEnquiry });
   } catch (err) {
     console.error("Enquiry saving error:", err);
