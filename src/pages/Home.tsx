@@ -505,7 +505,7 @@ export const Home: React.FC = () => {
           {/* Slider Outer Wrapper (Balanced Medium-Large Centered Width) */}
           <div 
             ref={teamRef}
-            className={`relative max-w-[1140px] mx-auto px-10 sm:px-14 md:px-16 transition-all duration-[1000ms] ease-out transform ${
+            className={`relative max-w-[1140px] mx-auto px-3 sm:px-8 md:px-12 transition-all duration-[1000ms] ease-out transform ${
               isTeamVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
             }`}
           >
@@ -529,7 +529,7 @@ export const Home: React.FC = () => {
             <div 
               ref={foundersScrollRef}
               onScroll={handleFoundersScroll}
-              className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth pb-4 px-5 -mx-5 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[420px] md:min-h-[350px] sm:px-0 sm:mx-0"
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[420px] md:min-h-[350px] sm:px-0 sm:mx-0"
             >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
@@ -537,7 +537,7 @@ export const Home: React.FC = () => {
                   <a
                     href={`#/about/founders?member=${member.id}`}
                     key={idx}
-                    className={`w-[85vw] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-5 last:mr-5 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[440px] sm:min-h-[380px] md:min-h-[330px] shadow-sm hover:shadow-md cursor-pointer block group ${
+                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[440px] sm:min-h-[380px] md:min-h-[330px] shadow-sm hover:shadow-md cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -878,7 +878,7 @@ export const Home: React.FC = () => {
           <div 
             ref={successStoriesScrollRef}
             onScroll={handleSuccessStoriesScroll}
-            className="flex overflow-x-auto md:grid md:grid-cols-4 gap-3.5 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-5 -mx-5 hide-scrollbar"
+            className="flex overflow-x-auto md:grid md:grid-cols-4 gap-4 pb-6 md:pb-0 snap-x snap-mandatory scroll-smooth px-1 -mx-1 hide-scrollbar"
           >
             {successPlayers.map((player, idx) => {
               const delays = ['delay-0', 'delay-200', 'delay-400', 'delay-600'];
@@ -887,7 +887,7 @@ export const Home: React.FC = () => {
                 <a
                   href={`#/academy/success-stories?player=${player.id}`}
                   key={idx}
-                  className={`flex-shrink-0 w-[88vw] max-w-[340px] md:w-full snap-center first:ml-5 md:first:ml-0 last:mr-5 md:last:mr-0 group bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-300 transform ${delayClass} ${
+                  className={`flex-shrink-0 w-[calc(100vw-2.5rem)] max-w-[420px] md:w-full snap-center first:ml-1 md:first:ml-0 last:mr-1 md:last:mr-0 group bg-white rounded-xl overflow-hidden border border-border-gray/50 shadow-sm hover:shadow-md hover:-translate-y-1 flex flex-col cursor-pointer transition-all duration-300 transform ${delayClass} ${
                     isStoriesVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'
                   }`}
                 >
