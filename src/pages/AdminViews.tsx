@@ -5136,8 +5136,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   <EnvelopeOpen size={22} />
                 </div>
                 <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-extrabold text-primary text-base">{enq.name}</h4>
                       {enq.isRead === false && (
                         <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
@@ -5145,7 +5145,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-text-light font-semibold">{enq.date}</span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs text-text-light font-semibold">{enq.date}</span>
+                      <button
+                        onClick={() => deleteEnquiry(enq.id)}
+                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-all border-none bg-transparent cursor-pointer flex items-center justify-center"
+                        title="Dismiss Enquiry"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
                   </div>
                   <div className="flex gap-4 text-[11px] font-bold text-accent uppercase tracking-wider mt-1.5 mb-3 flex-wrap">
                     <span>Email: {enq.email}</span>
@@ -5156,13 +5165,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     "{enq.message}"
                   </p>
                 </div>
-                <button
-                  onClick={() => deleteEnquiry(enq.id)}
-                  className="absolute top-5 right-5 text-text-light hover:text-rose-500 bg-transparent border-none p-1 cursor-pointer"
-                  title="Dismiss Enquiry"
-                >
-                  <Trash size={16} />
-                </button>
               </div>
             ))}
 
