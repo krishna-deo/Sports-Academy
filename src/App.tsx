@@ -26,7 +26,12 @@ function App() {
   }, [hash]);
 
   const normalizedHash = hash.split('?')[0];
-  const isAdminRoute = normalizedHash.startsWith('#/admin');
+  const isAdminRoute = 
+    normalizedHash.startsWith('#/HVEPP') || 
+    normalizedHash.startsWith('#HVEPP') || 
+    normalizedHash.toLowerCase().includes('hvepp') || 
+    normalizedHash.startsWith('#/admin') || 
+    normalizedHash.startsWith('#admin');
 
   // Routing Controller
   const renderRoute = () => {

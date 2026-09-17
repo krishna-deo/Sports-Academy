@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
             <a href="https://www.instagram.com/ranilaxmibaisportsacademy?igsh=NHh5cWVzMXY5eGY=" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent hover:text-primary flex items-center justify-center text-lg hover:-translate-y-1 transition-all"><InstagramLogo size={18} /></a>
             <a href="https://x.com/ranilaxminai" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent hover:text-primary flex items-center justify-center text-lg hover:-translate-y-1 transition-all"><TwitterLogo size={18} /></a>
             <a href="https://youtube.com/@ranilaxmibaisportsacademy7008?si=DcKFFe1rb_kxCtqa" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent hover:text-primary flex items-center justify-center text-lg hover:-translate-y-1 transition-all"><YoutubeLogo size={18} /></a>
-            <a href="#/admin" aria-label="Admin Portal" className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent hover:text-primary flex items-center justify-center text-lg hover:-translate-y-1 transition-all" title="Admin Portal"><Lock size={18} /></a>
+            <a href="#/HVEPP" aria-label="Admin Portal" className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent hover:text-primary flex items-center justify-center text-lg hover:-translate-y-1 transition-all" title="Admin Portal"><Lock size={18} /></a>
           </div>
         </div>
 
