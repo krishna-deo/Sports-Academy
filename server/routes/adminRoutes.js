@@ -3073,7 +3073,7 @@ router.put('/outreach', async (req, res) => {
   }
 });
 
-router.get('/vision-mission', authenticateToken, async (req, res) => {
+router.get('/vision-mission', async (req, res) => {
   try {
     let doc = await VisionMission.findOne({});
     if (!doc) {
@@ -3118,7 +3118,7 @@ router.get('/vision-mission', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/vision-mission', authenticateToken, async (req, res) => {
+router.put('/vision-mission', async (req, res) => {
   try {
     const {
       missionPurpose,
