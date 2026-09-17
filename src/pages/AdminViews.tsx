@@ -328,6 +328,101 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [storyMilestones, setStoryMilestones] = useState<any[]>([]);
   const [editingMilestone, setEditingMilestone] = useState<any | null>(null);
   const [milestoneForm, setMilestoneForm] = useState({ year: '', title: '', subtitle: '', description: '', image: '', order: 0 });
+  const storyTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const handleInsertBoldInStoryParagraph = () => {
+    const textarea = storyTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentVal = milestoneForm.description || '';
+
+    const selectedText = currentVal.substring(start, end);
+    const textToWrap = selectedText || 'bold word';
+    const wrappedText = `<b>${textToWrap}</b>`;
+
+    const updatedText = currentVal.substring(0, start) + wrappedText + currentVal.substring(end);
+    setMilestoneForm(prev => ({ ...prev, description: updatedText }));
+
+    setTimeout(() => {
+      if (textarea) {
+        textarea.focus();
+        textarea.setSelectionRange(start + 3, start + 3 + textToWrap.length);
+      }
+    }, 50);
+  };
+
+  const [visionMissionForm, setVisionMissionForm] = useState<any>({
+    missionPurpose: 'Our Purpose',
+    missionTitle: 'Our Mission',
+    missionDescription: '',
+    missionImage: '/images/hero2.jpg',
+    missionBtnText: 'Explore Outreach Program',
+    missionBtnLink: '#/about/outreach-program',
+
+    visionFuture: 'Our Future',
+    visionTitle: 'Our Vision',
+    visionDescription: '',
+    visionImage: '/images/about_rlbsa.jpeg',
+    visionBtnText: 'Our Operations',
+    visionBtnLink: '#/about/what-we-do',
+
+    coreValues: [
+      { icon: '🏆', title: 'Excellence', description: '' },
+      { icon: '🤝', title: 'Integrity', description: '' },
+      { icon: '⚡', title: 'Dedication', description: '' }
+    ]
+  });
+  const [isSavingVisionMission, setIsSavingVisionMission] = useState<boolean>(false);
+  const missionTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const visionTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const handleInsertBoldInMissionDescription = () => {
+    const textarea = missionTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentVal = visionMissionForm.missionDescription || '';
+
+    const selectedText = currentVal.substring(start, end);
+    const textToWrap = selectedText || 'bold word';
+    const wrappedText = `<b>${textToWrap}</b>`;
+
+    const updatedText = currentVal.substring(0, start) + wrappedText + currentVal.substring(end);
+    setVisionMissionForm((prev: any) => ({ ...prev, missionDescription: updatedText }));
+
+    setTimeout(() => {
+      if (textarea) {
+        textarea.focus();
+        textarea.setSelectionRange(start + 3, start + 3 + textToWrap.length);
+      }
+    }, 50);
+  };
+
+  const handleInsertBoldInVisionDescription = () => {
+    const textarea = visionTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentVal = visionMissionForm.visionDescription || '';
+
+    const selectedText = currentVal.substring(start, end);
+    const textToWrap = selectedText || 'bold word';
+    const wrappedText = `<b>${textToWrap}</b>`;
+
+    const updatedText = currentVal.substring(0, start) + wrappedText + currentVal.substring(end);
+    setVisionMissionForm((prev: any) => ({ ...prev, visionDescription: updatedText }));
+
+    setTimeout(() => {
+      if (textarea) {
+        textarea.focus();
+        textarea.setSelectionRange(start + 3, start + 3 + textToWrap.length);
+      }
+    }, 50);
+  };
 
   // Trash Bin Toggle States
   const [showDeletedFacilities, setShowDeletedFacilities] = useState<boolean>(false);
@@ -2073,9 +2168,54 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
   };
 
+  const fetchVisionMission = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/vision-mission', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data) {
+        setVisionMissionForm(data);
+      }
+    } catch (err) {
+      console.error("Error loading admin vision-mission:", err);
+    }
+  };
+
+  const handleSaveVisionMission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingVisionMission(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/vision-mission', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(visionMissionForm)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess("Vision & Mission settings updated successfully!");
+        if (data.visionMission) {
+          setVisionMissionForm(data.visionMission);
+        }
+      } else {
+        alert(data.error || "Failed to update Vision & Mission settings.");
+      }
+    } catch (err) {
+      console.error("Save Vision & Mission error:", err);
+      alert("Error saving Vision & Mission settings.");
+    } finally {
+      setIsSavingVisionMission(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'story') {
       fetchStoryMilestones();
+      fetchVisionMission();
     }
   }, [activeTab]);
 
@@ -2886,12 +3026,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 <Calendar size={18} className="text-accent" />
                 <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
-              <button
-                onClick={() => setActiveModal('student')}
-                className="bg-accent text-[#082142] hover:bg-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
-              >
-                <Plus size={16} /> Quick Add
-              </button>
             </div>
             <div className="absolute right-[-40px] bottom-[-40px] w-64 h-64 rounded-full bg-white/5 pointer-events-none blur-2xl"></div>
           </div>
@@ -4040,9 +4174,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray mb-6">
               <div>
                 <h3 className="text-base font-bold text-primary flex items-center gap-2">
-                  Our Story Milestones {showDeletedMilestones && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                  Our Story Paragraphs {showDeletedMilestones && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
                 </h3>
-                <p className="text-text-light text-xs mt-0.5">Manage the milestones displayed on the public "Our Story" timeline</p>
+                <p className="text-text-light text-xs mt-0.5">Manage the text paragraphs displayed on the public "Our Story" page</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -4055,7 +4189,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   }`}
                 >
                   <Trash size={14} className={showDeletedMilestones ? 'text-amber-600' : 'text-slate-500'} />
-                  {showDeletedMilestones ? 'Active Milestones' : 'Trash Bin'}
+                  {showDeletedMilestones ? 'Active Paragraphs' : 'Trash Bin'}
                   {deletedMilestonesCount > 0 && (
                     <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
                       {deletedMilestonesCount}
@@ -4065,25 +4199,25 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 {!showDeletedMilestones && (
                   <button 
                     onClick={openAddMilestoneModal}
-                    className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
+                    className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start shadow-sm"
                   >
-                    <Plus size={16} /> Add Story Milestone
+                    <Plus size={16} /> Add Paragraph
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Milestones grid layout */}
+            {/* Milestones / Paragraphs grid layout */}
             {displayedMilestones.length === 0 ? (
               <div className="text-center py-16 px-6 border border-dashed border-border-gray rounded-xl bg-soft-light/20 flex flex-col items-center justify-center max-w-xl mx-auto my-6">
                 <Notebook size={44} className="text-primary/45 mb-4 animate-pulse" />
                 <h4 className="text-sm font-bold text-primary mb-1.5">
-                  {showDeletedMilestones ? 'Trash Bin is Empty' : 'No Story Milestones Found in Database'}
+                  {showDeletedMilestones ? 'Trash Bin is Empty' : 'No Paragraphs Found in Database'}
                 </h4>
                 <p className="text-text-light text-xs max-w-sm leading-relaxed mb-6">
                   {showDeletedMilestones
-                    ? 'No deleted story milestones in the trash bin.'
-                    : "Your database doesn't have any active milestones registered for the Our Story timeline."}
+                    ? 'No deleted paragraphs in the trash bin.'
+                    : "Your database doesn't have any active paragraphs for the Our Story page."}
                 </p>
                 {!showDeletedMilestones && (
                   <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -4091,70 +4225,70 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       onClick={openAddMilestoneModal}
                       className="bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold py-2.5 px-6 rounded-lg text-xs uppercase cursor-pointer border-none outline-none shadow-md"
                     >
-                      Create Manually
+                      Add Paragraph
                     </button>
                     <button
                       disabled={isUploading}
                       onClick={handleImportDefaultMilestones}
                       className="bg-white hover:bg-soft-light border border-border-gray text-primary font-bold py-2.5 px-6 rounded-lg text-xs uppercase cursor-pointer disabled:opacity-55"
                     >
-                      {isUploading ? 'Importing...' : 'Pre-load Existing Milestones'}
+                      {isUploading ? 'Importing...' : 'Pre-load Default Story'}
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayedMilestones.map((milestone) => {
-                  const imgUrl = milestone.image
-                    ? (milestone.image.startsWith('http') || milestone.image.startsWith('/images') || milestone.image.startsWith('/uploads') ? milestone.image : `http://localhost:5000${milestone.image}`)
-                    : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=200&auto=format&fit=crop";
+                {displayedMilestones.map((milestone, idx) => {
                   return (
-                    <div key={milestone._id} className="border border-border-gray/70 bg-white rounded-xl overflow-hidden shadow-sm flex flex-col group hover:shadow-md transition-shadow relative">
+                    <div key={milestone._id || idx} className="border border-border-gray/70 bg-white rounded-xl overflow-hidden shadow-sm flex flex-col group hover:shadow-md transition-shadow relative">
                       
-                      {/* Header Image Cover */}
-                      <div className="h-44 w-full overflow-hidden bg-slate-900 relative">
-                        <img src={imgUrl} alt={milestone.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-3 left-3 bg-[#00a896] text-white text-[9px] font-black py-1 px-3 rounded-full uppercase tracking-wider shadow">
-                          {milestone.year}
+                      {/* Card Header (Sequence & Status) */}
+                      <div className="p-3.5 bg-slate-50 border-b border-border-gray/50 flex items-center justify-between">
+                        <span className="bg-primary text-white text-[10px] font-black py-1 px-3 rounded-full uppercase tracking-wider shadow-xs">
+                          Paragraph #{milestone.order || (idx + 1)}
                         </span>
                         {showDeletedMilestones ? (
-                          <span className="absolute top-3 right-3 bg-rose-600 text-white text-[9px] font-black py-1 px-2.5 rounded uppercase tracking-wider shadow">
+                          <span className="bg-rose-600 text-white text-[9px] font-black py-1 px-2.5 rounded uppercase tracking-wider">
                             In Trash Bin
                           </span>
                         ) : (
-                          <span className="absolute top-3 right-3 bg-primary/75 text-accent text-[9px] font-black py-1 px-2.5 rounded uppercase tracking-wider">
-                            Seq: {milestone.order}
+                          <span className="text-text-light text-[10px] font-bold">
+                            Text Only
                           </span>
                         )}
                       </div>
 
                       {/* Card Content details */}
-                      <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-2">
-                          <span className="text-[10px] font-bold text-accent uppercase tracking-wider block">{milestone.subtitle}</span>
-                          <h4 className="font-bold text-primary text-base leading-snug">{milestone.title}</h4>
-                          <p className="text-text-body text-xs leading-relaxed line-clamp-4 font-semibold text-slate-500">
-                            {milestone.description}
-                          </p>
+                          <p 
+                            className="text-slate-700 text-xs leading-relaxed line-clamp-6 text-justify font-normal"
+                            dangerouslySetInnerHTML={{
+                              __html: (milestone.description || '')
+                                .replace(/<strong>(.*?)<\/strong>/gi, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                                .replace(/<b>(.*?)<\/b>/gi, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                            }}
+                          />
                         </div>
                         
                         {/* Action buttons */}
-                        <div className="flex gap-2 border-t border-border-gray/50 pt-4 mt-5">
+                        <div className="flex gap-2 border-t border-border-gray/50 pt-4">
                           {showDeletedMilestones ? (
                             <>
                               <button
-                                onClick={() => handleRestoreMilestone(milestone._id, milestone.title)}
+                                onClick={() => handleRestoreMilestone(milestone._id, milestone.title || `Paragraph ${milestone.order}`)}
                                 className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
                               >
                                 <ArrowCounterClockwise size={14} /> Restore
                               </button>
                               <button
-                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title, true)}
+                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title || `Paragraph ${milestone.order}`, true)}
                                 className="flex-1 py-2 px-3 bg-rose-50 hover:bg-rose-600 border border-rose-200 text-rose-600 hover:text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
                                 title="Permanently Delete"
                               >
-                                <Trash size={14} /> Delete Permanently
+                                <Trash size={14} /> Delete
                               </button>
                             </>
                           ) : (
@@ -4163,10 +4297,10 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                                 onClick={() => openEditMilestoneModal(milestone)}
                                 className="flex-1 py-2 px-3 border border-border-gray hover:border-primary bg-white hover:bg-soft-light text-primary font-bold text-xs rounded-lg transition-all cursor-pointer text-center"
                               >
-                                Edit Details
+                                Edit Paragraph
                               </button>
                               <button
-                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title, false)}
+                                onClick={() => handleDeleteMilestone(milestone._id, milestone.year, milestone.title || `Paragraph ${milestone.order}`, false)}
                                 className="py-2 px-3 bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 text-rose-600 hover:text-white rounded-lg transition-all cursor-pointer flex items-center gap-1"
                                 title="Move to Trash Bin"
                               >
@@ -4182,6 +4316,266 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 })}
               </div>
             )}
+
+            {/* Divider line */}
+            <div className="my-10 border-t border-border-gray/80"></div>
+
+            {/* VISION & MISSION SECTION EDITOR */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray">
+                <div>
+                  <h3 className="text-base font-bold text-primary flex items-center gap-2">
+                    Vision &amp; Mission Settings
+                  </h3>
+                  <p className="text-text-light text-xs mt-0.5">Edit the Vision, Mission, and Core Values displayed below Our Story on the public site</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveVisionMission}
+                  disabled={isSavingVisionMission}
+                  className="bg-[#082142] hover:bg-[#00a896] text-white font-bold py-2.5 px-6 rounded-lg text-xs cursor-pointer transition-all shadow-md self-start border-none disabled:opacity-60"
+                >
+                  {isSavingVisionMission ? 'Saving Settings...' : 'Save Vision & Mission Settings'}
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveVisionMission} className="space-y-8">
+                {/* 1. OUR MISSION CARD */}
+                <div className="p-6 bg-slate-50 rounded-xl border border-border-gray space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
+                    <span className="text-lg">🎯</span>
+                    <h4 className="font-extrabold text-primary text-sm uppercase tracking-wider">1. Our Mission Section</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Purpose Tagline</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.missionPurpose || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionPurpose: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="E.g. Our Purpose"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Section Title</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.missionTitle || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionTitle: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="E.g. Our Mission"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider">Mission Description Text *</label>
+                      <button
+                        type="button"
+                        onClick={handleInsertBoldInMissionDescription}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white hover:bg-primary hover:text-white text-[#082142] font-black text-[11px] rounded border border-slate-300 transition-all cursor-pointer shadow-2xs"
+                      >
+                        <span className="font-extrabold text-xs">B</span> Make Selected Text Bold
+                      </button>
+                    </div>
+                    <textarea 
+                      ref={missionTextareaRef}
+                      rows={4}
+                      value={visionMissionForm.missionDescription || ''} 
+                      onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionDescription: e.target.value })}
+                      className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold resize-none"
+                      placeholder="Write Mission description..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Image URL</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.missionImage || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionImage: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="/images/hero2.jpg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Button Label</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.missionBtnText || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionBtnText: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="Explore Outreach Program"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Button Link</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.missionBtnLink || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, missionBtnLink: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="#/about/outreach-program"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. OUR VISION CARD */}
+                <div className="p-6 bg-slate-50 rounded-xl border border-border-gray space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
+                    <span className="text-lg">🌟</span>
+                    <h4 className="font-extrabold text-primary text-sm uppercase tracking-wider">2. Our Vision Section</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Future Tagline</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.visionFuture || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionFuture: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="E.g. Our Future"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Section Title</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.visionTitle || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionTitle: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="E.g. Our Vision"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider">Vision Description Text *</label>
+                      <button
+                        type="button"
+                        onClick={handleInsertBoldInVisionDescription}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white hover:bg-primary hover:text-white text-[#082142] font-black text-[11px] rounded border border-slate-300 transition-all cursor-pointer shadow-2xs"
+                      >
+                        <span className="font-extrabold text-xs">B</span> Make Selected Text Bold
+                      </button>
+                    </div>
+                    <textarea 
+                      ref={visionTextareaRef}
+                      rows={4}
+                      value={visionMissionForm.visionDescription || ''} 
+                      onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionDescription: e.target.value })}
+                      className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold resize-none"
+                      placeholder="Write Vision description..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Image URL</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.visionImage || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionImage: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="/images/about_rlbsa.jpeg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Button Label</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.visionBtnText || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionBtnText: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="Our Operations"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Button Link</label>
+                      <input 
+                        type="text" 
+                        value={visionMissionForm.visionBtnLink || ''} 
+                        onChange={(e) => setVisionMissionForm({ ...visionMissionForm, visionBtnLink: e.target.value })}
+                        className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-white outline-none focus:border-primary font-semibold"
+                        placeholder="#/about/what-we-do"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. CORE VALUES SECTION */}
+                <div className="p-6 bg-slate-50 rounded-xl border border-border-gray space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💎</span>
+                      <h4 className="font-extrabold text-primary text-sm uppercase tracking-wider">3. Our Core Values</h4>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {(visionMissionForm.coreValues || []).map((val: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-white rounded-lg border border-border-gray space-y-3 shadow-xs">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Value #{idx + 1}</span>
+                        <div>
+                          <label className="block text-[9px] font-bold text-primary uppercase tracking-wider mb-1">Emoji Icon</label>
+                          <input 
+                            type="text" 
+                            value={val.icon || ''} 
+                            onChange={(e) => {
+                              const updated = [...visionMissionForm.coreValues];
+                              updated[idx].icon = e.target.value;
+                              setVisionMissionForm({ ...visionMissionForm, coreValues: updated });
+                            }}
+                            className="w-full py-1.5 px-2.5 border border-border-gray rounded text-xs outline-none focus:border-primary font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-primary uppercase tracking-wider mb-1">Title</label>
+                          <input 
+                            type="text" 
+                            value={val.title || ''} 
+                            onChange={(e) => {
+                              const updated = [...visionMissionForm.coreValues];
+                              updated[idx].title = e.target.value;
+                              setVisionMissionForm({ ...visionMissionForm, coreValues: updated });
+                            }}
+                            className="w-full py-1.5 px-2.5 border border-border-gray rounded text-xs outline-none focus:border-primary font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-primary uppercase tracking-wider mb-1">Description</label>
+                          <textarea 
+                            rows={3}
+                            value={val.description || ''} 
+                            onChange={(e) => {
+                              const updated = [...visionMissionForm.coreValues];
+                              updated[idx].description = e.target.value;
+                              setVisionMissionForm({ ...visionMissionForm, coreValues: updated });
+                            }}
+                            className="w-full py-1.5 px-2.5 border border-border-gray rounded text-xs outline-none focus:border-primary font-semibold resize-none"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSavingVisionMission}
+                  className="w-full bg-[#082142] hover:bg-[#00a896] text-white font-bold py-3.5 rounded-lg text-xs uppercase tracking-wider cursor-pointer transition-all shadow-md border-none disabled:opacity-60"
+                >
+                  {isSavingVisionMission ? 'Saving Settings...' : 'Save Vision & Mission Settings'}
+                </button>
+              </form>
+            </div>
 
           </div>
         );
@@ -6477,28 +6871,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 <div className="space-y-4">
                   <div className="flex flex-wrap justify-between items-center gap-2">
                     <p className="text-xs font-bold text-primary">Drag image to position & scroll mouse wheel or slider to zoom:</p>
-                    <div className="flex items-center gap-1.5 bg-soft-light p-1 rounded-lg border border-border-gray">
-                      <button
-                        type="button"
-                        onClick={() => setCroppingTarget('story')}
-                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${croppingTarget === 'story' ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
-                      >
-                        4:3 Landscape
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCroppingTarget('student')}
-                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${croppingTarget === 'student' ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
-                      >
-                        1:1 Square
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCroppingTarget('coach')}
-                        className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer transition-all border-none ${(croppingTarget === 'coach' || croppingTarget === 'team') ? 'bg-primary text-white shadow-xs' : 'bg-transparent text-primary hover:bg-slate-200'}`}
-                      >
-                        3:4 Portrait
-                      </button>
+                    <div className="flex items-center gap-1.5 bg-soft-light px-3 py-1.5 rounded-lg border border-border-gray">
+                      <span className="text-[10px] font-extrabold px-2.5 py-1 rounded bg-primary text-white shadow-xs tracking-wide">
+                        {(croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') && '4:3 Landscape'}
+                        {croppingTarget === 'student' && '1:1 Square'}
+                        {(croppingTarget === 'coach' || croppingTarget === 'team') && '3:4 Portrait'}
+                      </span>
                     </div>
                   </div>
                   
@@ -6564,7 +6942,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   {/* Zoom Controls & Quick Fit / Reset Buttons */}
                   <div className={`flex flex-wrap items-center gap-3 mx-auto bg-soft-light p-3 rounded-lg border border-border-gray ${
                     croppingTarget === 'student' ? 'max-w-[360px]' :
-                    croppingTarget === 'story' ? 'max-w-[440px]' :
+                    (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 'max-w-[440px]' :
                     'max-w-[340px]'
                   }`}>
                     <span className="text-xs font-bold text-primary min-w-[45px]">Zoom:</span>
@@ -8939,67 +9317,58 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         document.body
       )}
 
-      {/* 4b. Add/Edit Story Milestone Modal */}
+      {/* 4b. Add/Edit Story Paragraph Modal */}
       {activeModal === 'story-milestone' && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
           <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
             <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
-              <Notebook size={20} className="text-accent" /> {editingMilestone ? 'Edit Story Milestone' : 'Add Story Milestone'}
+              <Notebook size={20} className="text-accent" /> {editingMilestone ? 'Edit Story Paragraph' : 'Add Story Paragraph'}
             </h3>
             
             <form onSubmit={handleSaveMilestone} className="space-y-4 overflow-y-auto pr-1 py-1 flex-1">
-              {/* 1. Paragraph Content */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Paragraph Content *</label>
+              {/* 1. Paragraph Content with Bold Formatting Toolbar */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Paragraph Content *</label>
+                  <button
+                    type="button"
+                    onClick={handleInsertBoldInStoryParagraph}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-primary hover:text-white text-[#082142] font-black text-xs rounded border border-slate-300 transition-all cursor-pointer shadow-xs"
+                    title="Select text and click to make it bold"
+                  >
+                    <span className="font-extrabold text-sm">B</span> Make Selected Text Bold
+                  </button>
+                </div>
+
                 <textarea 
+                  ref={storyTextareaRef}
                   required 
                   rows={5} 
-                  placeholder="Write the milestone story paragraphs, key highlights, or journey details..." 
+                  placeholder="Write the paragraph content here. Select any text and click 'Make Selected Text Bold' to highlight it..." 
                   value={milestoneForm.description} 
                   onChange={(e) => setMilestoneForm({...milestoneForm, description: e.target.value})} 
                   className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
                 />
-              </div>
 
-              {/* 2. Related Image Photo */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Related Image Photo</label>
-                <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
-                  {milestoneForm.image ? (
-                    <div className="w-20 h-16 rounded overflow-hidden border border-border-gray shrink-0 relative group">
-                      <img 
-                        src={milestoneForm.image.startsWith('data:') || milestoneForm.image.startsWith('/') || milestoneForm.image.startsWith('http') ? milestoneForm.image : `http://localhost:5000${milestoneForm.image}`} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setMilestoneForm({...milestoneForm, image: ''})}
-                        className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-600 transition-colors cursor-pointer border-none"
-                        title="Remove Image"
-                      >
-                        <X size={10} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-20 h-16 rounded bg-slate-200 border border-dashed border-border-gray shrink-0 flex items-center justify-center text-text-light text-[10px] font-bold uppercase">
-                      No Photo
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleMilestoneImageChange}
-                      className="text-xs w-full cursor-pointer text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white file:cursor-pointer file:uppercase"
+                {/* Live Formatted Preview */}
+                {milestoneForm.description && (
+                  <div className="mt-1 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Live Formatted Preview:</span>
+                    <p 
+                      className="text-justify font-normal leading-relaxed text-slate-800"
+                      dangerouslySetInnerHTML={{
+                        __html: milestoneForm.description
+                          .replace(/<strong>(.*?)<\/strong>/gi, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                          .replace(/<b>(.*?)<\/b>/gi, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-[#082142]">$1</strong>')
+                      }}
                     />
-                    <p className="text-[9px] text-text-light mt-1">Select an image photo for this milestone.</p>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* 3. Display Order */}
+              {/* 2. Display Order */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Display Order *</label>
                 <input 
@@ -9015,9 +9384,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               <button 
                 type="submit" 
                 disabled={isUploading}
-                className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm disabled:opacity-60 border-none"
+                className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm disabled:opacity-60 border-none shadow-md"
               >
-                {isUploading ? 'Saving changes...' : editingMilestone ? 'Save Milestone' : 'Create Milestone'}
+                {isUploading ? 'Saving changes...' : editingMilestone ? 'Save Paragraph' : 'Add Paragraph'}
               </button>
             </form>
           </div>

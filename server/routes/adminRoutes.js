@@ -56,6 +56,7 @@ const StoryMilestone = require('../models/StoryMilestone');
 const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
+const VisionMission = require('../models/VisionMission');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
@@ -3069,6 +3070,107 @@ router.put('/outreach', async (req, res) => {
   } catch (err) {
     console.error("Update outreach error:", err);
     res.status(500).json({ error: "Failed to update outreach program details." });
+  }
+});
+
+router.get('/vision-mission', authenticateToken, async (req, res) => {
+  try {
+    let doc = await VisionMission.findOne({});
+    if (!doc) {
+      doc = await VisionMission.create({
+        missionPurpose: 'Our Purpose',
+        missionTitle: 'Our Mission',
+        missionDescription: "RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.",
+        missionImage: '/images/hero2.jpg',
+        missionBtnText: 'Explore Outreach Program',
+        missionBtnLink: '#/about/outreach-program',
+
+        visionFuture: 'Our Future',
+        visionTitle: 'Our Vision',
+        visionDescription: "To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.",
+        visionImage: '/images/about_rlbsa.jpeg',
+        visionBtnText: 'Our Operations',
+        visionBtnLink: '#/about/what-we-do',
+
+        coreValues: [
+          {
+            icon: '🏆',
+            title: 'Excellence',
+            description: 'Constantly pushing technical limits to refine stroke, positioning, speed, and endurance.'
+          },
+          {
+            icon: '🤝',
+            title: 'Integrity',
+            description: 'Fair play, respect for opponents, and honesty under pressure are non-negotiable principles.'
+          },
+          {
+            icon: '⚡',
+            title: 'Dedication',
+            description: 'Understanding that physical gains and gold medals are outputs of steady daily discipline.'
+          }
+        ]
+      });
+    }
+    res.json(doc);
+  } catch (err) {
+    console.error("Admin fetch vision-mission error:", err);
+    res.status(500).json({ error: "Failed to fetch Vision & Mission settings." });
+  }
+});
+
+router.put('/vision-mission', authenticateToken, async (req, res) => {
+  try {
+    const {
+      missionPurpose,
+      missionTitle,
+      missionDescription,
+      missionImage,
+      missionBtnText,
+      missionBtnLink,
+      visionFuture,
+      visionTitle,
+      visionDescription,
+      visionImage,
+      visionBtnText,
+      visionBtnLink,
+      coreValues
+    } = req.body;
+
+    let doc = await VisionMission.findOne({});
+    if (!doc) {
+      doc = new VisionMission({});
+    }
+
+    if (missionPurpose !== undefined) doc.missionPurpose = missionPurpose;
+    if (missionTitle !== undefined) doc.missionTitle = missionTitle;
+    if (missionDescription !== undefined) doc.missionDescription = missionDescription;
+    if (missionImage !== undefined) doc.missionImage = missionImage;
+    if (missionBtnText !== undefined) doc.missionBtnText = missionBtnText;
+    if (missionBtnLink !== undefined) doc.missionBtnLink = missionBtnLink;
+
+    if (visionFuture !== undefined) doc.visionFuture = visionFuture;
+    if (visionTitle !== undefined) doc.visionTitle = visionTitle;
+    if (visionDescription !== undefined) doc.visionDescription = visionDescription;
+    if (visionImage !== undefined) doc.visionImage = visionImage;
+    if (visionBtnText !== undefined) doc.visionBtnText = visionBtnText;
+    if (visionBtnLink !== undefined) doc.visionBtnLink = visionBtnLink;
+
+    if (Array.isArray(coreValues)) {
+      doc.coreValues = coreValues.map(v => ({
+        icon: v.icon || '⭐',
+        title: v.title || '',
+        description: v.description || ''
+      }));
+    }
+
+    await doc.save();
+    if (typeof logAdminAction === 'function') {
+      await logAdminAction(req.admin?.username || 'admin', 'update-vision-mission', doc._id, 'Updated Vision & Mission settings');
+    }
+    res.json({ success: true, message: "Vision & Mission settings updated successfully!", visionMission: doc });
+  } catch (err) {
+    console.error("Update vision-mission error:", err);
+    res.status(500).json({ error: "Failed to update Vision & Mission settings." });
   }
 });
 

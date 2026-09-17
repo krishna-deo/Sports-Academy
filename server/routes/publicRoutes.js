@@ -16,6 +16,41 @@ const Update = require('../models/Update');
 const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
+const VisionMission = require('../models/VisionMission');
+
+const defaultVisionMission = {
+  missionPurpose: 'Our Purpose',
+  missionTitle: 'Our Mission',
+  missionDescription: "RLBSA strives for excellence in sports development by providing access to quality training, guidance, and opportunities. Through our dedication, we aim to inspire young athletes, nurture their potential, and empower them to achieve greatness while transforming lives through sports.",
+  missionImage: '/images/hero2.jpg',
+  missionBtnText: 'Explore Outreach Program',
+  missionBtnLink: '#/about/outreach-program',
+
+  visionFuture: 'Our Future',
+  visionTitle: 'Our Vision',
+  visionDescription: "To envision a world transformed by the power of sports, creating positive change for youth athletes and communities. We strive to provide every aspiring athlete with opportunities to grow, achieve excellence, and contribute to healthier, stronger, and more inclusive communities.",
+  visionImage: '/images/about_rlbsa.jpeg',
+  visionBtnText: 'Our Operations',
+  visionBtnLink: '#/about/what-we-do',
+
+  coreValues: [
+    {
+      icon: '🏆',
+      title: 'Excellence',
+      description: 'Constantly pushing technical limits to refine stroke, positioning, speed, and endurance.'
+    },
+    {
+      icon: '🤝',
+      title: 'Integrity',
+      description: 'Fair play, respect for opponents, and honesty under pressure are non-negotiable principles.'
+    },
+    {
+      icon: '⚡',
+      title: 'Dedication',
+      description: 'Understanding that physical gains and gold medals are outputs of steady daily discipline.'
+    }
+  ]
+};
 
 const defaultOutreach = {
   header: {
@@ -494,6 +529,19 @@ router.get('/success-stories', async (req, res) => {
     res.json(stories);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch success stories." });
+  }
+});
+
+router.get('/vision-mission', async (req, res) => {
+  try {
+    let doc = await VisionMission.findOne({});
+    if (!doc) {
+      doc = await VisionMission.create(defaultVisionMission);
+    }
+    res.json(doc);
+  } catch (err) {
+    console.error("Fetch vision-mission error:", err);
+    res.status(500).json({ error: "Failed to fetch Vision & Mission settings." });
   }
 });
 
