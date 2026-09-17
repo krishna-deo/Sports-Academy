@@ -71,7 +71,7 @@ router.post('/forgot-password', async (req, res) => {
       success: true, 
       message: sendResult?.isDevFallback 
         ? "Verification code generated!" 
-        : `A verification reset code has been sent to ${user.email}.`,
+        : "A 6-digit verification reset code has been sent to your registered email address.",
       devCode: sendResult?.isDevFallback ? resetCode : undefined
     });
   } catch (error) {
