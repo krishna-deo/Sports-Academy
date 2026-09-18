@@ -57,6 +57,7 @@ const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
+const AdmissionApplication = require('../models/AdmissionApplication');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
@@ -864,6 +865,239 @@ router.get('/students/documents/:filename', async (req, res) => {
     return res.status(404).json({ error: "Requested document does not exist." });
   }
   res.sendFile(filePath);
+});
+
+// ==========================================
+// ADMISSION APPLICATIONS MANAGEMENT (ADMIN)
+// ==========================================
+
+// 1. Get all Admission Applications (with pagination, filters & stats)
+router.get('/admission-applications', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const statusFilter = req.query.status || '';
+    const searchQuery = req.query.search || '';
+
+    const query = {};
+    if (statusFilter && statusFilter !== 'all') {
+      query.status = statusFilter;
+    }
+
+    if (searchQuery) {
+      const sanitizedSearch = sanitizeInput(searchQuery).trim();
+      query.$or = [
+        { fullName: { $regex: sanitizedSearch, $options: 'i' } },
+        { applicationId: { $regex: sanitizedSearch, $options: 'i' } },
+        { primarySport: { $regex: sanitizedSearch, $options: 'i' } },
+        { 'contact.phone': { $regex: sanitizedSearch, $options: 'i' } },
+        { 'guardian.name': { $regex: sanitizedSearch, $options: 'i' } }
+      ];
+    }
+
+    const applications = await AdmissionApplication.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await AdmissionApplication.countDocuments(query);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    // Overall stats counters
+    const pendingCount = await AdmissionApplication.countDocuments({ status: 'Pending' });
+    const approvedCount = await AdmissionApplication.countDocuments({ status: 'Approved' });
+    const rejectedCount = await AdmissionApplication.countDocuments({ status: 'Rejected' });
+    const totalApplications = await AdmissionApplication.countDocuments({});
+
+    res.json({
+      applications,
+      page,
+      totalPages,
+      total,
+      stats: {
+        total: totalApplications,
+        pending: pendingCount,
+        approved: approvedCount,
+        rejected: rejectedCount
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching admission applications:", err);
+    res.status(500).json({ error: "Failed to fetch admission applications." });
+  }
+});
+
+// 2. Get single Admission Application detail
+router.get('/admission-applications/:id', async (req, res) => {
+  try {
+    const app = await findDoc(AdmissionApplication, req.params.id) || await AdmissionApplication.findOne({ applicationId: req.params.id });
+    if (!app) {
+      return res.status(404).json({ error: "Admission application not found." });
+    }
+    res.json(app);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch admission application detail." });
+  }
+});
+
+// 3. Edit Admission Application details (Admin editing before or after decision)
+router.put('/admission-applications/:id', async (req, res) => {
+  try {
+    const app = await findDoc(AdmissionApplication, req.params.id) || await AdmissionApplication.findOne({ applicationId: req.params.id });
+    if (!app) {
+      return res.status(404).json({ error: "Admission application not found." });
+    }
+
+    const fields = ['fullName', 'gender', 'bloodGroup', 'primarySport', 'secondarySports', 'residency', 'contact', 'guardian', 'education', 'medicalNotes', 'status'];
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        app[field] = req.body[field];
+      }
+    });
+
+    if (req.body.dateOfBirth) {
+      app.dateOfBirth = new Date(req.body.dateOfBirth);
+    }
+
+    await app.save();
+    res.json({ success: true, message: "Application details updated successfully.", application: app });
+  } catch (err) {
+    console.error("Error updating admission application:", err);
+    res.status(500).json({ error: "Failed to update admission application." });
+  }
+});
+
+// 4. APPROVE Admission Application -> Creates an Active Student in MongoDB
+router.post('/admission-applications/:id/approve', async (req, res) => {
+  try {
+    const app = await findDoc(AdmissionApplication, req.params.id) || await AdmissionApplication.findOne({ applicationId: req.params.id });
+    if (!app) {
+      return res.status(404).json({ error: "Admission application not found." });
+    }
+
+    if (app.status === 'Approved' && app.approvedStudentId) {
+      const existingStudent = await Student.findOne({ studentId: app.approvedStudentId });
+      if (existingStudent) {
+        return res.status(400).json({ error: "Application is already approved and student record exists.", student: existingStudent });
+      }
+    }
+
+    const { batch, coach, hostelRoom, customStudentId } = req.body;
+
+    // Generate unique student ID if not provided
+    let finalStudentId = customStudentId ? String(customStudentId).trim() : '';
+    if (!finalStudentId) {
+      const year = new Date().getFullYear();
+      const count = await Student.countDocuments({});
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      finalStudentId = `RLBSA-STU-${year}-${(count + 1).toString().padStart(3, '0')}-${randomSuffix}`;
+    }
+
+    // Calculate age from Date of Birth
+    const dob = new Date(app.dateOfBirth);
+    const age = Math.max(1, new Date().getFullYear() - dob.getFullYear());
+
+    const newStudent = new Student({
+      id: finalStudentId,
+      studentId: finalStudentId,
+      fullName: app.fullName,
+      name: app.fullName,
+      dateOfBirth: app.dateOfBirth || dob || new Date(),
+      age: age,
+      gender: app.gender,
+      bloodGroup: app.bloodGroup || '',
+      avatar: app.photo || '🎓',
+      primarySport: app.primarySport,
+      sport: app.primarySport,
+      secondarySports: app.secondarySports || [],
+      joined: new Date().toISOString().split('T')[0],
+      admissionDate: new Date(),
+      status: 'Active',
+      residency: app.residency || 'resident',
+      batch: batch || 'Morning Batch A',
+      coach: coach || '',
+      hostelRoom: hostelRoom || '',
+      contact: {
+        phone: app.contact?.phone || '',
+        email: app.contact?.email || '',
+        address: app.contact?.address || ''
+      },
+      guardian: {
+        name: app.guardian?.name || '',
+        relationship: app.guardian?.relationship || 'Parent',
+        phone: app.guardian?.phone || '',
+        emergencyContact: app.guardian?.emergencyContact || '',
+        address: app.guardian?.address || ''
+      },
+      education: {
+        schoolName: app.education?.schoolName || '',
+        className: app.education?.className || '',
+        academicInfo: app.education?.academicInfo || ''
+      },
+      medalNumber: 0,
+      isDeleted: false,
+      showOnPublicWebsite: true
+    });
+
+    await newStudent.save();
+
+    // Mark application as Approved
+    app.status = 'Approved';
+    app.approvedStudentId = finalStudentId;
+    await app.save();
+
+    res.status(201).json({
+      success: true,
+      message: `Application approved! Student record created with ID: ${finalStudentId}`,
+      student: newStudent,
+      application: app
+    });
+  } catch (err) {
+    console.error("Error approving admission application:", err);
+    res.status(500).json({ error: "Failed to approve application and create student record." });
+  }
+});
+
+// 5. REJECT Admission Application
+router.post('/admission-applications/:id/reject', async (req, res) => {
+  try {
+    const app = await findDoc(AdmissionApplication, req.params.id) || await AdmissionApplication.findOne({ applicationId: req.params.id });
+    if (!app) {
+      return res.status(404).json({ error: "Admission application not found." });
+    }
+
+    const { rejectionReason, purge } = req.body;
+
+    if (purge) {
+      await AdmissionApplication.deleteOne({ _id: app._id });
+      return res.json({ success: true, message: "Application purged completely from database." });
+    }
+
+    app.status = 'Rejected';
+    app.rejectionReason = rejectionReason || 'Did not meet admission criteria';
+    await app.save();
+
+    res.json({ success: true, message: "Application rejected.", application: app });
+  } catch (err) {
+    console.error("Error rejecting application:", err);
+    res.status(500).json({ error: "Failed to reject application." });
+  }
+});
+
+// 6. Delete Admission Application
+router.delete('/admission-applications/:id', async (req, res) => {
+  try {
+    const app = await findDoc(AdmissionApplication, req.params.id) || await AdmissionApplication.findOne({ applicationId: req.params.id });
+    if (!app) {
+      return res.status(404).json({ error: "Admission application not found." });
+    }
+    await AdmissionApplication.deleteOne({ _id: app._id });
+    res.json({ success: true, message: "Application deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete application." });
+  }
 });
 
 // Coaches CRUD

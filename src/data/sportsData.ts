@@ -109,6 +109,14 @@ export const sportsList: SportItem[] = [
     age: "Ages 6+",
     description: "Refine sprinting forms, endurance, hurdles, long jump, and general physical performance metrics.",
     icon: "🏃"
+  },
+  {
+    id: "kabaddi",
+    name: "Kabaddi",
+    category: "Team Sports",
+    age: "Ages 8+",
+    description: "Develop agility, raiding skills, defensive tackles, and physical endurance on our dedicated mats.",
+    icon: "🤼"
   }
 ];
 

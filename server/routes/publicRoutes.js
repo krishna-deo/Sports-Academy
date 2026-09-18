@@ -17,6 +17,7 @@ const Facility = require('../models/Facility');
 const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
+const AdmissionApplication = require('../models/AdmissionApplication');
 const emailService = require('../services/emailService');
 
 const defaultVisionMission = {
@@ -554,6 +555,79 @@ router.get('/vision-mission', async (req, res) => {
   } catch (err) {
     console.error("Fetch vision-mission error:", err);
     res.status(500).json({ error: "Failed to fetch Vision & Mission settings." });
+  }
+});
+
+// Submit Online Admission Application (Public)
+router.post('/admission-applications', async (req, res) => {
+  try {
+    const {
+      fullName,
+      dateOfBirth,
+      gender,
+      bloodGroup,
+      photo,
+      primarySport,
+      secondarySports,
+      residency,
+      contact,
+      guardian,
+      education,
+      medicalNotes
+    } = req.body;
+
+    if (!fullName || !dateOfBirth || !primarySport || !contact?.phone || !guardian?.name || !guardian?.phone) {
+      return res.status(400).json({ 
+        error: "Missing required fields: Full Name, Date of Birth, Primary Sport, Phone Number, and Guardian details are required." 
+      });
+    }
+
+    const count = await AdmissionApplication.countDocuments({});
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const applicationId = `ADM-${new Date().getFullYear()}-${count + 1}${randomCode}`;
+
+    const application = new AdmissionApplication({
+      applicationId,
+      fullName: String(fullName).trim(),
+      dateOfBirth: new Date(dateOfBirth),
+      gender: gender || 'female',
+      bloodGroup: bloodGroup || '',
+      photo: photo || '',
+      primarySport: String(primarySport).trim(),
+      secondarySports: Array.isArray(secondarySports) ? secondarySports : (secondarySports ? [secondarySports] : []),
+      residency: residency || 'resident',
+      contact: {
+        phone: contact.phone ? String(contact.phone).trim() : '',
+        email: contact.email ? String(contact.email).trim() : '',
+        address: contact.address ? String(contact.address).trim() : ''
+      },
+      guardian: {
+        name: guardian.name ? String(guardian.name).trim() : '',
+        relationship: guardian.relationship ? String(guardian.relationship).trim() : 'Parent',
+        phone: guardian.phone ? String(guardian.phone).trim() : '',
+        emergencyContact: guardian.emergencyContact ? String(guardian.emergencyContact).trim() : '',
+        address: guardian.address ? String(guardian.address).trim() : ''
+      },
+      education: {
+        schoolName: education?.schoolName ? String(education.schoolName).trim() : '',
+        className: education?.className ? String(education.className).trim() : '',
+        academicInfo: education?.academicInfo ? String(education.academicInfo).trim() : ''
+      },
+      medicalNotes: medicalNotes ? String(medicalNotes).trim() : '',
+      status: 'Pending'
+    });
+
+    await application.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Admission application submitted successfully!",
+      applicationId: application.applicationId,
+      application
+    });
+  } catch (err) {
+    console.error("Error submitting admission application:", err);
+    res.status(500).json({ error: "Failed to submit admission application." });
   }
 });
 

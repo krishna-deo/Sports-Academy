@@ -14,6 +14,7 @@ import { Contact } from './pages/Contact';
 import { Donate } from './pages/Donate';
 import { AdminLayout } from './pages/AdminLayout';
 import { Compliance } from './pages/Compliance';
+import { StudentAdmissionForm } from './pages/StudentAdmissionForm';
 
 function App() {
   const hash = useHash();
@@ -100,6 +101,10 @@ function App() {
 
     if (normalizedHash === '#/compliance') {
       return <Compliance sub="privacy-policy" />;
+    }
+
+    if (normalizedHash === '#/admission-form' || normalizedHash === '#/apply' || normalizedHash === '#/admission') {
+      return <StudentAdmissionForm />;
     }
 
     // Default Fallback

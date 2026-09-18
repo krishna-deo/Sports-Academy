@@ -199,6 +199,23 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [viewingStudentProfile, setViewingStudentProfile] = useState<any | null>(null);
   const [editingStudentProfile, setEditingStudentProfile] = useState<any | null>(null);
+
+  // Admission Applications Sub-Module States
+  const [studentSubTab, setStudentSubTab] = useState<'roster' | 'applications'>('roster');
+  const [admissionApplications, setAdmissionApplications] = useState<any[]>([]);
+  const [applicationStats, setApplicationStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [applicationPage, setApplicationPage] = useState<number>(1);
+  const [applicationTotalPages, setApplicationTotalPages] = useState<number>(1);
+  const [applicationTotalItems, setApplicationTotalItems] = useState<number>(0);
+  const [applicationSearch, setApplicationSearch] = useState<string>('');
+  const [applicationStatusFilter, setApplicationStatusFilter] = useState<string>('Pending');
+  const [viewingApplication, setViewingApplication] = useState<any | null>(null);
+  const [editingApplication, setEditingApplication] = useState<any | null>(null);
+  const [approvingApplication, setApprovingApplication] = useState<any | null>(null);
+  const [rejectingApplication, setRejectingApplication] = useState<any | null>(null);
+  const [approvalForm, setApprovalForm] = useState({ batch: 'Morning Batch A', coach: '', hostelRoom: '', customStudentId: '' });
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [copiedLinkToast, setCopiedLinkToast] = useState<boolean>(false);
   
   // Form Fields State
   const [studentForm, setStudentForm] = useState<Record<string, any>>({
@@ -928,6 +945,121 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
   };
 
+  const fetchAdmissionApplications = async () => {
+    if (!token) return;
+    try {
+      const queryParams = new URLSearchParams({
+        page: String(applicationPage),
+        limit: '10',
+        search: applicationSearch,
+        status: applicationStatusFilter
+      });
+      const res = await fetch(`http://localhost:5000/api/admin/admission-applications?${queryParams}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdmissionApplications(data.applications || []);
+        setApplicationTotalPages(data.totalPages || 1);
+        setApplicationTotalItems(data.total || 0);
+        if (data.stats) {
+          setApplicationStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to query admission applications:", err);
+    }
+  };
+
+  const handleCopyAdmissionLink = () => {
+    const link = `${window.location.origin}/#/admission-form`;
+    navigator.clipboard.writeText(link);
+    setCopiedLinkToast(true);
+    triggerSuccess('Admission Form Link copied to clipboard!');
+    setTimeout(() => setCopiedLinkToast(false), 3000);
+  };
+
+  const handleApproveApplicationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!approvingApplication) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/admission-applications/${approvingApplication._id || approvingApplication.applicationId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(approvalForm)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`Application ${approvingApplication.applicationId} approved! Active student record created.`);
+        setApprovingApplication(null);
+        setApprovalForm({ batch: 'Morning Batch A', coach: '', hostelRoom: '', customStudentId: '' });
+        fetchAdmissionApplications();
+        fetchStudents();
+      } else {
+        alert(data.error || "Failed to approve application.");
+      }
+    } catch (err) {
+      console.error("Error approving application:", err);
+      alert("Network error.");
+    }
+  };
+
+  const handleRejectApplicationSubmit = async (e: React.FormEvent, purge = false) => {
+    e.preventDefault();
+    if (!rejectingApplication) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/admission-applications/${rejectingApplication._id || rejectingApplication.applicationId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rejectionReason, purge })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(purge ? 'Application purged.' : 'Application rejected.');
+        setRejectingApplication(null);
+        setRejectionReason('');
+        fetchAdmissionApplications();
+      } else {
+        alert(data.error || "Failed to reject application.");
+      }
+    } catch (err) {
+      console.error("Error rejecting application:", err);
+      alert("Network error.");
+    }
+  };
+
+  const handleSaveApplicationEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingApplication) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/admission-applications/${editingApplication._id || editingApplication.applicationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editingApplication)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess('Application details updated.');
+        setEditingApplication(null);
+        fetchAdmissionApplications();
+      } else {
+        alert(data.error || "Failed to update application.");
+      }
+    } catch (err) {
+      console.error("Error updating application:", err);
+      alert("Network error.");
+    }
+  };
+
   const fetchData = async () => {
     try {
       // Fetch public content
@@ -979,8 +1111,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           });
         }
         
-        // Also fetch students initially
+        // Also fetch students and admission applications initially
         fetchStudents();
+        fetchAdmissionApplications();
       }
     } catch (err) {
       console.error("Error loading backend api data:", err);
@@ -1001,6 +1134,18 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     studentStatusFilter, 
     studentYearFilter, 
     studentShowDeleted
+  ]);
+
+  useEffect(() => {
+    if (activeTab === 'students') {
+      fetchAdmissionApplications();
+    }
+  }, [
+    activeTab,
+    studentSubTab,
+    applicationPage,
+    applicationSearch,
+    applicationStatusFilter
   ]);
 
   useEffect(() => {
@@ -3328,20 +3473,61 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray">
             <div>
               <h3 className="text-base font-bold text-primary">Students Directory</h3>
-              <p className="text-text-light text-xs mt-0.5">Manage student profiles, parent details, coaching metrics, and documents</p>
+              <p className="text-text-light text-xs mt-0.5">Manage student profiles, parent details, coaching metrics, and admission requests</p>
             </div>
-            <button 
-              onClick={() => {
-                resetStudentForm();
-                setActiveModal('student-create');
-              }}
-              className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
+            <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+              <button
+                onClick={handleCopyAdmissionLink}
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all font-bold py-2.5 px-4 rounded-lg cursor-pointer text-xs flex items-center gap-1.5"
+                title="Copy public student admission registration link to share"
+              >
+                <span>🔗</span> {copiedLinkToast ? 'Link Copied!' : 'Share Admission Link'}
+              </button>
+              <button 
+                onClick={() => {
+                  resetStudentForm();
+                  setActiveModal('student-create');
+                }}
+                className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5"
+              >
+                <Plus size={16} /> Register Student
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-Tab Switcher: Active Students vs Pending Applications */}
+          <div className="flex border-b border-border-gray gap-2">
+            <button
+              onClick={() => setStudentSubTab('roster')}
+              className={`py-3 px-5 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+                studentSubTab === 'roster'
+                  ? 'border-primary text-primary bg-slate-50'
+                  : 'border-transparent text-text-light hover:text-primary'
+              }`}
             >
-              <Plus size={16} /> Register Student
+              <span>🎓</span> Active Students Roster ({studentStats.totalStudents})
+            </button>
+            <button
+              onClick={() => setStudentSubTab('applications')}
+              className={`py-3 px-5 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+                studentSubTab === 'applications'
+                  ? 'border-emerald-600 text-emerald-700 bg-emerald-50'
+                  : 'border-transparent text-text-light hover:text-emerald-700'
+              }`}
+            >
+              <span>📩</span> Pending Admission Requests
+              {applicationStats.pending > 0 && (
+                <span className="px-2 py-0.5 text-[10px] font-black bg-rose-500 text-white rounded-full">
+                  {applicationStats.pending}
+                </span>
+              )}
             </button>
           </div>
 
-          {/* Stats Dashboard */}
+          {/* SUB-TAB 1: ACTIVE STUDENTS ROSTER */}
+          {studentSubTab === 'roster' && (
+            <>
+              {/* Stats Dashboard */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="p-4 border border-border-gray rounded-xl bg-soft-light shadow-sm text-left animate-fade-in">
               <span className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1">Total Students</span>
@@ -3737,6 +3923,202 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               </div>
             </div>
           )}
+          </>
+          )}
+
+          {/* SUB-TAB 2: PENDING ADMISSION APPLICATIONS */}
+          {studentSubTab === 'applications' && (
+            <div className="space-y-6 animate-fade-in text-left">
+              
+              {/* Application Stats Dashboard */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 border border-border-gray rounded-xl bg-slate-50 shadow-sm text-left">
+                  <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Applications</span>
+                  <span className="text-xl font-extrabold text-slate-900">{applicationStats.total}</span>
+                </div>
+                <div className="p-4 border border-amber-200 rounded-xl bg-amber-50/50 shadow-sm text-left">
+                  <span className="block text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Pending Review</span>
+                  <span className="text-xl font-extrabold text-amber-600">{applicationStats.pending}</span>
+                </div>
+                <div className="p-4 border border-emerald-200 rounded-xl bg-emerald-50/50 shadow-sm text-left">
+                  <span className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Approved & Enrolled</span>
+                  <span className="text-xl font-extrabold text-emerald-600">{applicationStats.approved}</span>
+                </div>
+                <div className="p-4 border border-rose-200 rounded-xl bg-rose-50/50 shadow-sm text-left">
+                  <span className="block text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-1">Rejected</span>
+                  <span className="text-xl font-extrabold text-rose-600">{applicationStats.rejected}</span>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-border-gray flex flex-col md:flex-row items-center justify-between gap-3 text-left">
+                <div className="relative flex-1 w-full">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-slate-400"><MagnifyingGlass size={16} /></span>
+                  <input 
+                    type="text" 
+                    placeholder="Search Applicant Name, App ID, Phone, Sport..." 
+                    value={applicationSearch}
+                    onChange={(e) => {
+                      setApplicationSearch(e.target.value);
+                      setApplicationPage(1);
+                    }}
+                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white text-xs text-slate-800 font-semibold outline-none focus:border-emerald-500 transition-all"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                  <label className="text-xs font-bold text-slate-500 shrink-0">Status Filter:</label>
+                  <select 
+                    value={applicationStatusFilter}
+                    onChange={(e) => {
+                      setApplicationStatusFilter(e.target.value);
+                      setApplicationPage(1);
+                    }}
+                    className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="Pending">⏳ Pending Review</option>
+                    <option value="Approved">✅ Approved</option>
+                    <option value="Rejected">❌ Rejected</option>
+                    <option value="all">🌐 All Applications</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Applications Table */}
+              <div className="overflow-x-auto border border-border-gray rounded-xl">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100/80 uppercase font-bold text-slate-600 text-[10px] tracking-wider border-b border-border-gray">
+                    <tr>
+                      <th className="py-3 px-4">Application ID</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">DOB / Age</th>
+                      <th className="py-3 px-4">Sport & Residency</th>
+                      <th className="py-3 px-4">Parent / Guardian</th>
+                      <th className="py-3 px-4">Submitted Date</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-gray font-medium">
+                    {admissionApplications.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
+                          No admission applications found matching current filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      admissionApplications.map((app) => (
+                        <tr key={app._id || app.applicationId} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3 px-4 font-bold text-emerald-700 font-mono text-[11px]">
+                            {app.applicationId}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-900">{app.fullName}</div>
+                            <div className="text-[10px] text-slate-500 capitalize">{app.gender || 'girl'} • {app.contact?.phone || 'No phone'}</div>
+                          </td>
+                          <td className="py-3 px-4 text-[11px]">
+                            {app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-block bg-teal-50 text-teal-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                              {app.primarySport}
+                            </span>
+                            <div className="text-[10px] text-slate-500 capitalize mt-0.5">
+                              {app.residency === 'resident' ? 'Resident' : 'Day Scholar'}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-800">{app.guardian?.name || 'N/A'}</div>
+                            <div className="text-[10px] text-slate-500">{app.guardian?.relationship || 'Parent'} • {app.guardian?.phone}</div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 text-[10px]">
+                            {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : 'Recent'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              app.status === 'Approved'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                : app.status === 'Rejected'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}>
+                              {app.status === 'Approved' ? '✅ Approved' : app.status === 'Rejected' ? '❌ Rejected' : '⏳ Pending'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex justify-end items-center gap-1.5">
+                              <button
+                                onClick={() => setViewingApplication(app)}
+                                className="p-1.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                                title="View Application Details"
+                              >
+                                <Eye size={15} />
+                              </button>
+                              <button
+                                onClick={() => setEditingApplication({ ...app })}
+                                className="p-1.5 text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                                title="Edit Application Details"
+                              >
+                                <Pencil size={15} />
+                              </button>
+                              {app.status !== 'Approved' && (
+                                <button
+                                  onClick={() => {
+                                    setApprovingApplication(app);
+                                    setApprovalForm({ batch: 'Morning Batch A', coach: coaches[0]?.name || '', hostelRoom: '', customStudentId: '' });
+                                  }}
+                                  className="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors shadow-sm"
+                                  title="Approve & Enroll Student"
+                                >
+                                  ✅ Approve
+                                </button>
+                              )}
+                              {app.status !== 'Rejected' && (
+                                <button
+                                  onClick={() => {
+                                    setRejectingApplication(app);
+                                    setRejectionReason('');
+                                  }}
+                                  className="px-2.5 py-1 text-[11px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md transition-colors"
+                                  title="Reject Application"
+                                >
+                                  ❌ Reject
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Application Pagination */}
+              {applicationTotalPages > 1 && (
+                <div className="flex justify-between items-center bg-slate-50 p-3.5 px-5 rounded-xl border border-border-gray text-xs font-semibold text-slate-600">
+                  <span>Showing page <strong className="text-slate-900">{applicationPage}</strong> of <strong className="text-slate-900">{applicationTotalPages}</strong> ({applicationTotalItems} total)</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setApplicationPage(p => Math.max(1, p - 1))}
+                      disabled={applicationPage === 1}
+                      className="px-3 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-bold disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setApplicationPage(p => Math.min(applicationTotalPages, p + 1))}
+                      disabled={applicationPage === applicationTotalPages}
+                      className="px-3 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-bold disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
 
@@ -9428,6 +9810,411 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               >
                 {isVerifyingEmail ? 'VERIFYING...' : 'CONFIRM EMAIL CHANGE'}
               </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Admission Application Detail View Modal */}
+      {viewingApplication && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewingApplication(null)}>
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 sm:p-8 text-left relative max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1" onClick={() => setViewingApplication(null)}>
+              <X size={20} />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-lg">
+                📋
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Admission Application</span>
+                <h3 className="text-xl font-bold text-slate-900">{viewingApplication.fullName}</h3>
+                <span className="text-xs text-slate-500 font-mono">App ID: {viewingApplication.applicationId}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-slate-700">
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Personal Info</span>
+                <p><strong>DOB:</strong> {viewingApplication.dateOfBirth ? new Date(viewingApplication.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Gender:</strong> <span className="capitalize">{viewingApplication.gender}</span></p>
+                <p><strong>Blood Group:</strong> {viewingApplication.bloodGroup || 'N/A'}</p>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Sports & Residency</span>
+                <p><strong>Primary Sport:</strong> {viewingApplication.primarySport}</p>
+                <p><strong>Secondary Sports:</strong> {viewingApplication.secondarySports?.join(', ') || 'None'}</p>
+                <p><strong>Residency:</strong> <span className="capitalize">{viewingApplication.residency}</span></p>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Student Contact</span>
+                <p><strong>Phone:</strong> {viewingApplication.contact?.phone || 'N/A'}</p>
+                <p><strong>Email:</strong> {viewingApplication.contact?.email || 'N/A'}</p>
+                <p><strong>Address:</strong> {viewingApplication.contact?.address || 'N/A'}</p>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Parent / Guardian</span>
+                <p><strong>Name:</strong> {viewingApplication.guardian?.name || 'N/A'}</p>
+                <p><strong>Relationship:</strong> {viewingApplication.guardian?.relationship || 'Parent'}</p>
+                <p><strong>Phone:</strong> {viewingApplication.guardian?.phone || 'N/A'}</p>
+                <p><strong>Emergency:</strong> {viewingApplication.guardian?.emergencyContact || 'N/A'}</p>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Education</span>
+                <p><strong>School:</strong> {viewingApplication.education?.schoolName || 'N/A'}</p>
+                <p><strong>Class:</strong> {viewingApplication.education?.className || 'N/A'}</p>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Status & Submission</span>
+                <p><strong>Status:</strong> <span className="font-bold">{viewingApplication.status}</span></p>
+                <p><strong>Submitted:</strong> {viewingApplication.submittedAt ? new Date(viewingApplication.submittedAt).toLocaleString() : 'N/A'}</p>
+              </div>
+            </div>
+
+            {viewingApplication.medicalNotes && (
+              <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                <span className="font-bold text-amber-700 block mb-1">Medical Notes / Allergies:</span>
+                {viewingApplication.medicalNotes}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100">
+              <button onClick={() => setViewingApplication(null)} className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                Close
+              </button>
+              {viewingApplication.status !== 'Approved' && (
+                <button
+                  onClick={() => {
+                    setApprovingApplication(viewingApplication);
+                    setViewingApplication(null);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                >
+                  Approve Application
+                </button>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Approve Application Modal with Full Application Review */}
+      {approvingApplication && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={() => setApprovingApplication(null)}>
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-6 sm:p-8 text-left relative max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100" onClick={() => setApprovingApplication(null)}>
+              <X size={20} />
+            </button>
+
+            {/* Modal Title & Subtitle */}
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl shrink-0">
+                ✅
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Admission Review & Approval</span>
+                <h3 className="text-xl font-extrabold text-slate-900">{approvingApplication.fullName}</h3>
+                <span className="text-xs text-slate-500 font-mono">Application Reference ID: {approvingApplication.applicationId}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleApproveApplicationSubmit} className="space-y-6">
+              
+              {/* SECTION A: STUDENT SUBMITTED APPLICATION DETAILS */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    📋 Candidate Submitted Application Details
+                  </h4>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    Submitted: {approvingApplication.submittedAt ? new Date(approvingApplication.submittedAt).toLocaleDateString() : 'Recent'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                  {/* Personal Details */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 tracking-wider block mb-1">Personal Details</span>
+                    <p><strong className="text-slate-900">Name:</strong> {approvingApplication.fullName}</p>
+                    <p><strong className="text-slate-900">DOB:</strong> {approvingApplication.dateOfBirth ? new Date(approvingApplication.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+                    <p><strong className="text-slate-900">Gender:</strong> <span className="capitalize">{approvingApplication.gender}</span></p>
+                    <p><strong className="text-slate-900">Blood Group:</strong> {approvingApplication.bloodGroup || 'Not specified'}</p>
+                  </div>
+
+                  {/* Sports & Residency */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-teal-700 tracking-wider block mb-1">Sports & Hostel</span>
+                    <p><strong className="text-slate-900">Primary Sport:</strong> <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded text-[11px]">{approvingApplication.primarySport}</span></p>
+                    <p><strong className="text-slate-900">Secondary:</strong> {approvingApplication.secondarySports?.length ? approvingApplication.secondarySports.join(', ') : 'None'}</p>
+                    <p><strong className="text-slate-900">Residency:</strong> <span className="capitalize font-semibold">{approvingApplication.residency === 'resident' ? 'Residential Athlete' : 'Day Scholar'}</span></p>
+                  </div>
+
+                  {/* Student Contact */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-blue-700 tracking-wider block mb-1">Student Contact</span>
+                    <p><strong className="text-slate-900">Mobile:</strong> {approvingApplication.contact?.phone || 'N/A'}</p>
+                    <p className="truncate"><strong className="text-slate-900">Email:</strong> {approvingApplication.contact?.email || 'N/A'}</p>
+                    <p className="truncate"><strong className="text-slate-900">Address:</strong> {approvingApplication.contact?.address || 'N/A'}</p>
+                  </div>
+
+                  {/* Parent / Guardian Info */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1 sm:col-span-2">
+                    <span className="text-[10px] font-bold uppercase text-amber-700 tracking-wider block mb-1">Parent / Guardian Information</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <p><strong className="text-slate-900">Guardian Name:</strong> {approvingApplication.guardian?.name || 'N/A'}</p>
+                      <p><strong className="text-slate-900">Relationship:</strong> {approvingApplication.guardian?.relationship || 'Parent'}</p>
+                      <p><strong className="text-slate-900">Guardian Phone:</strong> {approvingApplication.guardian?.phone || 'N/A'}</p>
+                      <p><strong className="text-slate-900">Emergency Phone:</strong> {approvingApplication.guardian?.emergencyContact || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Education & School */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-purple-700 tracking-wider block mb-1">School & Education</span>
+                    <p><strong className="text-slate-900">School:</strong> {approvingApplication.education?.schoolName || 'N/A'}</p>
+                    <p><strong className="text-slate-900">Class:</strong> {approvingApplication.education?.className || 'N/A'}</p>
+                  </div>
+                </div>
+
+                {approvingApplication.medicalNotes && (
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
+                    <span className="font-bold text-amber-800 block mb-0.5">Medical Notes / Disclosures:</span>
+                    {approvingApplication.medicalNotes}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION B: ADMIN BATCH & COACH ASSIGNMENT */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-2">
+                  ⚙️ Admin Assignment & Enrollment Settings
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assign Training Batch <span className="text-rose-500">*</span></label>
+                    <select
+                      value={approvalForm.batch}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, batch: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-emerald-500 bg-white"
+                    >
+                      <option value="Morning Batch A">Morning Batch A</option>
+                      <option value="Morning Batch B">Morning Batch B</option>
+                      <option value="Evening Batch A">Evening Batch A</option>
+                      <option value="Elite Performance Batch">Elite Performance Batch</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assign Head Coach</label>
+                    <select
+                      value={approvalForm.coach}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, coach: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-emerald-500 bg-white"
+                    >
+                      <option value="">Select Coach</option>
+                      {coaches.map(c => (
+                        <option key={c.id || c.name} value={c.name}>{c.name} ({c.role || 'Coach'})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Hostel Room Number (If Resident)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Room 204, Block B"
+                      value={approvalForm.hostelRoom}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, hostelRoom: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Custom Student ID (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="Auto-generated if left blank (e.g. RLBSA-STU-2026-001)"
+                      value={approvalForm.customStudentId}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, customStudentId: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons Footer */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRejectingApplication(approvingApplication);
+                    setApprovingApplication(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all"
+                >
+                  ❌ Reject Application
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setApprovingApplication(null)} className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg hover:shadow-emerald-600/30 transition-all flex items-center gap-1.5">
+                    <span>✅</span> Confirm & Approve Student
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Reject Application Modal */}
+      {rejectingApplication && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={() => setRejectingApplication(null)}>
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 text-left relative" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1" onClick={() => setRejectingApplication(null)}>
+              <X size={20} />
+            </button>
+
+            <h3 className="text-lg font-bold text-rose-700 mb-1 flex items-center gap-2">
+              <span>❌</span> Reject Application
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">
+              Rejecting <strong className="text-slate-800">{rejectingApplication.fullName}</strong>'s admission request.
+            </p>
+
+            <form onSubmit={(e) => handleRejectApplicationSubmit(e, false)} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Rejection Reason</label>
+                <textarea
+                  rows={3}
+                  placeholder="Enter reason for rejection..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-rose-500"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                <button type="submit" className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">
+                  Mark as Rejected
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleRejectApplicationSubmit(e as any, true)}
+                  className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs"
+                >
+                  Purge Application Completely (Delete)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Pending Application Details Modal */}
+      {editingApplication && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={() => setEditingApplication(null)}>
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl p-6 sm:p-8 text-left relative max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1" onClick={() => setEditingApplication(null)}>
+              <X size={20} />
+            </button>
+
+            <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <Pencil size={20} className="text-indigo-600" /> Edit Application Details
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">Modify applicant information before or after review.</p>
+
+            <form onSubmit={handleSaveApplicationEdit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingApplication.fullName || ''}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, fullName: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Primary Sport</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingApplication.primarySport || ''}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, primarySport: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingApplication.contact?.phone || ''}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, contact: { ...(prev?.contact || {}), phone: e.target.value } }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Guardian Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingApplication.guardian?.name || ''}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, guardian: { ...(prev?.guardian || {}), name: e.target.value } }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Guardian Phone</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingApplication.guardian?.phone || ''}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, guardian: { ...(prev?.guardian || {}), phone: e.target.value } }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Residency</label>
+                  <select
+                    value={editingApplication.residency || 'resident'}
+                    onChange={(e) => setEditingApplication((prev: any) => ({ ...prev, residency: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-indigo-500 bg-white"
+                  >
+                    <option value="resident">Resident</option>
+                    <option value="non-resident">Non-Resident (Day Scholar)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setEditingApplication(null)} className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                  Cancel
+                </button>
+                <button type="submit" className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md">
+                  Save Application Changes
+                </button>
+              </div>
             </form>
           </div>
         </div>,
