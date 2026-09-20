@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const DocumentSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
+  category: { type: String, default: 'Legal Document' },
+  description: { type: String, default: '' },
   path: { type: String, required: true }, // secure file link
   visibility: { type: String, enum: ['public', 'internal', 'private'], default: 'public' },
   status: { type: String, enum: ['draft', 'published'], default: 'published' },

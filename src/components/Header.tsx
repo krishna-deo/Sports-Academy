@@ -42,6 +42,7 @@ export const Header: React.FC = () => {
         { label: 'Our Story', href: '#/about/story' },
         { label: 'Outreach Program', href: '#/about/outreach-program' },
         { label: 'Founders & Directors', href: '#/about/founders' },
+        { label: 'Our Team', href: '#/about/team' },
         { label: 'What We Do', href: '#/about/what-we-do' },
         { label: 'Facilities', href: '#/about/facilities' },
         { label: 'Achievements', href: '#/about/achievements' },

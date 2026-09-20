@@ -44,6 +44,7 @@ const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const User = require('../models/User');
 const TeamMember = require('../models/TeamMember');
+const StaffMember = require('../models/StaffMember');
 const SuccessStory = require('../models/SuccessStory');
 const Policy = require('../models/Policy');
 const Document = require('../models/Document');
@@ -743,6 +744,9 @@ router.put('/students/:id', studentUpload, async (req, res) => {
     if (dateOfBirth) student.dateOfBirth = new Date(dateOfBirth);
     if (gender) student.gender = gender.toLowerCase();
     if (bloodGroup !== undefined) student.bloodGroup = sanitizeOrDefault(bloodGroup);
+    if (aadhaarNumber !== undefined || aadharNumber !== undefined) {
+      student.aadhaarNumber = sanitizeInput(aadhaarNumber || aadharNumber || '').trim();
+    }
     
     if (!student.contact) student.contact = {};
     if (phone !== undefined) student.contact.phone = sanitizeOrDefault(phone);
@@ -1008,6 +1012,7 @@ router.post('/admission-applications/:id/approve', async (req, res) => {
       age: age,
       gender: app.gender,
       bloodGroup: app.bloodGroup || '',
+      aadhaarNumber: app.aadhaarNumber || '',
       avatar: app.photo || '🎓',
       primarySport: app.primarySport,
       sport: app.primarySport,
@@ -1102,7 +1107,7 @@ router.delete('/admission-applications/:id', async (req, res) => {
 
 // Coaches CRUD
 router.post('/coaches', async (req, res) => {
-  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, avatar } = req.body;
+  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, bio, avatar } = req.body;
   if (!name || !role || !certificationStatus || !avatar) {
     return res.status(400).json({ error: "All required fields (name, role, experience, certificationStatus, avatar) are compulsory." });
   }
@@ -1110,6 +1115,7 @@ router.post('/coaches', async (req, res) => {
   name = sanitizeInput(name).trim();
   role = sanitizeInput(role).trim();
   certificationStatus = sanitizeInput(certificationStatus).trim();
+  const bioText = bio ? sanitizeInput(bio).trim() : '';
   const y = parseInt(experienceYears) || 0;
   const m = parseInt(experienceMonths) || 0;
 
@@ -1141,7 +1147,7 @@ router.post('/coaches', async (req, res) => {
       experienceMonths: m,
       experience,
       certificationStatus,
-      bio: '',
+      bio: bioText,
       avatar
     });
     await newCoach.save();
@@ -1153,7 +1159,7 @@ router.post('/coaches', async (req, res) => {
 });
 
 router.put('/coaches/:name', async (req, res) => {
-  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, avatar } = req.body;
+  let { name, role, experienceYears, experienceMonths, experience, certificationStatus, bio, avatar } = req.body;
   if (!name || !role || !certificationStatus || !avatar) {
     return res.status(400).json({ error: "All required fields (name, role, experience, certificationStatus, avatar) are compulsory." });
   }
@@ -1166,6 +1172,9 @@ router.put('/coaches/:name', async (req, res) => {
     coach.role = sanitizeInput(role).trim();
     coach.specialization = coach.role;
     coach.certificationStatus = sanitizeInput(certificationStatus).trim();
+    if (bio !== undefined) {
+      coach.bio = sanitizeInput(bio).trim();
+    }
 
     const y = parseInt(experienceYears) || 0;
     const m = parseInt(experienceMonths) || 0;
@@ -2000,6 +2009,166 @@ router.put('/team/:id/restore', async (req, res) => {
   }
 });
 
+// Staff Team Members CRUD
+router.get('/staff-team', async (req, res) => {
+  try {
+    let staff = await StaffMember.find({}).sort({ createdAt: 1 });
+    if (staff.length === 0) {
+      const defaultStaff = [
+        {
+          id: 'STM-001',
+          name: 'Sunil Kumar Sharma',
+          role: 'Operations & Logistics Manager',
+          bio: 'Sunil manages daily campus operations, equipment procurement, and transport coordination for over 100 student athletes.\nHis dedication ensures seamless logistics during regional and national tournament trips.',
+          image: '/images/hero1.jpeg',
+          objectPosition: 'center 20%'
+        },
+        {
+          id: 'STM-002',
+          name: 'Pooja Verma',
+          role: 'Academic & Welfare Coordinator',
+          bio: 'Pooja oversees school tuition programs, evening tutorial schedules, and student welfare.\nShe ensures every athlete maintains high academic standing while pursuing sports excellence.',
+          image: '/images/about_rlbsa.jpeg',
+          objectPosition: 'center 15%'
+        },
+        {
+          id: 'STM-003',
+          name: 'Dr. Amit Singh',
+          role: 'Sports Physiotherapist & Medical Lead',
+          bio: 'Dr. Amit leads injury prevention, rehabilitation therapy, and biomechanical recovery programs for RLBSA athletes.\nHe conducts monthly physical assessment audits to optimize athletic performance.',
+          image: '/images/hero2.jpg',
+          objectPosition: 'center 25%'
+        },
+        {
+          id: 'STM-004',
+          name: 'Rameshwar Roy',
+          role: 'Grounds & Infrastructure Specialist',
+          bio: 'Rameshwar maintains turf conditions, athletics tracks, and indoor training equipment to international safety standards.\nHe has been with RLBSA for over 8 years as a pillar of ground operations.',
+          image: '/images/sports_training_card.jpg',
+          objectPosition: 'center 15%'
+        }
+      ];
+      await StaffMember.insertMany(defaultStaff);
+      staff = await StaffMember.find({}).sort({ createdAt: 1 });
+    }
+    res.json(staff);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch staff team members list." });
+  }
+});
+
+router.post('/staff-team', async (req, res) => {
+  let { name, role, bio, image, objectPosition } = req.body;
+  if (!name || !role || !bio || !image) {
+    return res.status(400).json({ error: "Name, role, bio, and image are required." });
+  }
+
+  name = sanitizeInput(name).trim();
+  role = sanitizeInput(role).trim();
+  bio = sanitizeInput(bio).trim();
+  image = sanitizeInput(image).trim();
+  objectPosition = objectPosition ? sanitizeInput(objectPosition).trim() : 'center';
+
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'staff-team');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for staff member:", err);
+    }
+  }
+
+  try {
+    const newMember = new StaffMember({
+      id: 'STM-' + Math.floor(100 + Math.random() * 900),
+      name,
+      role,
+      bio,
+      image,
+      objectPosition
+    });
+    await newMember.save();
+    await logAdminAction(req.admin.username, 'staff-team-add', newMember.id, `Added staff member: ${name}`);
+    res.status(201).json({ success: true, member: newMember });
+  } catch (err) {
+    console.error("Error saving staff member:", err);
+    res.status(500).json({ error: "Failed to add staff member: " + err.message });
+  }
+});
+
+router.put('/staff-team/:id', async (req, res) => {
+  let { name, role, bio, image, objectPosition } = req.body;
+  if (!name || !role || !bio || !image) {
+    return res.status(400).json({ error: "Name, role, bio, and image are required." });
+  }
+
+  name = sanitizeInput(name).trim();
+  role = sanitizeInput(role).trim();
+  bio = sanitizeInput(bio).trim();
+  image = sanitizeInput(image).trim();
+  objectPosition = objectPosition ? sanitizeInput(objectPosition).trim() : 'center';
+
+  if (image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'staff-team');
+    } catch (err) {
+      console.error("Cloudinary Base64 upload failed for staff member:", err);
+    }
+  }
+
+  try {
+    const member = await findDoc(StaffMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Staff member not found." });
+    member.name = name;
+    member.role = role;
+    member.bio = bio;
+    member.image = image;
+    member.objectPosition = objectPosition;
+    await member.save();
+    await logAdminAction(req.admin.username, 'staff-team-update', req.params.id, `Updated staff member: ${name}`);
+    res.json({ success: true, member });
+  } catch (err) {
+    console.error("Error updating staff member:", err);
+    res.status(500).json({ error: "Failed to update staff member: " + err.message });
+  }
+});
+
+router.delete('/staff-team/:id', async (req, res) => {
+  try {
+    const isPermanent = req.query.permanent === 'true';
+    const member = await findDoc(StaffMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Staff member not found." });
+
+    if (isPermanent) {
+      await StaffMember.deleteOne({ _id: member._id });
+      await logAdminAction(req.admin.username, 'staff-team-permanent-delete', req.params.id, `Permanently deleted staff member: ${member.name}`);
+      return res.json({ success: true, message: "Staff member permanently deleted." });
+    } else {
+      member.isDeleted = true;
+      await member.save();
+      await logAdminAction(req.admin.username, 'staff-team-soft-delete', req.params.id, `Moved staff member to trash: ${member.name}`);
+      return res.json({ success: true, message: "Staff member moved to trash." });
+    }
+  } catch (err) {
+    console.error("Error deleting staff member:", err);
+    res.status(500).json({ error: "Failed to delete staff member." });
+  }
+});
+
+router.put('/staff-team/:id/restore', async (req, res) => {
+  try {
+    const member = await findDoc(StaffMember, req.params.id);
+    if (!member) return res.status(404).json({ error: "Staff member not found." });
+
+    member.isDeleted = false;
+    await member.save();
+    await logAdminAction(req.admin.username, 'staff-team-restore', req.params.id, `Restored staff member: ${member.name}`);
+    res.json({ success: true, member });
+  } catch (err) {
+    console.error("Error restoring staff member:", err);
+    res.status(500).json({ error: "Failed to restore staff member." });
+  }
+});
+
 // Success Stories CRUD
 router.get('/success-stories', async (req, res) => {
   try {
@@ -2329,7 +2498,7 @@ router.get('/compliance/documents', async (req, res) => {
 });
 
 router.post('/compliance/documents', upload.single('file'), async (req, res) => {
-  const { name, visibility, status, expiryDate } = req.body;
+  const { name, visibility, status, expiryDate, category, description } = req.body;
   if (!name || !req.file) {
     return res.status(400).json({ error: "Document Name and File upload are required." });
   }
@@ -2347,6 +2516,8 @@ router.post('/compliance/documents', upload.single('file'), async (req, res) => 
     const newDoc = new Document({
       id: docId,
       name: sanitizeInput(name).trim(),
+      category: category ? sanitizeInput(category).trim() : 'Legal Document',
+      description: description ? sanitizeInput(description).trim() : '',
       path: filePath,
       visibility: visibility || 'public',
       status: status || 'published',
@@ -2365,17 +2536,23 @@ router.post('/compliance/documents', upload.single('file'), async (req, res) => 
 
 router.delete('/compliance/documents/:id', async (req, res) => {
   try {
-    const doc = await Document.findOne({ id: req.params.id });
+    const doc = await Document.findOne({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
     if (!doc) return res.status(404).json({ error: "Document not found." });
     
-    await storageService.delete(doc.path);
-    await Document.deleteOne({ id: req.params.id });
+    try {
+      if (doc.path) await storageService.delete(doc.path);
+    } catch (e) {
+      console.warn("Storage delete warning:", e.message);
+    }
+
+    await Document.deleteOne({ _id: doc._id });
     
-    await logAdminAction(req.admin.username, 'document-delete', req.params.id, `Deleted document: ${doc.name}`);
+    const adminUser = req.admin ? req.admin.username : 'admin';
+    await logAdminAction(adminUser, 'document-delete', doc.id || doc._id.toString(), `Deleted document: ${doc.name}`);
     res.json({ success: true });
   } catch (err) {
     console.error("Delete document error:", err);
-    res.status(500).json({ error: "Failed to delete document." });
+    res.status(500).json({ error: "Failed to delete document: " + err.message });
   }
 });
 

@@ -7,6 +7,7 @@ const Event = require('../models/Event');
 const Enquiry = require('../models/Enquiry');
 const Milestone = require('../models/Milestone');
 const TeamMember = require('../models/TeamMember');
+const StaffMember = require('../models/StaffMember');
 const SuccessStory = require('../models/SuccessStory');
 const Policy = require('../models/Policy');
 const Document = require('../models/Document');
@@ -464,6 +465,15 @@ router.get('/team', async (req, res) => {
   }
 });
 
+router.get('/staff-team', async (req, res) => {
+  try {
+    const staff = await StaffMember.find({ isDeleted: { $ne: true } }).sort({ createdAt: 1 });
+    res.json(staff);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch staff team members list." });
+  }
+});
+
 // --- Public Legal & Compliance Routes ---
 
 // Get all published policies (only metadata: id, title, description, version, effectiveDate, lastUpdated)
@@ -492,9 +502,52 @@ router.get('/compliance/policies/:id', async (req, res) => {
 // Get all published public documents
 router.get('/compliance/documents', async (req, res) => {
   try {
-    const documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+    let documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+    if (!documents || documents.length === 0) {
+      const defaultDocs = [
+        {
+          id: 'doc-legal-society-reg',
+          name: 'Society Registration Certificate',
+          category: 'Registration & Statutory',
+          description: 'Official registration certificate of Rani Laxmibai Sports Academy registered under the Societies Registration Act.',
+          path: '/documents/society_registration_certificate.pdf',
+          visibility: 'public',
+          status: 'published'
+        },
+        {
+          id: 'doc-legal-80g-12a',
+          name: '12A & 80G Tax Exemption Certificate',
+          category: 'Tax Exemption',
+          description: 'Income Tax Department approval certificate granting tax exemption benefits for donations made to RLBSA.',
+          path: '/documents/tax_exemption_80g_12a.pdf',
+          visibility: 'public',
+          status: 'published'
+        },
+        {
+          id: 'doc-legal-audit-2024',
+          name: 'Annual Audited Financial Report (FY 2024-25)',
+          category: 'Financial Audit',
+          description: 'Audited financial statements, balance sheet, and compliance report prepared by independent Chartered Accountants.',
+          path: '/documents/annual_audit_report_2024.pdf',
+          visibility: 'public',
+          status: 'published'
+        },
+        {
+          id: 'doc-legal-csr-1',
+          name: 'Ministry of Corporate Affairs CSR-1 Registration',
+          category: 'CSR Approval',
+          description: 'Official Form CSR-1 registration certificate authorizing RLBSA to receive and execute Corporate Social Responsibility funds.',
+          path: '/documents/mca_csr_1_registration.pdf',
+          visibility: 'public',
+          status: 'published'
+        }
+      ];
+      await Document.insertMany(defaultDocs);
+      documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+    }
     res.json(documents);
   } catch (err) {
+    console.error("Fetch public documents error:", err);
     res.status(500).json({ error: "Failed to fetch public documents." });
   }
 });
@@ -566,6 +619,8 @@ router.post('/admission-applications', async (req, res) => {
       dateOfBirth,
       gender,
       bloodGroup,
+      aadhaarNumber,
+      aadharNumber,
       photo,
       primarySport,
       secondarySports,
@@ -592,6 +647,7 @@ router.post('/admission-applications', async (req, res) => {
       dateOfBirth: new Date(dateOfBirth),
       gender: gender || 'female',
       bloodGroup: bloodGroup || '',
+      aadhaarNumber: aadhaarNumber || aadharNumber ? String(aadhaarNumber || aadharNumber).trim() : '',
       photo: photo || '',
       primarySport: String(primarySport).trim(),
       secondarySports: Array.isArray(secondarySports) ? secondarySports : (secondarySports ? [secondarySports] : []),

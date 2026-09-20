@@ -32,6 +32,7 @@ import {
 
 import { AdminCompliance } from '../components/AdminCompliance';
 import { getBioParagraphs } from '../utils/textUtils';
+import { defaultStaffMembers } from '../data/teamMembersData';
 
 interface AdminViewsProps {
   activeTab: string;
@@ -260,7 +261,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [studentPhotoPreview, setStudentPhotoPreview] = useState<string>('');
   const [studentDocFiles, setStudentDocFiles] = useState<{ file: File; name: string }[]>([]);
   const [deletedDocuments, setDeletedDocuments] = useState<string[]>([]);
-  const [coachForm, setCoachForm] = useState({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
+  const [coachForm, setCoachForm] = useState({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', bio: '', avatar: '👨‍🏫' });
   const [editingCoach, setEditingCoach] = useState<any | null>(null);
   const [openCoachDropdown, setOpenCoachDropdown] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({ name: '', email: '', username: '' });
@@ -334,6 +335,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [team, setTeam] = useState<any[]>([]);
   const [teamForm, setTeamForm] = useState({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
   const [editingTeamMember, setEditingTeamMember] = useState<any | null>(null);
+
+  // Staff Team Members states
+  const [staffTeam, setStaffTeam] = useState<any[]>(defaultStaffMembers);
+  const [staffTeamForm, setStaffTeamForm] = useState({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
+  const [editingStaffMember, setEditingStaffMember] = useState<any | null>(null);
+  const [showDeletedStaffTeam, setShowDeletedStaffTeam] = useState<boolean>(false);
 
   // Success Stories states
   const [stories, setStories] = useState<any[]>([]);
@@ -457,7 +464,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [dragStartPoint, setDragStartPoint] = useState({ x: 0, y: 0 });
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
-  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach' | 'facility' | 'edge'>('story');
+  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach' | 'facility' | 'edge' | 'staff-team'>('story');
   const cropperBoxRef = React.useRef<HTMLDivElement>(null);
 
   // Facilities CMS States
@@ -574,11 +581,106 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
   };
 
+  const fetchStaffTeam = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/team', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setStaffTeam(data);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching staff team members:", err);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'facilities') {
       fetchFacilities();
+    } else if (activeTab === 'team-members') {
+      fetchStaffTeam();
     }
   }, [activeTab]);
+
+  const handleSaveStaffMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffTeamForm.name || !staffTeamForm.role || !staffTeamForm.bio || !staffTeamForm.image) {
+      alert("Please fill in name, role, bio, and image.");
+      return;
+    }
+
+    try {
+      const url = editingStaffMember
+        ? `http://localhost:5000/api/admin/team/${editingStaffMember.id || editingStaffMember._id}`
+        : 'http://localhost:5000/api/admin/team';
+      const method = editingStaffMember ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(staffTeamForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        fetchStaffTeam();
+        setActiveModal(null);
+        setEditingStaffMember(null);
+        setStaffTeamForm({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
+      } else {
+        alert(data.error || "Failed to save staff member.");
+      }
+    } catch (err) {
+      console.error("Error saving staff member:", err);
+    }
+  };
+
+  const handleDeleteStaffMember = async (id: string, name: string, permanent: boolean = false) => {
+    const confirmMsg = permanent
+      ? `Are you sure you want to PERMANENTLY delete team member "${name}"?`
+      : `Move team member "${name}" to Trash Bin?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const url = `http://localhost:5000/api/admin/team/${id}${permanent ? '?permanent=true' : ''}`;
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchStaffTeam();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete staff member.");
+      }
+    } catch (err) {
+      console.error("Error deleting staff member:", err);
+    }
+  };
+
+  const handleRestoreStaffMember = async (id: string, _name: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/team/${id}/restore`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchStaffTeam();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to restore staff member.");
+      }
+    } catch (err) {
+      console.error("Error restoring staff member:", err);
+    }
+  };
 
   const handleSaveFacility = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1856,6 +1958,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             });
         } else if (croppingTarget === 'team') {
           setTeamForm(prev => ({ ...prev, image: croppedBase64 }));
+        } else if (croppingTarget === 'staff-team') {
+          setStaffTeamForm(prev => ({ ...prev, image: croppedBase64 }));
         } else if (croppingTarget === 'coach') {
           setCoachForm(prev => ({ ...prev, avatar: croppedBase64 }));
         } else if (croppingTarget === 'facility') {
@@ -2074,7 +2178,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const closeCoachModal = () => {
     setActiveModal(null);
     setEditingCoach(null);
-    setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
+    setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', bio: '', avatar: '👨‍🏫' });
   };
 
   const handleEditCoachClick = (coach: any) => {
@@ -2093,6 +2197,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       experienceYears: expY || '0',
       experienceMonths: expM || '0',
       certificationStatus: coach.certificationStatus || 'SAI Certified / Elite License',
+      bio: coach.bio || '',
       avatar: coach.avatar || '👨‍🏫'
     });
     setActiveModal('coach');
@@ -2137,6 +2242,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           experienceMonths: m,
           experience: expStr,
           certificationStatus: coachForm.certificationStatus.trim(),
+          bio: coachForm.bio.trim(),
           avatar: coachForm.avatar
         })
       });
@@ -4133,7 +4239,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             <button 
               onClick={() => {
                 setEditingCoach(null);
-                setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', avatar: '👨‍🏫' });
+                setCoachForm({ name: '', role: '', experienceYears: '', experienceMonths: '0', certificationStatus: 'SAI Certified / Elite License', bio: '', avatar: '👨‍🏫' });
                 setActiveModal('coach');
               }}
               className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2.5 px-5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5 self-start"
@@ -6089,7 +6195,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       })()}
 
       {/* OTHER PLACEHOLDER VIEWS */}
-      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'success-stories', 'compliance', 'facilities', 'rlbsa-edge', 'outreach'].includes(activeTab) && (
+      {!['dashboard', 'students', 'coaches', 'gallery', 'events', 'enquiries', 'achievements', 'settings', 'founders', 'team-members', 'success-stories', 'compliance', 'facilities', 'rlbsa-edge', 'outreach'].includes(activeTab) && (
         <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left">
           <h3 className="text-base font-bold text-primary mb-2">Management Module</h3>
           <p className="text-text-light text-xs mb-6">Database configuration values for Category: <strong className="text-primary font-bold">{activeTab}</strong></p>
@@ -6778,6 +6884,139 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           </button>
                           <button
                             onClick={() => handleDeleteTeamMember(member.id, member.name, false)}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash size={12} /> Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* TEAM MEMBERS MANAGEMENT */}
+      {activeTab === 'team-members' && (() => {
+        const deletedStaffCount = staffTeam.filter(m => m.isDeleted).length;
+        const displayedStaff = staffTeam.filter(m => showDeletedStaffTeam ? m.isDeleted : !m.isDeleted);
+
+        return (
+          <div className="bg-white p-8 rounded-xl border border-border-gray shadow-sm text-left flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray/50">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  Our Members Management {showDeletedStaffTeam && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">Configure profile cards for operational staff, academic coordinators, and sports specialists.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeletedStaffTeam(!showDeletedStaffTeam)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedStaffTeam
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedStaffTeam ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedStaffTeam ? 'Active Members' : 'Trash Bin'}
+                  {deletedStaffCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedStaffCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedStaffTeam && (
+                  <button
+                    onClick={() => {
+                      setStaffTeamForm({ name: '', role: '', bio: '', image: '', objectPosition: 'center 15%' });
+                      setEditingStaffMember(null);
+                      setActiveModal('staff-team');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer"
+                  >
+                    <Plus size={16} /> Add Member
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {displayedStaff.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedStaffTeam ? 'Trash bin is empty. No deleted members.' : 'No members registered. Click "Add Member" to create one.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedStaff.map((member) => (
+                  <div key={member.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light relative">
+                    <div>
+                      <div className="h-[180px] bg-primary relative">
+                        <img 
+                          src={member.image ? (member.image.startsWith('http') || member.image.startsWith('/images') || member.image.startsWith('/uploads') ? member.image : `http://localhost:5000${member.image}`) : '/images/hero1.jpeg'} 
+                          alt={member.name} 
+                          className="w-full h-full object-cover" 
+                          style={{ objectPosition: member.objectPosition || 'center' }} 
+                        />
+                        <span className="absolute bottom-3 left-3 bg-accent text-primary text-[10px] font-black px-2 py-0.5 rounded shadow uppercase">
+                          Our Member
+                        </span>
+                        {showDeletedStaffTeam && (
+                          <span className="absolute top-3 right-3 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow">
+                            In Trash Bin
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-5 text-left">
+                        <h3 className="text-sm font-extrabold text-primary mb-1">{member.name}</h3>
+                        <span className="text-[11px] font-bold text-accent block mb-3 uppercase tracking-wider">{member.role}</span>
+                        <div className="text-text-light text-[11px] leading-relaxed space-y-1 line-clamp-4 font-normal text-justify">
+                          {getBioParagraphs(member.bio).map((paragraph, idx) => (
+                            <p key={idx} className="text-justify">{paragraph}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                      {showDeletedStaffTeam ? (
+                        <>
+                          <button
+                            onClick={() => handleRestoreStaffMember(member.id, member.name)}
+                            className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <ArrowCounterClockwise size={14} /> Restore
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStaffMember(member.id, member.name, true)}
+                            className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <Trash size={14} /> Delete Permanently
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingStaffMember(member);
+                              setStaffTeamForm({
+                                name: member.name,
+                                role: member.role,
+                                bio: member.bio,
+                                image: member.image,
+                                objectPosition: member.objectPosition || 'center 15%'
+                              });
+                              setActiveModal('staff-team');
+                            }}
+                            className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStaffMember(member.id, member.name, false)}
                             className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
                           >
                             <Trash size={12} /> Delete
@@ -8458,6 +8697,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       <div className="flex justify-between"><span>Primary Sport:</span><span className="font-extrabold text-primary">{viewingStudentProfile.primarySport || viewingStudentProfile.sport}</span></div>
                       <div className="flex justify-between"><span>Residency Program:</span><span className="font-extrabold text-primary capitalize">{viewingStudentProfile.residency || 'Resident'}</span></div>
                       {viewingStudentProfile.residency === 'resident' && <div className="flex justify-between"><span>Hostel Room:</span><span className="font-extrabold text-primary">{viewingStudentProfile.hostelRoom || 'Not Assigned'}</span></div>}
+                      <div className="flex justify-between"><span>Aadhaar Number:</span><span className="font-extrabold text-primary font-mono">{viewingStudentProfile.aadhaarNumber || 'N/A'}</span></div>
                       <div className="flex justify-between"><span>Admission Date:</span><span className="font-extrabold text-primary">{viewingStudentProfile.admissionDate ? viewingStudentProfile.admissionDate.split('T')[0] : (viewingStudentProfile.joined || 'N/A')}</span></div>
                     </div>
 
@@ -8710,6 +8950,11 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Certification Status *</label>
                 <input required type="text" placeholder="E.g. SAI Certified / Elite License" value={coachForm.certificationStatus} onChange={(e) => setCoachForm({...coachForm, certificationStatus: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Coach Bio / Background</label>
+                <textarea rows={3} placeholder="Enter coach background, achievement highlights, or training philosophy..." value={coachForm.bio} onChange={(e) => setCoachForm({...coachForm, bio: e.target.value})} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-medium resize-none" />
               </div>
 
               <div>
@@ -9816,6 +10061,98 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         document.body
       )}
 
+      {/* ADD / EDIT STAFF MEMBER MODAL */}
+      {activeModal === 'staff-team' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
+              {editingStaffMember ? <Pencil size={20} className="text-accent" /> : <Plus size={20} className="text-accent" />}
+              {editingStaffMember ? 'Edit Member Profile' : 'Add Member'}
+            </h3>
+            
+            <form onSubmit={handleSaveStaffMember} className="space-y-4 overflow-y-auto pr-1 py-1 flex-1">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Full Name *</label>
+                <input required type="text" placeholder="E.g. Sunil Kumar Sharma" value={staffTeamForm.name} onChange={(e) => setStaffTeamForm({ ...staffTeamForm, name: e.target.value })} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Role / Title *</label>
+                <input required type="text" placeholder="E.g. Operations & Logistics Manager" value={staffTeamForm.role} onChange={(e) => setStaffTeamForm({ ...staffTeamForm, role: e.target.value })} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Biography / Description *</label>
+                <textarea required rows={5} placeholder="Write detailed bio. Use line breaks for separate paragraphs..." value={staffTeamForm.bio} onChange={(e) => setStaffTeamForm({ ...staffTeamForm, bio: e.target.value })} className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 3:4) *</label>
+                <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
+                  {staffTeamForm.image && (staffTeamForm.image.startsWith('http') || staffTeamForm.image.startsWith('/') || staffTeamForm.image.startsWith('data:')) ? (
+                    <img 
+                      src={staffTeamForm.image.startsWith('http') || staffTeamForm.image.startsWith('/') || staffTeamForm.image.startsWith('data:') ? staffTeamForm.image : `http://localhost:5000${staffTeamForm.image}`} 
+                      alt="Member" 
+                      className="w-12 h-16 object-cover rounded border border-primary shrink-0 shadow-xs" 
+                      style={{ objectPosition: staffTeamForm.objectPosition || 'center' }}
+                    />
+                  ) : (
+                    <div className="w-12 h-16 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('staff-team');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-text-light file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
+                    />
+                    {staffTeamForm.image && (
+                      <span className="block mt-1 text-[10px] text-emerald-600 font-bold">Photo Ready &amp; Cropped (3:4)</span>
+                    )}
+                  </div>
+                </div>
+                <input type="hidden" name="image" value={staffTeamForm.image} required />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Image Focal Point (Object Position)</label>
+                <select
+                  value={staffTeamForm.objectPosition}
+                  onChange={(e) => setStaffTeamForm({ ...staffTeamForm, objectPosition: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary font-semibold"
+                >
+                  <option value="center 10%">Top (Center 10%)</option>
+                  <option value="center 15%">Upper Middle (Center 15%)</option>
+                  <option value="center">Center</option>
+                  <option value="center 30%">Lower Middle (Center 30%)</option>
+                </select>
+              </div>
+
+              <button type="submit" className="w-full bg-primary hover:bg-accent hover:text-primary transition-all text-white font-bold py-3 mt-3 rounded-lg cursor-pointer text-sm shadow-md border-none">
+                {editingStaffMember ? 'Update Member' : 'Save Member'}
+              </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Admission Application Detail View Modal */}
       {viewingApplication && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewingApplication(null)}>
@@ -9841,6 +10178,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 <p><strong>DOB:</strong> {viewingApplication.dateOfBirth ? new Date(viewingApplication.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
                 <p><strong>Gender:</strong> <span className="capitalize">{viewingApplication.gender}</span></p>
                 <p><strong>Blood Group:</strong> {viewingApplication.bloodGroup || 'N/A'}</p>
+                <p><strong>Aadhaar Number:</strong> <span className="font-mono text-emerald-800 font-bold">{viewingApplication.aadhaarNumber || 'N/A'}</span></p>
               </div>
 
               <div>

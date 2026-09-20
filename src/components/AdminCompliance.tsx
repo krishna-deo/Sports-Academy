@@ -15,7 +15,8 @@ import {
   Download, 
   Clock, 
   UserGear,
-  House
+  House,
+  Eye
 } from '@phosphor-icons/react';
 
 interface AdminComplianceProps {
@@ -59,12 +60,15 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
   // Document Upload Form State
   const [docForm, setDocForm] = useState({
     name: '',
+    category: 'Legal Document',
+    description: '',
     visibility: 'public',
     status: 'published',
     expiryDate: ''
   });
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [viewingDocAdmin, setViewingDocAdmin] = useState<any | null>(null);
 
   // Student Consent Form State
   const [consentForm, setConsentForm] = useState({
@@ -294,6 +298,8 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     setIsUploadingDoc(true);
     const formData = new FormData();
     formData.append('name', docForm.name);
+    formData.append('category', docForm.category);
+    formData.append('description', docForm.description);
     formData.append('visibility', docForm.visibility);
     formData.append('status', docForm.status);
     if (docForm.expiryDate) formData.append('expiryDate', docForm.expiryDate);
@@ -309,7 +315,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       if (response.ok && data.success) {
         triggerSuccess("Document uploaded successfully.");
         setActiveModal(null);
-        setDocForm({ name: '', visibility: 'public', status: 'published', expiryDate: '' });
+        setDocForm({ name: '', category: 'Legal Document', description: '', visibility: 'public', status: 'published', expiryDate: '' });
         setDocFile(null);
         loadData();
       } else {
@@ -319,22 +325,6 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       alert("Error contacting upload server.");
     } finally {
       setIsUploadingDoc(false);
-    }
-  };
-
-  const handleDeleteDoc = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this document from storage?")) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/admin/compliance/documents/${id}`, {
-        method: 'DELETE',
-        headers
-      });
-      if (response.ok) {
-        triggerSuccess("Document deleted successfully.");
-        loadData();
-      }
-    } catch (err) {
-      alert("Failed to delete document.");
     }
   };
 
@@ -463,6 +453,12 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     }
   };
 
+  const getFileUrl = (filePath: string) => {
+    if (!filePath) return '#';
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+    return `http://localhost:5000${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -470,6 +466,26 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    if (!id) return;
+    if (!window.confirm("Are you sure you want to delete this document from storage?")) return;
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/compliance/documents/${id}`, {
+        method: 'DELETE',
+        headers
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        triggerSuccess("Document deleted successfully.");
+        loadData();
+      } else {
+        alert(data.error || "Failed to delete document.");
+      }
+    } catch (err) {
+      alert("Failed to delete document.");
+    }
   };
 
   if (loading) {
@@ -695,51 +711,68 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
 
           {/* Document list */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map(doc => (
-              <div key={doc.id} className="bg-white p-4 border border-border-gray rounded-xl flex gap-3 items-start justify-between">
-                <div className="flex gap-2.5 items-start">
-                  <div className="w-10 h-10 bg-soft-light border border-border-gray rounded-lg flex items-center justify-center text-xl shrink-0">
-                    📂
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-primary">{doc.name}</span>
-                    <span className="block text-[10px] text-text-light mt-0.5">{doc.id}</span>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      <span className={`text-[9px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full ${
-                        doc.visibility === 'public'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
-                        {doc.visibility}
-                      </span>
-                      {doc.expiryDate && (
-                        <span className="text-[9px] bg-rose-50 text-rose-700 border border-rose-100 py-0.5 px-2 rounded-full font-bold">
-                          Expires: {formatDate(doc.expiryDate)}
-                        </span>
+            {documents.map(doc => {
+              const docKey = doc.id || doc._id;
+              return (
+                <div key={docKey} className="bg-white p-4 border border-border-gray rounded-xl flex gap-3 items-start justify-between">
+                  <div className="flex gap-2.5 items-start">
+                    <div className="w-10 h-10 bg-soft-light border border-border-gray rounded-lg flex items-center justify-center text-xl shrink-0">
+                      📜
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold text-primary">{doc.name}</span>
+                      <span className="block text-[10px] text-text-light mt-0.5">{docKey}</span>
+                      {doc.description && (
+                        <p className="text-[11px] text-text-body font-medium mt-1 leading-snug line-clamp-2">{doc.description}</p>
                       )}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="text-[9px] font-bold uppercase tracking-wider py-0.5 px-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          {doc.category || 'Legal Document'}
+                        </span>
+                        <span className={`text-[9px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full ${
+                          doc.visibility === 'public'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {doc.visibility}
+                        </span>
+                        {doc.expiryDate && (
+                          <span className="text-[9px] bg-rose-50 text-rose-700 border border-rose-100 py-0.5 px-2 rounded-full font-bold">
+                            Expires: {formatDate(doc.expiryDate)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setViewingDocAdmin(doc)}
+                      className="p-2 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary hover:text-white text-primary transition-all flex items-center justify-center cursor-pointer"
+                      title="View Document"
+                    >
+                      <Eye size={14} />
+                    </button>
+                    <a
+                      href={getFileUrl(doc.path)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="p-2 bg-soft-light border border-border-gray rounded-lg hover:border-primary text-primary transition-all flex items-center justify-center decoration-none"
+                      title="Download Document"
+                    >
+                      <Download size={14} />
+                    </a>
+                    <button
+                      onClick={() => handleDeleteDoc(docKey)}
+                      className="p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
+                      title="Delete Document"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-1.5">
-                  <a
-                    href={doc.path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-soft-light border border-border-gray rounded-lg hover:border-primary text-primary transition-all flex items-center justify-center decoration-none"
-                    title="Download / View"
-                  >
-                    <Download size={14} />
-                  </a>
-                  <button
-                    onClick={() => handleDeleteDoc(doc.id)}
-                    className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all cursor-pointer border-none"
-                    title="Delete Document"
-                  >
-                    <Trash size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -1206,15 +1239,42 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
 
             <form onSubmit={handleUploadDoc} className="p-6 space-y-4 text-xs font-semibold">
               <div>
-                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Document Name *</label>
+                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Document Title / Name *</label>
                 <input
                   type="text"
                   required
                   value={docForm.name}
                   onChange={(e) => setDocForm({ ...docForm, name: e.target.value })}
-                  placeholder="E.g. Waiver Signature Form"
+                  placeholder="E.g. Society Registration Certificate"
                   className="w-full bg-slate-50 border border-border-gray py-2.5 px-4 rounded-xl outline-none focus:border-primary"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Document Category *</label>
+                <select
+                  value={docForm.category}
+                  onChange={(e) => setDocForm({ ...docForm, category: e.target.value })}
+                  className="w-full bg-slate-50 border border-border-gray py-2.5 px-4 rounded-xl outline-none focus:border-primary"
+                >
+                  <option value="Registration & Statutory">Registration & Statutory</option>
+                  <option value="Tax Exemption">Tax Exemption (12A / 80G)</option>
+                  <option value="Financial Audit">Financial Audit Report</option>
+                  <option value="CSR Approval">CSR Registration (Form CSR-1)</option>
+                  <option value="Safeguarding & Welfare">Safeguarding & Welfare</option>
+                  <option value="Legal Document">General Legal Document</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Description</label>
+                <textarea
+                  rows={2}
+                  value={docForm.description}
+                  onChange={(e) => setDocForm({ ...docForm, description: e.target.value })}
+                  placeholder="Brief description of the document contents..."
+                  className="w-full bg-slate-50 border border-border-gray py-2.5 px-4 rounded-xl outline-none focus:border-primary resize-none"
+                ></textarea>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1225,7 +1285,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
                     onChange={(e) => setDocForm({ ...docForm, visibility: e.target.value })}
                     className="w-full bg-slate-50 border border-border-gray py-2.5 px-4 rounded-xl outline-none focus:border-primary"
                   >
-                    <option value="public">Public</option>
+                    <option value="public">Public (Website Footer & Compliance)</option>
                     <option value="internal">Internal Only</option>
                     <option value="private">Private (Restricted)</option>
                   </select>
@@ -1674,6 +1734,96 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* MODAL 6: ADMIN DOCUMENT VIEWER */}
+      {viewingDocAdmin && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 text-left animate-fade-in">
+          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col justify-between overflow-hidden animate-scale-up">
+            <div className="p-5 border-b border-border-gray/50 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  📜
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-primary leading-tight">
+                    {viewingDocAdmin.name}
+                  </h3>
+                  <span className="text-[10px] font-bold text-text-light uppercase tracking-wider">
+                    {viewingDocAdmin.category || 'Legal Document'} &bull; ID: {viewingDocAdmin.id || viewingDocAdmin._id}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewingDocAdmin(null)} 
+                className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center cursor-pointer border-none transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs font-semibold">
+              {viewingDocAdmin.description && (
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-xs font-medium text-text-body">
+                  <span className="font-extrabold text-primary block mb-1 uppercase tracking-wider text-[10px]">Description</span>
+                  {viewingDocAdmin.description}
+                </div>
+              )}
+
+              {/* Document Stream / File Actions Preview */}
+              <div className="border border-border-gray rounded-2xl p-6 bg-slate-50 text-center space-y-4">
+                <div className="w-16 h-16 bg-white border border-border-gray rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xs">
+                  📄
+                </div>
+                <div>
+                  <h4 className="text-base font-extrabold text-primary">{viewingDocAdmin.name}</h4>
+                  <p className="text-xs text-text-light font-semibold mt-1 max-w-md mx-auto">
+                    Document stored at: <code className="bg-slate-200 px-2 py-0.5 rounded text-primary">{viewingDocAdmin.path}</code>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                  <a
+                    href={getFileUrl(viewingDocAdmin.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-accent hover:text-primary transition-all"
+                  >
+                    <Eye size={16} /> Open Document File
+                  </a>
+                  <a
+                    href={getFileUrl(viewingDocAdmin.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-emerald-700 transition-all"
+                  >
+                    <Download size={16} /> Download File
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border-gray/50 bg-slate-50 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const targetId = viewingDocAdmin.id || viewingDocAdmin._id;
+                  setViewingDocAdmin(null);
+                  handleDeleteDoc(targetId);
+                }}
+                className="px-4 py-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white font-bold rounded-xl text-xs cursor-pointer border border-rose-200 flex items-center gap-1.5 transition-all"
+              >
+                <Trash size={14} /> Delete Document
+              </button>
+              <button
+                onClick={() => setViewingDocAdmin(null)}
+                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs cursor-pointer border-none transition-all"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>,
         document.body

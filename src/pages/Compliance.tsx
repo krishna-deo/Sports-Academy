@@ -5,7 +5,9 @@ import {
   Warning,
   ArrowRight,
   Download,
-  Calendar
+  Calendar,
+  Eye,
+  X
 } from '@phosphor-icons/react';
 
 interface PolicyAttachment {
@@ -30,6 +32,8 @@ interface ComplianceProps {
 
 export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
   const [policy, setPolicy] = useState<PolicyData | null>(null);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [viewingDoc, setViewingDoc] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +48,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
 
   const policyMenu = [
     { id: 'privacy-policy', label: 'Privacy Policy', icon: '🔒' },
+    { id: 'legal-documents', label: 'Legal Documents', icon: '📜' },
     { id: 'terms-and-conditions', label: 'Terms & Conditions', icon: '📝' },
     { id: 'student-conduct', label: 'Code of Conduct', icon: '🎓' },
     { id: 'child-protection', label: 'Safeguarding Policy', icon: '🛡️' },
@@ -56,23 +61,43 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
     setLoading(true);
     setError(null);
     setSubmitSuccess(null);
+    setPolicy(null);
 
-    fetch(`http://localhost:5000/api/public/compliance/policies/${sub}`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Policy details could not be loaded or are not published yet.');
-        }
-        return res.json();
-      })
-      .then((data: PolicyData) => {
-        setPolicy(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching policy:", err);
-        setError(err.message || 'Failed to fetch policy.');
-        setLoading(false);
-      });
+    if (sub === 'legal-documents') {
+      fetch('http://localhost:5000/api/public/compliance/documents')
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch legal documents.');
+          }
+          return res.json();
+        })
+        .then((data: any[]) => {
+          setLegalDocs(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error fetching legal documents:", err);
+          setError(err.message || 'Failed to fetch legal documents.');
+          setLoading(false);
+        });
+    } else {
+      fetch(`http://localhost:5000/api/public/compliance/policies/${sub}`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Policy details could not be loaded or are not published yet.');
+          }
+          return res.json();
+        })
+        .then((data: PolicyData) => {
+          setPolicy(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error fetching policy:", err);
+          setError(err.message || 'Failed to fetch policy.');
+          setLoading(false);
+        });
+    }
   }, [sub]);
 
   const handleGrievanceSubmit = async (e: React.FormEvent) => {
@@ -117,6 +142,12 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
     window.location.hash = `#/compliance/${id}`;
   };
 
+  const getFileUrl = (filePath: string) => {
+    if (!filePath) return '#';
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+    return `http://localhost:5000${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -142,7 +173,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
             RLBSA Compliance Portal
           </h1>
           <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-[580px] mx-auto">
-            Review our public safety frameworks, student codes of conduct, privacy safeguards, and file official grievances directly to our redressal committee.
+            Review our public safety frameworks, official legal documents, privacy safeguards, and file grievances directly to our redressal committee.
           </p>
         </div>
       </div>
@@ -211,7 +242,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
           {loading ? (
             <div className="bg-white rounded-xl border border-border-gray p-16 text-center shadow-sm">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-text-light font-semibold text-sm">Loading policy details dynamically...</p>
+              <p className="text-text-light font-semibold text-sm">Loading details dynamically...</p>
             </div>
           ) : error ? (
             <div className="bg-white rounded-xl border border-border-gray p-16 text-center shadow-sm">
@@ -228,6 +259,82 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
               >
                 Return to Privacy Policy
               </button>
+            </div>
+          ) : sub === 'legal-documents' ? (
+            /* Legal Documents Grid Section */
+            <div className="space-y-6 text-left">
+              <div className="bg-white rounded-xl border border-border-gray p-6 md:p-8 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-border-gray/50">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-primary tracking-tight">
+                      Public Legal Documents & Statutory Filings
+                    </h2>
+                    <p className="text-xs text-text-light mt-1 font-semibold leading-relaxed">
+                      Official registration certificates, 12A/80G tax exemption approvals, CA financial audit reports, and statutory filings for transparency.
+                    </p>
+                  </div>
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black py-1.5 px-3 rounded-lg border border-emerald-200 shrink-0">
+                    Verified Public Registry
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+                  {legalDocs.map((doc) => (
+                    <div key={doc.id || doc._id} className="bg-white rounded-xl border border-border-gray p-5 hover:border-primary/50 transition-all shadow-xs flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="w-10 h-10 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-center text-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-all">
+                            📜
+                          </div>
+                          <span className="bg-blue-50 text-blue-700 text-[10px] font-bold py-1 px-2.5 rounded-full border border-blue-100 uppercase tracking-wider">
+                            {doc.category || 'Legal Document'}
+                          </span>
+                        </div>
+
+                        <h3 className="text-base font-extrabold text-primary mb-1.5 leading-snug">
+                          {doc.name}
+                        </h3>
+
+                        {doc.description && (
+                          <p className="text-xs text-text-body font-medium leading-relaxed mb-4">
+                            {doc.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-4 border-t border-border-gray/50 flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-[10px] font-semibold text-text-light flex items-center gap-1">
+                          <Calendar size={13} /> {formatDate(doc.uploadedAt || doc.createdAt)}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setViewingDoc(doc)}
+                            className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white font-bold rounded-lg text-xs transition-all cursor-pointer border-none flex items-center gap-1.5"
+                          >
+                            <Eye size={14} /> View Document
+                          </button>
+                          <a
+                            href={getFileUrl(doc.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="px-3 py-1.5 bg-primary hover:bg-accent text-white hover:text-primary font-bold rounded-lg text-xs transition-all decoration-none flex items-center gap-1.5"
+                          >
+                            <Download size={14} /> Download
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {legalDocs.length === 0 && (
+                    <div className="col-span-2 text-center py-12 text-text-light italic text-xs">
+                      No public legal documents published yet.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ) : policy ? (
             <div className="space-y-6">
@@ -275,7 +382,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
                       {policy.attachments.map((attach, idx) => (
                         <a
                           key={idx}
-                          href={attach.path}
+                          href={getFileUrl(attach.path)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-soft-light border border-border-gray hover:border-primary p-3 rounded-xl flex items-center justify-between group transition-all text-left text-xs font-bold text-text-body decoration-none hover:shadow-xs"
@@ -414,6 +521,89 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
           ) : null}
         </div>
       </div>
+
+      {/* Document View Modal / Lightbox */}
+      {viewingDoc && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 text-left animate-fade-in">
+          <div className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col justify-between overflow-hidden animate-scale-up">
+            <div className="p-5 border-b border-border-gray/50 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  📜
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-primary leading-tight">
+                    {viewingDoc.name}
+                  </h3>
+                  <span className="text-[10px] font-bold text-text-light uppercase tracking-wider">
+                    {viewingDoc.category || 'Legal Document'} &bull; Uploaded: {formatDate(viewingDoc.uploadedAt || viewingDoc.createdAt)}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewingDoc(null)} 
+                className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center cursor-pointer border-none transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-5">
+              {viewingDoc.description && (
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-xs font-medium text-text-body">
+                  <span className="font-extrabold text-primary block mb-1 uppercase tracking-wider text-[10px]">Document Information</span>
+                  {viewingDoc.description}
+                </div>
+              )}
+
+              {/* Document Stream / File Actions Preview */}
+              <div className="border border-border-gray rounded-2xl p-6 bg-slate-50 text-center space-y-4">
+                <div className="w-16 h-16 bg-white border border-border-gray rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xs">
+                  📄
+                </div>
+                <div>
+                  <h4 className="text-base font-extrabold text-primary">{viewingDoc.name}</h4>
+                  <p className="text-xs text-text-light font-semibold mt-1 max-w-md mx-auto">
+                    Verified statutory legal document registered under RLBSA Foundation compliance registry.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                  <a
+                    href={getFileUrl(viewingDoc.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-accent hover:text-primary transition-all"
+                  >
+                    <Eye size={16} /> Open / View Full Document
+                  </a>
+                  <a
+                    href={getFileUrl(viewingDoc.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-emerald-700 transition-all"
+                  >
+                    <Download size={16} /> Download File
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border-gray/50 bg-slate-50 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-text-light uppercase tracking-wider">
+                Rani Laxmibai Sports Academy Compliance Portal
+              </span>
+              <button
+                onClick={() => setViewingDoc(null)}
+                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs cursor-pointer border-none transition-all"
+              >
+                Close Window
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

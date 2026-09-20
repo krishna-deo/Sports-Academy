@@ -16,6 +16,7 @@ const StudentSchema = new mongoose.Schema({
   dateOfBirth: { type: Date, required: true },
   gender: { type: String, enum: ['boy', 'girl', 'male', 'female', 'Boy', 'Girl', 'Male', 'Female'], default: 'female' },
   bloodGroup: { type: String, default: '' },
+  aadhaarNumber: { type: String, default: '' },
   contact: {
     phone: { type: String, default: '' },
     email: { type: String, default: '' },

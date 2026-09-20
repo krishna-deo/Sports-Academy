@@ -498,6 +498,7 @@ export const AdminLayout: React.FC = () => {
     { id: 'story', label: 'Our Story', icon: <Notebook size={20} /> },
     { id: 'success-stories', label: 'Success Stories', icon: <ChatText size={20} /> },
     { id: 'founders', label: 'Founders & Directors', icon: <UserIcon size={20} /> },
+    { id: 'team-members', label: 'Our Team', icon: <Users size={20} /> },
     { id: 'coaches', label: 'Coaches', icon: <Users size={20} /> },
     { id: 'students', label: 'Students', icon: <GraduationCap size={20} /> },
     { id: 'facilities', label: 'Facilities', icon: <Buildings size={20} /> },

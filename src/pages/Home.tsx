@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar, ArrowRight } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
 import { successStories as initialSuccessStories } from '../data/sportsData';
@@ -606,6 +606,17 @@ export const Home: React.FC = () => {
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
+            </div>
+
+            {/* View Our Team Button */}
+            <div className="text-center mt-8">
+              <a
+                href="#/about/team"
+                className="inline-flex items-center gap-2.5 bg-primary hover:bg-primary/90 text-white hover:text-white font-extrabold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-300 border-none cursor-pointer"
+              >
+                <span>View Our Team</span>
+                <ArrowRight size={16} weight="bold" />
+              </a>
             </div>
           </div>
         </div>

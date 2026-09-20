@@ -1,6 +1,7 @@
 import React from 'react';
-import { X } from '@phosphor-icons/react';
+import { X, ArrowRight } from '@phosphor-icons/react';
 import { teamMembers } from '../data/teamData';
+import { defaultStaffMembers } from '../data/teamMembersData';
 import { useHash } from '../hooks/useHash';
 import { getBioParagraphs } from '../utils/textUtils';
 
@@ -175,6 +176,7 @@ const defaultFacilities = [
 
 export const About: React.FC<AboutProps> = ({ sub }) => {
   const [team, setTeam] = React.useState<any[]>(teamMembers);
+  const [staffTeam, setStaffTeam] = React.useState<any[]>(defaultStaffMembers);
   const [milestones, setMilestones] = React.useState<any[]>(defaultMilestones);
   const [facilities, setFacilities] = React.useState<any[]>(defaultFacilities);
   const [outreachData, setOutreachData] = React.useState<any>(null);
@@ -226,6 +228,17 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
   }, []);
 
   React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/staff-team')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setStaffTeam(data);
+        }
+      })
+      .catch(err => console.error("Error loading staff team values:", err));
+  }, []);
+
+  React.useEffect(() => {
     fetch('http://localhost:5000/api/public/facilities')
       .then(res => res.json())
       .then(data => {
@@ -243,7 +256,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
     if (hashParts.length > 1) {
       const params = new URLSearchParams(hashParts[1]);
       let targetId = '';
-      if (sub === 'founders') {
+      if (sub === 'founders' || sub === 'team' || sub === 'team-members') {
         targetId = params.get('member') || '';
       } else if (sub === 'what-we-do') {
         targetId = params.get('section') || '';
@@ -303,7 +316,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                         return (
                           <p 
                             key={pIdx} 
-                            className="text-slate-700 text-base md:text-lg leading-relaxed text-justify font-normal"
+                            className="text-slate-700 text-xs md:text-sm leading-relaxed text-justify font-normal"
                             dangerouslySetInnerHTML={{ __html: formattedText }}
                           />
                         );
@@ -778,7 +791,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Dietary Health</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Food & Nutrition</h3>
-                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6 text-justify">
+                    <p className="text-text-light text-xs md:text-sm leading-relaxed mb-6 text-justify">
                       Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -800,7 +813,7 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                   <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
                     <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Residential Boarding</span>
                     <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Hostel & Accommodation</h3>
-                    <p className="text-text-light text-base md:text-lg leading-relaxed mb-6 text-justify">
+                    <p className="text-text-light text-xs md:text-sm leading-relaxed mb-6 text-justify">
                       Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
@@ -1086,6 +1099,118 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
                         <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2.5 text-justify font-normal">
                           {getBioParagraphs(member.bio).map((paragraph, idx) => (
                             <p key={idx} className="text-justify">{paragraph}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </RevealRow>
+              );
+            })}
+          </div>
+
+          {/* View Our Team CTA Button */}
+          <div className="text-center mt-6 pb-4">
+            <a
+              href="#/about/team"
+              className="inline-flex items-center gap-2.5 bg-primary hover:bg-primary/90 text-white hover:text-white font-extrabold py-3.5 px-8 rounded-full text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-300 border-none cursor-pointer"
+            >
+              <span>View Our Team</span>
+              <ArrowRight size={16} weight="bold" />
+            </a>
+          </div>
+        </>
+      )}
+
+      {(sub === 'team' || sub === 'team-members') && (
+        <>
+          {/* Centered Heading */}
+          <div className="text-center max-w-[700px] mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
+              Our Team
+            </h2>
+            <p className="text-text-light text-base md:text-lg animate-fade-in">
+              Meet our dedicated operational managers, academic coordinators, and sports specialists driving excellence at Rani Laxmibai Sports Academy.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-10 max-w-[1140px] mx-auto overflow-hidden pb-12">
+            {/* HERO CARD: Lead Team Member (matching Mr. Sanjay Pathak Hero Card layout) */}
+            {staffTeam.length > 0 && (
+              <RevealRow id={staffTeam[0].id || 'staff-0'} className="w-full">
+                {(isVisible) => (
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
+                    {/* Hero Left: Image */}
+                    <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
+                      <img 
+                        src={staffTeam[0].image ? (staffTeam[0].image.startsWith('http') || staffTeam[0].image.startsWith('/images') || staffTeam[0].image.startsWith('/uploads') || staffTeam[0].image.startsWith('data:') ? staffTeam[0].image : `http://localhost:5000${staffTeam[0].image}`) : '/images/hero1.jpeg'} 
+                        alt={staffTeam[0].name} 
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: staffTeam[0].objectPosition || 'center' }}
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-accent text-primary text-xs font-black px-3 py-1.5 rounded shadow uppercase tracking-wider">
+                          LEAD MEMBER
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Hero Right: Details */}
+                    <div className="lg:w-1/2 p-8 md:p-12 flex flex-col justify-center text-left">
+                      <span className="text-accent text-[11.5px] font-black tracking-[0.2em] uppercase mb-2 block">
+                        {staffTeam[0].role}
+                      </span>
+                      <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                        {staffTeam[0].name}
+                      </h3>
+                      <div className="text-text-light text-sm md:text-base leading-relaxed space-y-3.5 text-justify font-normal">
+                        {getBioParagraphs(staffTeam[0].bio).map((paragraph: string, idx: number) => (
+                          <p key={idx} className="text-justify">{paragraph}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </RevealRow>
+            )}
+
+            {/* TEAM MEMBERS STACK: Alternating smaller horizontal profile cards matching Directors */}
+            {staffTeam.slice(1).map((member, idx) => {
+              const isEven = idx % 2 === 0;
+              const isImgLeft = !isEven; // Exactly matching Directors slice(1) flow
+              const slideInClass = isImgLeft ? '-translate-x-24' : 'translate-x-24';
+              const directionClass = isImgLeft ? 'lg:flex-row' : 'lg:flex-row-reverse';
+
+              return (
+                <RevealRow key={member.id || idx + 1} id={member.id || `staff-${idx + 1}`} className="w-full">
+                  {(isVisible) => (
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
+                      {/* Image container */}
+                      <div className="lg:w-[38%] relative h-[220px] lg:h-auto min-h-[220px] bg-primary">
+                        <img 
+                          src={member.image ? (member.image.startsWith('http') || member.image.startsWith('/images') || member.image.startsWith('/uploads') || member.image.startsWith('data:') ? member.image : `http://localhost:5000${member.image}`) : '/images/hero1.jpeg'} 
+                          alt={member.name} 
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: member.objectPosition || 'center' }}
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded tracking-wider uppercase">
+                            MEMBER
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Content container */}
+                      <div className="lg:w-[62%] p-6 md:p-8 flex flex-col justify-center text-left">
+                        <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-1.5 block">
+                          {member.role}
+                        </span>
+                        <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-3 leading-tight">
+                          {member.name}
+                        </h3>
+                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2.5 text-justify font-normal">
+                          {getBioParagraphs(member.bio).map((paragraph: string, pIdx: number) => (
+                            <p key={pIdx} className="text-justify">{paragraph}</p>
                           ))}
                         </div>
                       </div>

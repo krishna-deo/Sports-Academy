@@ -129,6 +129,7 @@ export const coachesList: CoachItem[] = [
     experienceMonths: 0,
     experience: "15 Years Coaching",
     certificationStatus: "A-Licensed / SAI Certified",
+    bio: "Focuses on tactical positions, team coordination, passing efficiency, and player physical conditioning frameworks.",
     avatar: "👨‍🏫"
   },
   {
@@ -139,6 +140,7 @@ export const coachesList: CoachItem[] = [
     experienceMonths: 6,
     experience: "8 Years 6 Months Coaching",
     certificationStatus: "SAI Certified / Elite License",
+    bio: "Former National Handball medalist specializing in offensive speed transitions, tactical jump shots, and youth team building.",
     avatar: "👩‍🏫"
   },
   {
@@ -149,6 +151,7 @@ export const coachesList: CoachItem[] = [
     experienceMonths: 0,
     experience: "12 Years Coaching",
     certificationStatus: "NIS Certified Senior Director",
+    bio: "NIS Certified Athletics Director leading sprint acceleration protocols, block starts, and biomechanical form checks.",
     avatar: "👨‍🏫"
   },
   {
@@ -159,6 +162,7 @@ export const coachesList: CoachItem[] = [
     experienceMonths: 4,
     experience: "10 Years 4 Months Coaching",
     certificationStatus: "IRB Level 2 Certified",
+    bio: "Expert in rugby match tactics, contact safety, dynamic set-pieces, and endurance conditioning.",
     avatar: "👨‍🏫"
   }
 ];

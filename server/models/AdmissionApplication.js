@@ -6,6 +6,7 @@ const AdmissionApplicationSchema = new mongoose.Schema({
   dateOfBirth: { type: Date, required: true },
   gender: { type: String, enum: ['boy', 'girl', 'male', 'female', 'Boy', 'Girl', 'Male', 'Female'], default: 'female' },
   bloodGroup: { type: String, default: '' },
+  aadhaarNumber: { type: String, default: '' },
   photo: { type: String, default: '' },
   
   // Sports & Residency Preferences

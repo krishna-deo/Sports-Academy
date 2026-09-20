@@ -107,6 +107,7 @@ export const Footer: React.FC = () => {
           <p>&copy; 2026 Ranilaxmibai Sports Academy. All Rights Reserved.</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center md:justify-end">
             <a href="#/compliance/privacy-policy" className="hover:text-accent">Privacy Policy</a>
+            <a href="#/compliance/legal-documents" className="hover:text-accent">Legal Documents</a>
             <a href="#/compliance/terms-and-conditions" className="hover:text-accent">Terms & Conditions</a>
             <a href="#/compliance/student-conduct" className="hover:text-accent">Code of Conduct</a>
             <a href="#/compliance/child-protection" className="hover:text-accent">Safeguarding</a>

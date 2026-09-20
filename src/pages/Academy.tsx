@@ -830,10 +830,10 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                       🎓
                     </div>
                     <div className="text-left">
-                      <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                      <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">
                         Experience
                       </span>
-                      <span className="text-sm font-extrabold text-slate-800">
+                      <span className="text-sm font-black text-slate-900">
                         {selectedCoach.experience}
                       </span>
                     </div>
@@ -845,14 +845,31 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                       🛡️
                     </div>
                     <div className="text-left">
-                      <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                      <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">
                         Certification Status
                       </span>
-                      <span className="text-sm font-extrabold text-slate-800">
+                      <span className="text-sm font-black text-slate-900">
                         {selectedCoach.certificationStatus || 'SAI Certified / Elite License'}
                       </span>
                     </div>
                   </div>
+
+                  {/* Coach Bio Card */}
+                  {selectedCoach.bio && (
+                    <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl shrink-0 text-slate-700">
+                        📝
+                      </div>
+                      <div className="text-left">
+                        <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">
+                          Biography
+                        </span>
+                        <p className="text-xs md:text-sm font-semibold text-slate-900 leading-relaxed text-justify">
+                          {selectedCoach.bio}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
