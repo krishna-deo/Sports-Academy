@@ -117,25 +117,49 @@ class StorageService {
   }
 
   /**
+  /**
    * Uploads a local file to Cloudinary and deletes the local file.
    * @param {string} localFilePath Path to the local file
    * @param {string} folder Target folder name on Cloudinary
+   * @param {string} [originalName] Original name of the uploaded file
    * @returns {Promise<string>} Secure URL of the uploaded asset
    */
-  async uploadToCloud(localFilePath, folder = 'general') {
+  async uploadToCloud(localFilePath, folder = 'general', originalName = null) {
     if (!isCloudinaryConfigured) {
       throw new Error("Cloudinary is not configured. Enable it in your .env file.");
     }
     try {
-      const result = await cloudinary.uploader.upload(localFilePath, {
+      let ext = originalName ? path.extname(originalName).toLowerCase() : path.extname(localFilePath).toLowerCase();
+      const isDocument = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv'].includes(ext);
+
+      const options = {
         folder: `sports-academy/${folder}`,
-        resource_type: 'auto'
-      });
+        resource_type: isDocument ? 'raw' : 'auto'
+      };
+
+      if (originalName) {
+        const cleanName = path.basename(originalName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+        if (isDocument) {
+          options.public_id = `${cleanName}_${Date.now()}${ext}`;
+        } else {
+          options.public_id = `${cleanName}_${Date.now()}`;
+          if (ext) options.format = ext.replace('.', '');
+        }
+      }
+
+      const result = await cloudinary.uploader.upload(localFilePath, options);
+
       // Delete local file after upload
       if (fs.existsSync(localFilePath)) {
         fs.unlinkSync(localFilePath);
       }
-      return result.secure_url;
+
+      let url = result.secure_url;
+      if (isDocument && ext && !url.toLowerCase().endsWith(ext)) {
+        url += ext;
+      }
+
+      return url;
     } catch (err) {
       // Clean up local file even on failure
       if (fs.existsSync(localFilePath)) {

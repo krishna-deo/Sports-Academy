@@ -16,7 +16,8 @@ import {
   Clock, 
   UserGear,
   House,
-  Eye
+  Eye,
+  ArrowCounterClockwise
 } from '@phosphor-icons/react';
 
 interface AdminComplianceProps {
@@ -33,6 +34,13 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
   const [stats, setStats] = useState<any>({});
   const [policies, setPolicies] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [trashDocuments, setTrashDocuments] = useState<any[]>([]);
+  const [docSubTab, setDocSubTab] = useState<'active' | 'trash'>('active');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'trash' | 'restore' | 'permanent';
+    doc: any | null;
+  }>({ isOpen: false, type: 'trash', doc: null });
   const [consents, setConsents] = useState<any[]>([]);
   const [complaints, setComplaints] = useState<any[]>([]);
   const [incidents, setIncidents] = useState<any[]>([]);
@@ -141,11 +149,16 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
         setPolicies(polData.policies || []);
       }
 
-      // 4. Load Documents
+      // 4. Load Documents & Trash Documents
       const docRes = await fetch('http://localhost:5000/api/admin/compliance/documents', { headers });
       if (docRes.ok) {
         const docData = await docRes.json();
         setDocuments(docData.documents || []);
+      }
+      const trashRes = await fetch('http://localhost:5000/api/admin/compliance/documents/trash', { headers });
+      if (trashRes.ok) {
+        const trashData = await trashRes.json();
+        setTrashDocuments(trashData.documents || []);
       }
 
       // 5. Load Consents
@@ -292,6 +305,11 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     e.preventDefault();
     if (!docForm.name.trim() || !docFile) {
       alert("Please enter a name and choose a file to upload.");
+      return;
+    }
+
+    if (!docFile.name.toLowerCase().endsWith('.pdf') && docFile.type !== 'application/pdf') {
+      alert("Only PDF documents (.pdf) can be uploaded.");
       return;
     }
 
@@ -453,8 +471,16 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     }
   };
 
-  const getFileUrl = (filePath: string) => {
-    if (!filePath) return '#';
+  const getFileUrl = (item: any) => {
+    if (!item) return '#';
+    if (typeof item === 'object') {
+      const docId = item.id || item._id;
+      if (docId) {
+        return `http://localhost:5000/api/public/compliance/documents/view/${docId}`;
+      }
+      return getFileUrl(item.path);
+    }
+    const filePath = String(item);
     if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
     return `http://localhost:5000${filePath.startsWith('/') ? '' : '/'}${filePath}`;
   };
@@ -468,23 +494,50 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     });
   };
 
-  const handleDeleteDoc = async (id: string) => {
-    if (!id) return;
-    if (!window.confirm("Are you sure you want to delete this document from storage?")) return;
+  const openConfirmModal = (doc: any, type: 'trash' | 'restore' | 'permanent') => {
+    setConfirmModal({ isOpen: true, type, doc });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmModal.doc) return;
+    const docId = confirmModal.doc.id || confirmModal.doc._id;
+    const { type } = confirmModal;
+
+    setConfirmModal({ isOpen: false, type: 'trash', doc: null });
+
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/compliance/documents/${id}`, {
-        method: 'DELETE',
-        headers
-      });
+      let url = `http://localhost:5000/api/admin/compliance/documents/${docId}`;
+      let method = 'DELETE';
+
+      if (type === 'restore') {
+        url = `http://localhost:5000/api/admin/compliance/documents/${docId}/restore`;
+        method = 'PUT';
+      } else if (type === 'permanent') {
+        url = `http://localhost:5000/api/admin/compliance/documents/${docId}/permanent`;
+        method = 'DELETE';
+      }
+
+      const response = await fetch(url, { method, headers });
       const data = await response.json();
+
       if (response.ok && data.success) {
-        triggerSuccess("Document deleted successfully.");
+        if (type === 'trash') triggerSuccess("Document moved to Trash Bin.");
+        else if (type === 'restore') triggerSuccess("Document restored successfully.");
+        else if (type === 'permanent') triggerSuccess("Document permanently deleted.");
         loadData();
       } else {
-        alert(data.error || "Failed to delete document.");
+        alert(data.error || "Action failed.");
       }
     } catch (err) {
-      alert("Failed to delete document.");
+      alert("Failed to process document operation.");
+    }
+  };
+
+  const handleDeleteDoc = (docKey: string) => {
+    const targetDoc = documents.find(d => (d.id === docKey || d._id === docKey)) ||
+                      trashDocuments.find(d => (d.id === docKey || d._id === docKey));
+    if (targetDoc) {
+      openConfirmModal(targetDoc, docSubTab === 'trash' ? 'permanent' : 'trash');
     }
   };
 
@@ -696,84 +749,175 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
       {/* SUBTAB 3: DOCUMENTS */}
       {activeSubTab === 'documents' && (
         <div className="space-y-6 text-left">
-          <div className="flex justify-between items-center pb-4 border-b border-border-gray/50">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-border-gray/50">
             <div>
               <h3 className="text-base font-extrabold text-primary">Compliance Document Storage</h3>
               <p className="text-text-light text-xs mt-0.5">Upload safeguarding audits, licenses, waivers, and reference assets.</p>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveModal('document')}
+                className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2 px-4 rounded-xl cursor-pointer text-xs flex items-center gap-1.5 border-none shadow-xs"
+              >
+                <FileArrowUp size={16} /> Upload Document
+              </button>
+            </div>
+          </div>
+
+          {/* Document Filter Sub-Tabs */}
+          <div className="flex items-center gap-2 border-b border-border-gray/40 pb-3">
             <button
-              onClick={() => setActiveModal('document')}
-              className="bg-primary text-white hover:bg-accent hover:text-primary transition-all font-bold py-2 px-4 rounded-xl cursor-pointer text-xs flex items-center gap-1 border-none"
+              onClick={() => setDocSubTab('active')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-none flex items-center gap-2 ${
+                docSubTab === 'active'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
             >
-              <FileArrowUp size={16} /> Upload Document
+              📜 Active Documents ({documents.length})
+            </button>
+            <button
+              onClick={() => setDocSubTab('trash')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-none flex items-center gap-2 ${
+                docSubTab === 'trash'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+              }`}
+            >
+              🗑️ Trash Bin ({trashDocuments.length})
             </button>
           </div>
 
-          {/* Document list */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map(doc => {
-              const docKey = doc.id || doc._id;
-              return (
-                <div key={docKey} className="bg-white p-4 border border-border-gray rounded-xl flex gap-3 items-start justify-between">
-                  <div className="flex gap-2.5 items-start">
-                    <div className="w-10 h-10 bg-soft-light border border-border-gray rounded-lg flex items-center justify-center text-xl shrink-0">
-                      📜
-                    </div>
-                    <div>
-                      <span className="block text-xs font-bold text-primary">{doc.name}</span>
-                      <span className="block text-[10px] text-text-light mt-0.5">{docKey}</span>
-                      {doc.description && (
-                        <p className="text-[11px] text-text-body font-medium mt-1 leading-snug line-clamp-2">{doc.description}</p>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        <span className="text-[9px] font-bold uppercase tracking-wider py-0.5 px-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          {doc.category || 'Legal Document'}
-                        </span>
-                        <span className={`text-[9px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full ${
-                          doc.visibility === 'public'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
-                          {doc.visibility}
-                        </span>
-                        {doc.expiryDate && (
-                          <span className="text-[9px] bg-rose-50 text-rose-700 border border-rose-100 py-0.5 px-2 rounded-full font-bold">
-                            Expires: {formatDate(doc.expiryDate)}
-                          </span>
-                        )}
+          {/* Active Documents List */}
+          {docSubTab === 'active' && (
+            documents.length === 0 ? (
+              <div className="bg-white p-8 text-center border border-border-gray rounded-xl">
+                <p className="text-xs text-text-light font-semibold">No active documents found.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {documents.map(doc => {
+                  const docKey = doc.id || doc._id;
+                  return (
+                    <div key={docKey} className="bg-white p-4 border border-border-gray rounded-xl flex gap-3 items-start justify-between shadow-xs hover:border-primary/40 transition-all">
+                      <div className="flex gap-2.5 items-start">
+                        <div className="w-10 h-10 bg-soft-light border border-border-gray rounded-lg flex items-center justify-center text-xl shrink-0">
+                          📜
+                        </div>
+                        <div>
+                          <span className="block text-xs font-bold text-primary">{doc.name}</span>
+                          <span className="block text-[10px] text-text-light mt-0.5">{docKey}</span>
+                          {doc.description && (
+                            <p className="text-[11px] text-text-body font-medium mt-1 leading-snug line-clamp-2">{doc.description}</p>
+                          )}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <span className="text-[9px] font-bold uppercase tracking-wider py-0.5 px-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                              {doc.category || 'Legal Document'}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full ${
+                              doc.visibility === 'public'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                              {doc.visibility}
+                            </span>
+                            {doc.expiryDate && (
+                              <span className="text-[9px] bg-rose-50 text-rose-700 border border-rose-100 py-0.5 px-2 rounded-full font-bold">
+                                Expires: {formatDate(doc.expiryDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setViewingDocAdmin(doc)}
+                          className="p-2 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary hover:text-white text-primary transition-all flex items-center justify-center cursor-pointer"
+                          title="View Document"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <a
+                          href={getFileUrl(doc)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="p-2 bg-soft-light border border-border-gray rounded-lg hover:border-primary text-primary transition-all flex items-center justify-center decoration-none"
+                          title="Download Document"
+                        >
+                          <Download size={14} />
+                        </a>
+                        <button
+                          onClick={() => openConfirmModal(doc, 'trash')}
+                          className="p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
+                          title="Move to Trash Bin"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => setViewingDocAdmin(doc)}
-                      className="p-2 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary hover:text-white text-primary transition-all flex items-center justify-center cursor-pointer"
-                      title="View Document"
-                    >
-                      <Eye size={14} />
-                    </button>
-                    <a
-                      href={getFileUrl(doc.path)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      className="p-2 bg-soft-light border border-border-gray rounded-lg hover:border-primary text-primary transition-all flex items-center justify-center decoration-none"
-                      title="Download Document"
-                    >
-                      <Download size={14} />
-                    </a>
-                    <button
-                      onClick={() => handleDeleteDoc(docKey)}
-                      className="p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
-                      title="Delete Document"
-                    >
-                      <Trash size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            )
+          )}
+
+          {/* Trash Bin List */}
+          {docSubTab === 'trash' && (
+            trashDocuments.length === 0 ? (
+              <div className="bg-white p-8 text-center border border-border-gray rounded-xl">
+                <p className="text-xs text-text-light font-semibold">Trash Bin is empty. No deleted documents.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {trashDocuments.map(doc => {
+                  const docKey = doc.id || doc._id;
+                  return (
+                    <div key={docKey} className="bg-rose-50/40 p-4 border border-rose-200/70 rounded-xl flex gap-3 items-start justify-between shadow-xs">
+                      <div className="flex gap-2.5 items-start">
+                        <div className="w-10 h-10 bg-rose-100 border border-rose-200 rounded-lg flex items-center justify-center text-xl shrink-0 text-rose-700">
+                          🗑️
+                        </div>
+                        <div>
+                          <span className="block text-xs font-bold text-slate-800 line-through decoration-rose-500">{doc.name}</span>
+                          <span className="block text-[10px] text-text-light mt-0.5">{docKey}</span>
+                          {doc.description && (
+                            <p className="text-[11px] text-text-body font-medium mt-1 leading-snug line-clamp-2">{doc.description}</p>
+                          )}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider py-0.5 px-2 rounded-full bg-rose-100 text-rose-700 border border-rose-300">
+                              In Trash Bin
+                            </span>
+                            {doc.deletedAt && (
+                              <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-200 py-0.5 px-2 rounded-full font-bold">
+                                Deleted: {formatDate(doc.deletedAt)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => openConfirmModal(doc, 'restore')}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer border-none shadow-xs"
+                          title="Restore Document"
+                        >
+                          <ArrowCounterClockwise size={14} /> Restore
+                        </button>
+                        <button
+                          onClick={() => openConfirmModal(doc, 'permanent')}
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer border-none shadow-xs"
+                          title="Permanently Delete Document"
+                        >
+                          <Trash size={14} /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          )}
         </div>
       )}
 
@@ -1314,17 +1458,26 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Select File *</label>
+                <label className="block text-[10px] font-bold text-text-light uppercase tracking-wider mb-1.5">Select File (PDF Only *)</label>
                 <input
                   type="file"
                   required
+                  accept=".pdf,application/pdf"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
-                      setDocFile(e.target.files[0]);
+                      const selectedFile = e.target.files[0];
+                      if (!selectedFile.name.toLowerCase().endsWith('.pdf') && selectedFile.type !== 'application/pdf') {
+                        alert("Only PDF files (.pdf) are allowed.");
+                        e.target.value = '';
+                        setDocFile(null);
+                        return;
+                      }
+                      setDocFile(selectedFile);
                     }
                   }}
                   className="w-full bg-slate-50 border border-border-gray py-2 px-3 rounded-xl outline-none focus:border-primary"
                 />
+                <p className="text-[10px] text-text-light mt-1 font-medium">Only official PDF files (.pdf) are supported.</p>
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-border-gray/50">
@@ -1773,35 +1926,47 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
               )}
 
               {/* Document Stream / File Actions Preview */}
-              <div className="border border-border-gray rounded-2xl p-6 bg-slate-50 text-center space-y-4">
-                <div className="w-16 h-16 bg-white border border-border-gray rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xs">
-                  📄
-                </div>
-                <div>
-                  <h4 className="text-base font-extrabold text-primary">{viewingDocAdmin.name}</h4>
-                  <p className="text-xs text-text-light font-semibold mt-1 max-w-md mx-auto">
-                    Document stored at: <code className="bg-slate-200 px-2 py-0.5 rounded text-primary">{viewingDocAdmin.path}</code>
-                  </p>
+              <div className="border border-border-gray rounded-2xl p-5 bg-slate-50 text-center space-y-4">
+                <div className="flex flex-wrap justify-between items-center bg-white p-3 rounded-xl border border-border-gray/70">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl shrink-0">
+                      📄
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-primary">{viewingDocAdmin.name}</h4>
+                      <p className="text-[11px] text-text-light font-medium truncate max-w-xs">
+                        Path: <code className="bg-slate-100 px-1 py-0.5 rounded text-primary">{viewingDocAdmin.path}</code>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={getFileUrl(viewingDocAdmin)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 decoration-none shadow-xs hover:bg-accent hover:text-primary transition-all"
+                    >
+                      <Eye size={14} /> Open in New Tab
+                    </a>
+                    <a
+                      href={getFileUrl(viewingDocAdmin)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 decoration-none shadow-xs hover:bg-emerald-700 transition-all"
+                    >
+                      <Download size={14} /> Download
+                    </a>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-3 pt-2">
-                  <a
-                    href={getFileUrl(viewingDocAdmin.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-accent hover:text-primary transition-all"
-                  >
-                    <Eye size={16} /> Open Document File
-                  </a>
-                  <a
-                    href={getFileUrl(viewingDocAdmin.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-emerald-700 transition-all"
-                  >
-                    <Download size={16} /> Download File
-                  </a>
+                {/* Inline PDF / Document Viewer Frame */}
+                <div className="w-full h-[380px] bg-slate-200 rounded-xl overflow-hidden border border-border-gray relative">
+                  <iframe
+                    src={getFileUrl(viewingDocAdmin)}
+                    className="w-full h-full border-none"
+                    title={viewingDocAdmin.name}
+                  />
                 </div>
               </div>
             </div>
@@ -1822,6 +1987,77 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
                 className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs cursor-pointer border-none transition-all"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Confirmation Modal for Soft Delete / Restore / Permanent Delete */}
+      {confirmModal.isOpen && confirmModal.doc && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-border-gray space-y-5 animate-scale-up text-left">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${
+                confirmModal.type === 'restore'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : confirmModal.type === 'permanent'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {confirmModal.type === 'restore' ? '🔄' : confirmModal.type === 'permanent' ? '⚠️' : '🗑️'}
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-primary">
+                  {confirmModal.type === 'restore'
+                    ? 'Restore Document?'
+                    : confirmModal.type === 'permanent'
+                    ? 'Permanently Delete Document?'
+                    : 'Move Document to Trash Bin?'}
+                </h3>
+                <p className="text-xs text-text-light font-medium mt-0.5">
+                  {confirmModal.doc.name}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-text-body font-medium leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              {confirmModal.type === 'restore' && (
+                <>This document will be restored and made available in active legal document storage.</>
+              )}
+              {confirmModal.type === 'trash' && (
+                <>This document will be moved to the Trash Bin. Public users will no longer see or access it, but you can restore it anytime.</>
+              )}
+              {confirmModal.type === 'permanent' && (
+                <strong className="text-rose-600">
+                  Warning: This action CANNOT be undone. The document file will be permanently erased from Cloudinary / server storage and database records.
+                </strong>
+              )}
+            </p>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-border-gray/50">
+              <button
+                onClick={() => setConfirmModal({ isOpen: false, type: 'trash', doc: null })}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs border-none cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAction}
+                className={`px-5 py-2 text-white font-extrabold rounded-xl text-xs cursor-pointer border-none shadow-xs transition-all ${
+                  confirmModal.type === 'restore'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : confirmModal.type === 'permanent'
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                }`}
+              >
+                {confirmModal.type === 'restore'
+                  ? 'Yes, Restore Document'
+                  : confirmModal.type === 'permanent'
+                  ? 'Yes, Delete Permanently'
+                  : 'Yes, Move to Trash'}
               </button>
             </div>
           </div>

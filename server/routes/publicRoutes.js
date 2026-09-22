@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const https = require('https');
 const Coach = require('../models/Coach');
 const Student = require('../models/Student');
 const Gallery = require('../models/Gallery');
@@ -20,6 +25,8 @@ const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
 const AdmissionApplication = require('../models/AdmissionApplication');
 const emailService = require('../services/emailService');
+const storageService = require('../services/storageService');
+const cloudinary = require('cloudinary').v2;
 
 const defaultVisionMission = {
   missionPurpose: 'Our Purpose',
@@ -502,7 +509,7 @@ router.get('/compliance/policies/:id', async (req, res) => {
 // Get all published public documents
 router.get('/compliance/documents', async (req, res) => {
   try {
-    let documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+    let documents = await Document.find({ visibility: 'public', status: 'published', isDeleted: { $ne: true } }).sort({ uploadedAt: -1 });
     if (!documents || documents.length === 0) {
       const defaultDocs = [
         {
@@ -543,12 +550,95 @@ router.get('/compliance/documents', async (req, res) => {
         }
       ];
       await Document.insertMany(defaultDocs);
-      documents = await Document.find({ visibility: 'public', status: 'published' }).sort({ uploadedAt: -1 });
+      documents = await Document.find({ visibility: 'public', status: 'published', isDeleted: { $ne: true } }).sort({ uploadedAt: -1 });
     }
     res.json(documents);
   } catch (err) {
     console.error("Fetch public documents error:", err);
     res.status(500).json({ error: "Failed to fetch public documents." });
+  }
+});
+
+function getCloudinaryDownloadUrl(url) {
+  if (!storageService.isCloudinaryActive() || !url.includes('cloudinary.com')) {
+    return url;
+  }
+  try {
+    const isRaw = url.includes('/raw/upload/');
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return url;
+    
+    const pathAfterUpload = parts[1].replace(/^v\d+\//, '');
+    if (isRaw) {
+      return cloudinary.utils.private_download_url(pathAfterUpload, 'pdf', { resource_type: 'raw', type: 'upload' });
+    } else {
+      const publicIdWithoutExt = pathAfterUpload.replace(/\.pdf$/i, '');
+      return cloudinary.utils.private_download_url(publicIdWithoutExt, 'pdf', { resource_type: 'image', type: 'upload' });
+    }
+  } catch (err) {
+    console.error("Error generating Cloudinary download URL:", err);
+    return url;
+  }
+}
+
+function streamRemoteFile(url, res, fileName = 'document.pdf') {
+  const targetUrl = getCloudinaryDownloadUrl(url);
+  const client = targetUrl.startsWith('https') ? https : http;
+
+  const req = client.get(targetUrl, (remoteRes) => {
+    if (remoteRes.statusCode >= 300 && remoteRes.statusCode < 400 && remoteRes.headers.location) {
+      return streamRemoteFile(remoteRes.headers.location, res, fileName);
+    }
+    
+    if (remoteRes.statusCode !== 200) {
+      console.error(`Remote stream error: Upstream status code ${remoteRes.statusCode} for URL: ${url}`);
+      if (!res.headersSent) {
+        return res.status(remoteRes.statusCode >= 400 && remoteRes.statusCode < 600 ? remoteRes.statusCode : 500)
+                  .send(`Failed to stream document. Upstream storage returned status ${remoteRes.statusCode}.`);
+      }
+      return;
+    }
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+    remoteRes.pipe(res);
+  });
+
+  req.on('error', (err) => {
+    console.error("Remote document stream network error:", err);
+    if (!res.headersSent) {
+      res.status(500).send("Failed to stream document.");
+    }
+  });
+}
+
+
+// Stream / View Document endpoint (Proxying Cloudinary / Local files to force Content-Type: application/pdf)
+router.get('/compliance/documents/view/:id', async (req, res) => {
+  try {
+    let doc = await Document.findOne({ id: req.params.id });
+    if (!doc && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      doc = await Document.findOne({ _id: req.params.id });
+    }
+    if (!doc || !doc.path || doc.isDeleted) {
+      return res.status(404).send('Document not found');
+    }
+
+    if (doc.path.startsWith('http://') || doc.path.startsWith('https://')) {
+      streamRemoteFile(doc.path, res, `${doc.name}.pdf`);
+    } else {
+      const cleanPath = doc.path.startsWith('/') ? doc.path.substring(1) : doc.path;
+      const fullPath = path.join(__dirname, '..', cleanPath);
+      if (!fs.existsSync(fullPath)) {
+        return res.status(404).send('File not found on server');
+      }
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.name)}.pdf"`);
+      res.sendFile(fullPath);
+    }
+  } catch (err) {
+    console.error("View document endpoint error:", err);
+    res.status(500).send("Failed to stream document: " + err.message);
   }
 });
 

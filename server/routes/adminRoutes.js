@@ -81,12 +81,22 @@ async function saveBase64File(base64Data, folder) {
   const buffer = Buffer.from(matches[2], 'base64');
 
   if (storageService.isCloudinaryActive()) {
-    const tempFileName = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const extMap = {
+      'application/pdf': '.pdf',
+      'application/msword': '.doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif'
+    };
+    const ext = extMap[mimeType] || '';
+    const originalName = `file_${Date.now()}${ext}`;
+    const tempFileName = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`;
     const tempFilePath = path.join(__dirname, '..', 'uploads', 'temp', tempFileName);
     fs.writeFileSync(tempFilePath, buffer);
     
     try {
-      const url = await storageService.uploadToCloud(tempFilePath, folder);
+      const url = await storageService.uploadToCloud(tempFilePath, folder, originalName);
       return url;
     } catch (err) {
       if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
@@ -1882,11 +1892,43 @@ router.get('/team', async (req, res) => {
     if (team.length === 0) {
       const defaultTeam = [
         {
-          id: 'TM-001',
+          id: 'sanjay-pathak',
           name: 'Mr. Sanjay Pathak',
           role: 'Founder & Director',
           bio: 'Sanjay Pathak is a transformative leader, educator, and the driving force behind a grassroots sports revolution in rural Bihar.\nA geography teacher by profession, he founded the Rani Laxmibai Sports Academy Foundation in 2009 with a powerful vision: to weaponise sports against deep-seated gender discrimination and generational poverty.',
           image: '/images/Mr. Sanjay Pathak (Founder and Director).jpeg',
+          objectPosition: 'center 15%'
+        },
+        {
+          id: 'shrad-chaudhary',
+          name: 'Dr. Shrad Chaudhary',
+          role: 'Director',
+          bio: 'An accomplished academician and sports enthusiast, Dr. Chaudhary oversees sports integration programs.\nHe fosters a balanced approach between academic development and physical excellence for student-athletes.',
+          image: '/images/Dr. Shrad Chaudhary (Director).jpeg',
+          objectPosition: 'center 15%'
+        },
+        {
+          id: 'rita-sinha',
+          name: 'Dr. Rita Sinha',
+          role: 'Director',
+          bio: 'A dedicated advocate for youth empowerment and sports education, Dr. Sinha specializes in building inclusive developmental programs.\nShe mentors junior athletes and promotes sports wellness initiatives.',
+          image: '/images/Dr. Rita Sinha (Director).jpeg',
+          objectPosition: 'center 10%'
+        },
+        {
+          id: 'rajeev-mishra',
+          name: 'Rajeev Lochan Mishra',
+          role: 'Director',
+          bio: 'Bringing years of administrative expertise, Mr. Mishra leads strategic growth and partnership building.\nHe steers the academy\'s community outreach programs and talent scout networks.',
+          image: '/images/Rajeev Lochan Mishra (Director).jpeg',
+          objectPosition: 'center 10%'
+        },
+        {
+          id: 'alakh-pandey',
+          name: 'Mr. Alakh Niranjan Pandey',
+          role: 'Director',
+          bio: 'Mr. Pandey guides the development of residential infrastructure, campus operations, and athlete welfare programs.\nHe ensures a secure and supportive training environment for all student-athletes.',
+          image: '/images/Dr. Alakh Niranjan Pandey (Director).jpeg',
           objectPosition: 'center 15%'
         }
       ];
@@ -2368,10 +2410,10 @@ router.get('/compliance/stats', async (req, res) => {
     const publishedPolicies = await Policy.countDocuments({ status: 'published' });
     const draftPolicies = await Policy.countDocuments({ status: 'draft' });
     
-    const totalDocuments = await Document.countDocuments({});
-    const publicDocs = await Document.countDocuments({ visibility: 'public', status: 'published' });
-    const internalDocs = await Document.countDocuments({ visibility: 'internal' });
-    const privateDocs = await Document.countDocuments({ visibility: 'private' });
+    const totalDocuments = await Document.countDocuments({ isDeleted: { $ne: true } });
+    const publicDocs = await Document.countDocuments({ visibility: 'public', status: 'published', isDeleted: { $ne: true } });
+    const internalDocs = await Document.countDocuments({ visibility: 'internal', isDeleted: { $ne: true } });
+    const privateDocs = await Document.countDocuments({ visibility: 'private', isDeleted: { $ne: true } });
     
     const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const expiringSoonReminders = await ComplianceReminder.countDocuments({
@@ -2490,10 +2532,19 @@ router.delete('/compliance/policies/:id', async (req, res) => {
 // 3. Document Management (Upload/Delete)
 router.get('/compliance/documents', async (req, res) => {
   try {
-    const documents = await Document.find({}).sort({ createdAt: -1 });
+    const documents = await Document.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     res.json({ success: true, documents });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch documents." });
+  }
+});
+
+router.get('/compliance/documents/trash', async (req, res) => {
+  try {
+    const documents = await Document.find({ isDeleted: true }).sort({ deletedAt: -1 });
+    res.json({ success: true, documents });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch trash documents." });
   }
 });
 
@@ -2502,11 +2553,19 @@ router.post('/compliance/documents', upload.single('file'), async (req, res) => 
   if (!name || !req.file) {
     return res.status(400).json({ error: "Document Name and File upload are required." });
   }
+
+  const isPdf = req.file.originalname.toLowerCase().endsWith('.pdf') || req.file.mimetype === 'application/pdf';
+  if (!isPdf) {
+    if (fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    return res.status(400).json({ error: "Only PDF documents (.pdf) are allowed to be uploaded." });
+  }
   
   try {
     let filePath = '';
     if (storageService.isCloudinaryActive()) {
-      filePath = await storageService.uploadToCloud(req.file.path, 'documents');
+      filePath = await storageService.uploadToCloud(req.file.path, 'documents', req.file.originalname);
     } else {
       const fileName = `${Date.now()}-${req.file.originalname}`;
       filePath = await storageService.save(req.file.path, 'original', fileName);
@@ -2522,7 +2581,8 @@ router.post('/compliance/documents', upload.single('file'), async (req, res) => 
       visibility: visibility || 'public',
       status: status || 'published',
       expiryDate: expiryDate ? new Date(expiryDate) : null,
-      uploadedAt: new Date()
+      uploadedAt: new Date(),
+      isDeleted: false
     });
     
     await newDoc.save();
@@ -2534,9 +2594,57 @@ router.post('/compliance/documents', upload.single('file'), async (req, res) => 
   }
 });
 
+// Soft Delete (Move to Trash Bin)
 router.delete('/compliance/documents/:id', async (req, res) => {
   try {
-    const doc = await Document.findOne({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    let doc = await Document.findOne({ id: req.params.id });
+    if (!doc && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      doc = await Document.findOne({ _id: req.params.id });
+    }
+    if (!doc) return res.status(404).json({ error: "Document not found." });
+    
+    doc.isDeleted = true;
+    doc.deletedAt = new Date();
+    await doc.save();
+    
+    const adminUser = req.admin ? req.admin.username : 'admin';
+    await logAdminAction(adminUser, 'document-soft-delete', doc.id || doc._id.toString(), `Moved document to trash: ${doc.name}`);
+    res.json({ success: true, message: "Document moved to trash bin." });
+  } catch (err) {
+    console.error("Soft delete document error:", err);
+    res.status(500).json({ error: "Failed to move document to trash: " + err.message });
+  }
+});
+
+// Restore from Trash Bin
+router.put('/compliance/documents/:id/restore', async (req, res) => {
+  try {
+    let doc = await Document.findOne({ id: req.params.id });
+    if (!doc && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      doc = await Document.findOne({ _id: req.params.id });
+    }
+    if (!doc) return res.status(404).json({ error: "Document not found." });
+    
+    doc.isDeleted = false;
+    doc.deletedAt = null;
+    await doc.save();
+    
+    const adminUser = req.admin ? req.admin.username : 'admin';
+    await logAdminAction(adminUser, 'document-restore', doc.id || doc._id.toString(), `Restored document from trash: ${doc.name}`);
+    res.json({ success: true, message: "Document restored successfully." });
+  } catch (err) {
+    console.error("Restore document error:", err);
+    res.status(500).json({ error: "Failed to restore document: " + err.message });
+  }
+});
+
+// Permanent Delete
+router.delete('/compliance/documents/:id/permanent', async (req, res) => {
+  try {
+    let doc = await Document.findOne({ id: req.params.id });
+    if (!doc && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      doc = await Document.findOne({ _id: req.params.id });
+    }
     if (!doc) return res.status(404).json({ error: "Document not found." });
     
     try {
@@ -2548,11 +2656,11 @@ router.delete('/compliance/documents/:id', async (req, res) => {
     await Document.deleteOne({ _id: doc._id });
     
     const adminUser = req.admin ? req.admin.username : 'admin';
-    await logAdminAction(adminUser, 'document-delete', doc.id || doc._id.toString(), `Deleted document: ${doc.name}`);
-    res.json({ success: true });
+    await logAdminAction(adminUser, 'document-permanent-delete', doc.id || doc._id.toString(), `Permanently deleted document: ${doc.name}`);
+    res.json({ success: true, message: "Document permanently deleted." });
   } catch (err) {
-    console.error("Delete document error:", err);
-    res.status(500).json({ error: "Failed to delete document: " + err.message });
+    console.error("Permanent delete document error:", err);
+    res.status(500).json({ error: "Failed to permanently delete document: " + err.message });
   }
 });
 

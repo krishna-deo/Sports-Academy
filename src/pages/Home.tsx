@@ -672,7 +672,7 @@ export const Home: React.FC = () => {
                           <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
                             {featured.title}
                           </h3>
-                          <p className="text-text-light text-sm leading-relaxed mb-6">
+                          <p className="text-text-light text-sm leading-relaxed mb-6 text-justify">
                             {featured.description}
                           </p>
                         </div>
@@ -710,10 +710,13 @@ export const Home: React.FC = () => {
                           <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                             {card.title}
                           </h3>
-                          <p className="text-text-light text-xs leading-relaxed">
+                          <p className="text-text-light text-xs leading-relaxed text-justify">
                             {card.description}
                           </p>
                         </div>
+                        <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
+                          {card.linkText || 'LEARN MORE'} &rarr;
+                        </span>
                       </div>
                     </a>
                   ))}
@@ -744,7 +747,7 @@ export const Home: React.FC = () => {
                       <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
                         “Our athletes inspire future generations of rural sports champions.”
                       </h3>
-                      <p className="text-text-light text-sm leading-relaxed mb-6">
+                      <p className="text-text-light text-sm leading-relaxed mb-6 text-justify">
                         RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
                       </p>
                     </div>
@@ -777,10 +780,13 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Structured Multi-Sport Development Pathways
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed">
+                      <p className="text-text-light text-xs leading-relaxed text-justify">
                         Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
                       </p>
                     </div>
+                    <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
+                      LEARN MORE &rarr;
+                    </span>
                   </div>
                 </a>
 
@@ -805,10 +811,13 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Vast Olympic-Level Sports Facilities & Arenas
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed">
+                      <p className="text-text-light text-xs leading-relaxed text-justify">
                         Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
                       </p>
                     </div>
+                    <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
+                      EXPLORE FACILITIES &rarr;
+                    </span>
                   </div>
                 </a>
 
@@ -833,10 +842,13 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Calorie-Mapped Nutrition & Rehab Metrics
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed">
+                      <p className="text-text-light text-xs leading-relaxed text-justify">
                         Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
                       </p>
                     </div>
+                    <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
+                      LEARN MORE &rarr;
+                    </span>
                   </div>
                 </a>
 
@@ -861,10 +873,13 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Grassroots Potential to National Champions
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed">
+                      <p className="text-text-light text-xs leading-relaxed text-justify">
                         Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
                       </p>
                     </div>
+                    <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
+                      SCHOLARSHIP PROGRAM &rarr;
+                    </span>
                   </div>
                 </a>
               </div>

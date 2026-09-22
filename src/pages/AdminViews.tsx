@@ -583,7 +583,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
   const fetchStaffTeam = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/team', {
+      const res = await fetch('http://localhost:5000/api/admin/staff-team', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -602,6 +602,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       fetchFacilities();
     } else if (activeTab === 'team-members') {
       fetchStaffTeam();
+    } else if (activeTab === 'founders') {
+      fetchTeam();
     }
   }, [activeTab]);
 
@@ -614,8 +616,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
     try {
       const url = editingStaffMember
-        ? `http://localhost:5000/api/admin/team/${editingStaffMember.id || editingStaffMember._id}`
-        : 'http://localhost:5000/api/admin/team';
+        ? `http://localhost:5000/api/admin/staff-team/${editingStaffMember.id || editingStaffMember._id}`
+        : 'http://localhost:5000/api/admin/staff-team';
       const method = editingStaffMember ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -641,44 +643,55 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
   };
 
-  const handleDeleteStaffMember = async (id: string, name: string, permanent: boolean = false) => {
-    const confirmMsg = permanent
-      ? `Are you sure you want to PERMANENTLY delete team member "${name}"?`
+  const handleDeleteStaffMember = async (id: string, name: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete team member "${name}"? This action cannot be undone.`
       : `Move team member "${name}" to Trash Bin?`;
 
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      const url = `http://localhost:5000/api/admin/team/${id}${permanent ? '?permanent=true' : ''}`;
-      const res = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchStaffTeam();
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to delete staff member.");
+    setConfirmationModal({
+      show: true,
+      title: isPermanent ? "Permanently Delete Team Member?" : "Move to Trash Bin?",
+      message: confirmMsg,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/staff-team/${id}${isPermanent ? '?permanent=true' : ''}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('rlbsa_admin_token');
+            window.location.reload();
+            return;
+          }
+          const data = await response.json();
+          if (response.ok && data.success) {
+            await fetchStaffTeam();
+            triggerSuccess(isPermanent ? 'Team member permanently deleted.' : 'Team member moved to Trash Bin.');
+          } else {
+            alert(data.error || "Failed to delete team member.");
+          }
+        } catch (err) {
+          alert("Error contacting the backend server.");
+        }
       }
-    } catch (err) {
-      console.error("Error deleting staff member:", err);
-    }
+    });
   };
 
-  const handleRestoreStaffMember = async (id: string, _name: string) => {
+  const handleRestoreStaffMember = async (id: string, name: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/team/${id}/restore`, {
+      const response = await fetch(`http://localhost:5000/api/admin/staff-team/${id}/restore`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        fetchStaffTeam();
+      const data = await response.json();
+      if (response.ok && data.success) {
+        await fetchStaffTeam();
+        triggerSuccess(`Team member "${name}" restored successfully.`);
       } else {
-        const data = await res.json();
-        alert(data.error || "Failed to restore staff member.");
+        alert(data.error || "Failed to restore team member.");
       }
     } catch (err) {
-      console.error("Error restoring staff member:", err);
+      alert("Error contacting backend server.");
     }
   };
 
@@ -6128,7 +6141,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         </div>
                         <div className="p-5 text-left space-y-2">
                           <h3 className="text-sm font-extrabold text-primary">{card.title}</h3>
-                          <p className="text-text-light text-xs leading-relaxed line-clamp-3">
+                          <p className="text-text-light text-xs leading-relaxed line-clamp-3 text-justify">
                             {card.description}
                           </p>
                           {(card.link || card.linkText) && (
@@ -6953,7 +6966,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedStaff.map((member) => (
-                  <div key={member.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light relative">
+                  <div key={member._id || member.id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow transition-all bg-soft-light relative">
                     <div>
                       <div className="h-[180px] bg-primary relative">
                         <img 
@@ -6985,13 +6998,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       {showDeletedStaffTeam ? (
                         <>
                           <button
-                            onClick={() => handleRestoreStaffMember(member.id, member.name)}
+                            onClick={() => handleRestoreStaffMember(member._id || member.id, member.name)}
                             className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
                           >
                             <ArrowCounterClockwise size={14} /> Restore
                           </button>
                           <button
-                            onClick={() => handleDeleteStaffMember(member.id, member.name, true)}
+                            onClick={() => handleDeleteStaffMember(member._id || member.id, member.name, true)}
                             className="flex-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
                           >
                             <Trash size={14} /> Delete Permanently
@@ -7016,7 +7029,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteStaffMember(member.id, member.name, false)}
+                            onClick={() => handleDeleteStaffMember(member._id || member.id, member.name, false)}
                             className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
                           >
                             <Trash size={12} /> Delete
@@ -7881,7 +7894,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   placeholder="Card features and details description..."
                   value={edgeCardForm.description} 
                   onChange={(e) => setEdgeCardForm({ ...edgeCardForm, description: e.target.value })}
-                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none"
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none text-justify"
                 />
               </div>
 

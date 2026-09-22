@@ -142,8 +142,16 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
     window.location.hash = `#/compliance/${id}`;
   };
 
-  const getFileUrl = (filePath: string) => {
-    if (!filePath) return '#';
+  const getFileUrl = (item: any) => {
+    if (!item) return '#';
+    if (typeof item === 'object') {
+      const docId = item.id || item._id;
+      if (docId) {
+        return `http://localhost:5000/api/public/compliance/documents/view/${docId}`;
+      }
+      return getFileUrl(item.path);
+    }
+    const filePath = String(item);
     if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
     return `http://localhost:5000${filePath.startsWith('/') ? '' : '/'}${filePath}`;
   };
@@ -267,7 +275,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
                 <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-border-gray/50">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-black text-primary tracking-tight">
-                      Public Legal Documents & Statutory Filings
+                      Legal Documents
                     </h2>
                     <p className="text-xs text-text-light mt-1 font-semibold leading-relaxed">
                       Official registration certificates, 12A/80G tax exemption approvals, CA financial audit reports, and statutory filings for transparency.
@@ -315,7 +323,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
                             <Eye size={14} /> View Document
                           </button>
                           <a
-                            href={getFileUrl(doc.path)}
+                            href={getFileUrl(doc)}
                             target="_blank"
                             rel="noopener noreferrer"
                             download
@@ -557,35 +565,47 @@ export const Compliance: React.FC<ComplianceProps> = ({ sub }) => {
               )}
 
               {/* Document Stream / File Actions Preview */}
-              <div className="border border-border-gray rounded-2xl p-6 bg-slate-50 text-center space-y-4">
-                <div className="w-16 h-16 bg-white border border-border-gray rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xs">
-                  📄
-                </div>
-                <div>
-                  <h4 className="text-base font-extrabold text-primary">{viewingDoc.name}</h4>
-                  <p className="text-xs text-text-light font-semibold mt-1 max-w-md mx-auto">
-                    Verified statutory legal document registered under RLBSA Foundation compliance registry.
-                  </p>
+              <div className="border border-border-gray rounded-2xl p-5 bg-slate-50 text-center space-y-4">
+                <div className="flex flex-wrap justify-between items-center bg-white p-3 rounded-xl border border-border-gray/70">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl shrink-0">
+                      📄
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-primary">{viewingDoc.name}</h4>
+                      <p className="text-[11px] text-text-light font-medium">
+                        Verified statutory legal document
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={getFileUrl(viewingDoc)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 decoration-none shadow-xs hover:bg-accent hover:text-primary transition-all"
+                    >
+                      <Eye size={14} /> Open in New Tab
+                    </a>
+                    <a
+                      href={getFileUrl(viewingDoc)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 decoration-none shadow-xs hover:bg-emerald-700 transition-all"
+                    >
+                      <Download size={14} /> Download
+                    </a>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-3 pt-2">
-                  <a
-                    href={getFileUrl(viewingDoc.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-accent hover:text-primary transition-all"
-                  >
-                    <Eye size={16} /> Open / View Full Document
-                  </a>
-                  <a
-                    href={getFileUrl(viewingDoc.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs inline-flex items-center gap-2 decoration-none shadow-md hover:bg-emerald-700 transition-all"
-                  >
-                    <Download size={16} /> Download File
-                  </a>
+                {/* Inline PDF / Document Viewer Frame */}
+                <div className="w-full h-[380px] bg-slate-200 rounded-xl overflow-hidden border border-border-gray relative">
+                  <iframe
+                    src={getFileUrl(viewingDoc)}
+                    className="w-full h-full border-none"
+                    title={viewingDoc.name}
+                  />
                 </div>
               </div>
             </div>

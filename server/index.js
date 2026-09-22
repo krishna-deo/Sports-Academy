@@ -69,7 +69,9 @@ app.use('/documents', express.static(path.join(__dirname, 'documents')));
 // Secure HTTP Headers injection
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  if (!req.path.includes('/documents/view/')) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
   res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 });
@@ -78,6 +80,11 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', verifyAdminToken, adminRoutes);
+
+// Return JSON 404 for unhandled API endpoints instead of falling back to index.html
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
 // Serve static assets from the React build in production
 app.use(express.static(path.join(__dirname, '../dist')));

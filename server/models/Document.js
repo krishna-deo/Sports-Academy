@@ -9,7 +9,9 @@ const DocumentSchema = new mongoose.Schema({
   visibility: { type: String, enum: ['public', 'internal', 'private'], default: 'public' },
   status: { type: String, enum: ['draft', 'published'], default: 'published' },
   expiryDate: { type: Date, default: null },
-  uploadedAt: { type: Date, default: Date.now }
+  uploadedAt: { type: Date, default: Date.now },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Document', DocumentSchema);
