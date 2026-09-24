@@ -33,6 +33,7 @@ import {
 import { AdminCompliance } from '../components/AdminCompliance';
 import { getBioParagraphs } from '../utils/textUtils';
 import { defaultStaffMembers } from '../data/teamMembersData';
+import { uploadWithProgress } from '../utils/uploadUtils';
 import { COUNTRY_CODES } from '../data/countryCodes';
 
 interface AdminViewsProps {
@@ -138,12 +139,14 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     location: '',
     description: '',
     status: 'draft' as 'draft' | 'published',
-    mediaType: 'image' as 'image' | 'video',
+    mediaType: 'image' as 'image' | 'video' | 'local-video',
     videoUrl: ''
   });
 
   const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
   const [selectedPhotoPreviews, setSelectedPhotoPreviews] = useState<string[]>([]);
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [selectedVideoPreview, setSelectedVideoPreview] = useState<string>('');
   const [coverIndex, setCoverIndex] = useState<number>(0);
   const [customCoverImage, setCustomCoverImage] = useState<File | null>(null);
   const [customCoverPreview, setCustomCoverPreview] = useState<string>('');
@@ -154,6 +157,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [showQuickViewEvent, setShowQuickViewEvent] = useState<any | null>(null);
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [galleryDefaultSettings, setGalleryDefaultSettings] = useState({
     visibility: (localStorage.getItem('rlbsa_gallery_default_visibility') || 'public') as 'public' | 'private',
     status: (localStorage.getItem('rlbsa_gallery_default_status') || 'published') as 'draft' | 'published',
@@ -2338,6 +2342,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     const method = isEdit ? 'PUT' : 'POST';
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       
@@ -2389,20 +2394,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         formData.append('deletedDocPaths', JSON.stringify(deletedDocuments));
       }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
+      const res = await uploadWithProgress(url, method, formData, token, (pct) => setUploadProgress(pct));
 
-      if (response.status === 401 || response.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         localStorage.removeItem('rlbsa_admin_token');
         window.location.reload();
         return;
       }
 
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const data = res.data;
+      if (res.ok && data.success) {
         triggerSuccess(`Student successfully ${isEdit ? 'updated' : 'registered'}.`);
         setActiveModal(null);
         resetStudentForm();
@@ -2771,12 +2772,27 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     });
     setSelectedPhotos([]);
     setSelectedPhotoPreviews([]);
+    setSelectedVideoFile(null);
+    setSelectedVideoPreview('');
     setCoverIndex(0);
     setCustomCoverImage(null);
     setCustomCoverPreview('');
     setEditingEventGallery(null);
     setExistingPhotos([]);
     setDeletedExistingPhotos([]);
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext !== 'mp4' && ext !== 'mov') {
+        alert("Please select a valid .mp4 or .mov video file.");
+        return;
+      }
+      setSelectedVideoFile(file);
+      setSelectedVideoPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSaveEventGallery = async (e: React.FormEvent, forceStatus?: 'draft' | 'published') => {
@@ -2787,19 +2803,27 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     }
 
     const isEdit = !!editingEventGallery;
-    const isVideo = eventGalleryForm.mediaType === 'video';
+    const isLocalVideo = eventGalleryForm.mediaType === 'local-video';
+    const isYoutubeVideo = eventGalleryForm.mediaType === 'video';
+    const isVideo = isLocalVideo || isYoutubeVideo;
     
     if (!isEdit && !isVideo && selectedPhotos.length === 0) {
       alert("Please select at least one photo to upload.");
       return;
     }
+
+    if (isLocalVideo && !isEdit && !selectedVideoFile) {
+      alert("Please select a video file (.mp4 or .mov) to upload.");
+      return;
+    }
     
-    if (isVideo && !eventGalleryForm.videoUrl.trim()) {
+    if (isYoutubeVideo && !eventGalleryForm.videoUrl.trim()) {
       alert("Please provide a YouTube video URL.");
       return;
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append('name', eventGalleryForm.name);
@@ -2809,8 +2833,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       formData.append('description', eventGalleryForm.description);
       formData.append('status', forceStatus || eventGalleryForm.status);
       formData.append('mediaType', eventGalleryForm.mediaType);
-      formData.append('videoUrl', isVideo ? eventGalleryForm.videoUrl.trim() : '');
+      formData.append('videoUrl', isYoutubeVideo ? eventGalleryForm.videoUrl.trim() : '');
       formData.append('coverIndex', String(coverIndex));
+
+      if (isLocalVideo && selectedVideoFile) {
+        formData.append('video', selectedVideoFile);
+      }
 
       if (!isVideo) {
         selectedPhotos.forEach(file => {
@@ -2838,20 +2866,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
       const method = isEdit ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
+      const res = await uploadWithProgress(url, method, formData, token, (pct) => setUploadProgress(pct));
 
-      if (response.status === 401 || response.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         localStorage.removeItem('rlbsa_admin_token');
         window.location.reload();
         return;
       }
 
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const data = res.data;
+      if (res.ok && data.success) {
         triggerSuccess(isEdit ? 'Event updated successfully.' : 'Event created successfully.');
         setActiveModal(null);
         resetEventGalleryForm();
@@ -2977,6 +3001,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     setDeletedExistingPhotos([]);
     setSelectedPhotos([]);
     setSelectedPhotoPreviews([]);
+    setSelectedVideoFile(null);
+    setSelectedVideoPreview('');
     
     const idx = event.photos?.findIndex((p: any) => p.path === event.coverImage);
     setCoverIndex(idx !== -1 ? idx : 0);
@@ -3978,7 +4004,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 <option value="Handball">Handball</option>
                 <option value="Athletics">Athletics</option>
                 <option value="Rugby">Rugby</option>
-                <option value="Kabaddi">Kabaddi</option>
               </select>
 
               {/* All Genders Filter */}
@@ -4853,9 +4878,9 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           {event.date ? new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                         </td>
                         <td className="p-4 font-bold text-primary">
-                          {event.mediaType === 'video' ? (
+                          {event.mediaType === 'video' || event.mediaType === 'local-video' ? (
                             <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 w-fit text-[9px] uppercase tracking-wider font-extrabold">
-                              Video
+                              {event.mediaType === 'local-video' ? '🎬 Video File' : '🎥 YouTube'}
                             </span>
                           ) : (
                             <span>{event.photos?.length || 0} Photos</span>
@@ -8865,7 +8890,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           <option value="Handball">Handball</option>
                           <option value="Athletics">Athletics</option>
                           <option value="Rugby">Rugby</option>
-                          <option value="Kabaddi">Kabaddi</option>
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -9317,13 +9341,33 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     <button 
                       type="submit" 
                       disabled={isUploading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-all text-xs cursor-pointer border-none shadow-md disabled:opacity-60"
                     >
-                      {isUploading ? 'Saving...' : 'Save Record'}
+                      {isUploading ? `Uploading... ${uploadProgress}%` : 'Save Record'}
                     </button>
                   )}
                 </div>
               </div>
+
+              {isUploading && (
+                <div className="w-full bg-slate-50 border border-primary/20 rounded-lg p-3 mt-3 shadow-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-primary">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      Uploading photo &amp; documents...
+                    </span>
+                    <span className="text-accent font-black text-sm">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-primary h-full transition-all duration-150 ease-out rounded-full relative overflow-hidden"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>,
@@ -9777,11 +9821,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Media Type *</label>
                   <select 
                     value={eventGalleryForm.mediaType} 
-                    onChange={(e) => setEventGalleryForm({...eventGalleryForm, mediaType: e.target.value as 'image' | 'video'})} 
+                    onChange={(e) => setEventGalleryForm({...eventGalleryForm, mediaType: e.target.value as 'image' | 'video' | 'local-video'})} 
                     className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary transition-all font-semibold"
                   >
                     <option value="image">📸 Image Album</option>
                     <option value="video">🎥 YouTube Video</option>
+                    <option value="local-video">🎬 Direct Video Upload (.mp4, .mov)</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -9849,6 +9894,29 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 </div>
               )}
 
+              {/* Local Video Upload section if mediaType is local-video */}
+              {eventGalleryForm.mediaType === 'local-video' && (
+                <div className="flex flex-col gap-2 border-t border-border-gray/50 pt-4">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    Upload Video File (.mp4, .mov) *
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="video/mp4,video/quicktime,video/*,.mp4,.mov"
+                    onChange={handleVideoChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white focus:border-primary transition-all font-semibold cursor-pointer"
+                  />
+                  <p className="text-[10px] text-text-light">
+                    Supports .mp4 and .mov formats. Max target size 100MB (larger files will be automatically compressed before uploading).
+                  </p>
+                  {selectedVideoPreview && (
+                    <div className="mt-2 rounded-lg overflow-hidden border border-border-gray bg-black">
+                      <video src={selectedVideoPreview} controls className="w-full max-h-56 object-contain" />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Photo Upload section if mediaType is image */}
               {eventGalleryForm.mediaType === 'image' && (
                 <>
@@ -9900,7 +9968,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               {/* Custom Cover Photo option */}
               <div className="flex flex-col gap-1.5 border-t border-border-gray/50 pt-4">
                 <label className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                  {eventGalleryForm.mediaType === 'video' ? 'Or Upload Custom Cover Image (Optional, default is YouTube Thumbnail)' : 'Or Upload Custom Cover Image (Optional)'}
+                  {eventGalleryForm.mediaType === 'video' ? 'Or Upload Custom Cover Image (Optional, default is YouTube Thumbnail)' : eventGalleryForm.mediaType === 'local-video' ? 'Or Upload Custom Cover Image (Optional, default is auto frame snapshot)' : 'Or Upload Custom Cover Image (Optional)'}
                 </label>
                 <input 
                   type="file" 
@@ -9922,6 +9990,27 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 )}
               </div>
 
+              {/* Upload Progress Bar */}
+              {isUploading && (
+                <div className="w-full bg-slate-50 border border-primary/20 rounded-lg p-3 my-2 shadow-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-primary">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      Uploading photos / media...
+                    </span>
+                    <span className="text-accent font-black text-sm">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-primary h-full transition-all duration-150 ease-out rounded-full relative overflow-hidden"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Modal footer */}
               <div className="flex justify-end gap-3 pt-4 border-t border-border-gray/50">
                 <button 
@@ -9937,7 +10026,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   onClick={(e) => handleSaveEventGallery(e, 'draft')}
                   className="py-2.5 px-5 rounded-lg bg-soft-light hover:bg-border-gray text-primary disabled:opacity-60 font-bold text-xs cursor-pointer transition-all"
                 >
-                  {isUploading ? 'Saving...' : 'Save as Draft'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Save as Draft'}
                 </button>
                 <button 
                   type="submit" 
@@ -9945,7 +10034,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   onClick={(e) => { e.preventDefault(); handleSaveEventGallery(e, 'published'); }}
                   className="py-2.5 px-6 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60 font-bold text-xs cursor-pointer transition-all"
                 >
-                  {isUploading ? 'Uploading...' : 'Publish Event'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Publish Event'}
                 </button>
               </div>
             </form>
@@ -9979,11 +10068,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Media Type *</label>
                   <select 
                     value={eventGalleryForm.mediaType} 
-                    onChange={(e) => setEventGalleryForm({...eventGalleryForm, mediaType: e.target.value as 'image' | 'video'})} 
+                    onChange={(e) => setEventGalleryForm({...eventGalleryForm, mediaType: e.target.value as 'image' | 'video' | 'local-video'})} 
                     className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-white outline-none focus:border-primary transition-all font-semibold"
                   >
                     <option value="image">📸 Image Album</option>
                     <option value="video">🎥 YouTube Video</option>
+                    <option value="local-video">🎬 Direct Video Upload (.mp4, .mov)</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -10047,6 +10137,37 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     className="w-full py-2.5 px-3 border border-border-gray rounded text-sm bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
                   />
                   <p className="text-[10px] text-text-light mt-1">Supports standard watch links, youtu.be shortlinks, or embed links.</p>
+                </div>
+              )}
+
+              {/* Local Video Upload section if mediaType is local-video */}
+              {eventGalleryForm.mediaType === 'local-video' && (
+                <div className="flex flex-col gap-2 border-t border-border-gray/50 pt-4">
+                  <label className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    Replace Video File (.mp4, .mov) (Optional)
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="video/mp4,video/quicktime,video/*,.mp4,.mov"
+                    onChange={handleVideoChange}
+                    className="w-full py-1.5 px-2 border border-border-gray rounded text-xs bg-white focus:border-primary transition-all font-semibold cursor-pointer"
+                  />
+                  <p className="text-[10px] text-text-light">
+                    Select a new video to replace the existing video. Max target size 100MB (auto-compressed if larger).
+                  </p>
+                  {selectedVideoPreview ? (
+                    <div className="mt-2 rounded-lg overflow-hidden border border-border-gray bg-black">
+                      <video src={selectedVideoPreview} controls className="w-full max-h-56 object-contain" />
+                    </div>
+                  ) : editingEventGallery?.videoUrl ? (
+                    <div className="mt-2 rounded-lg overflow-hidden border border-border-gray bg-black">
+                      <video 
+                        src={editingEventGallery.videoUrl.startsWith('http') ? editingEventGallery.videoUrl : `http://localhost:5000${editingEventGallery.videoUrl}`} 
+                        controls 
+                        className="w-full max-h-56 object-contain" 
+                      />
+                    </div>
+                  ) : null}
                 </div>
               )}
 
@@ -10447,6 +10568,26 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
               </div>
 
+              {isUploading && (
+                <div className="w-full bg-slate-50 border border-primary/20 rounded-lg p-3 my-2 shadow-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-primary">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      Uploading media files...
+                    </span>
+                    <span className="text-accent font-black text-sm">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-primary h-full transition-all duration-150 ease-out rounded-full relative overflow-hidden"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4 border-t border-border-gray/50">
                 <button
                   type="button"
@@ -10460,7 +10601,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   disabled={isUploading}
                   className="py-2.5 px-6 rounded-lg bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold text-xs cursor-pointer disabled:opacity-60 border-none"
                 >
-                  {isUploading ? 'Scheduling...' : 'Save Event'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Save Event'}
                 </button>
               </div>
             </form>
@@ -10633,6 +10774,26 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
               </div>
 
+              {isUploading && (
+                <div className="w-full bg-slate-50 border border-primary/20 rounded-lg p-3 my-2 shadow-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-primary">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      Uploading media files...
+                    </span>
+                    <span className="text-accent font-black text-sm">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-primary h-full transition-all duration-150 ease-out rounded-full relative overflow-hidden"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4 border-t border-border-gray/50">
                 <button
                   type="button"
@@ -10646,7 +10807,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   disabled={isUploading}
                   className="py-2.5 px-6 rounded-lg bg-primary hover:bg-accent text-white hover:text-primary transition-all font-bold text-xs cursor-pointer disabled:opacity-60 border-none"
                 >
-                  {isUploading ? 'Publishing...' : 'Save Update'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Save Update'}
                 </button>
               </div>
             </form>

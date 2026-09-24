@@ -70,8 +70,7 @@ export const StudentAdmissionForm: React.FC = () => {
     'Football',
     'Handball',
     'Athletics',
-    'Rugby',
-    'Kabaddi'
+    'Rugby'
   ];
 
   const handleInputChange = (field: string, value: any) => {

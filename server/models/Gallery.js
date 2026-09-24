@@ -31,7 +31,7 @@ const GallerySchema = new mongoose.Schema({
   },
   mediaType: {
     type: String,
-    enum: ['image', 'video'],
+    enum: ['image', 'video', 'local-video'],
     default: 'image'
   },
   videoUrl: {

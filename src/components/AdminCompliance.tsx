@@ -20,6 +20,8 @@ import {
   ArrowCounterClockwise
 } from '@phosphor-icons/react';
 
+import { uploadWithProgress } from '../utils/uploadUtils';
+
 interface AdminComplianceProps {
   token: string;
   triggerSuccess: (msg: string) => void;
@@ -76,6 +78,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
   });
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [docUploadProgress, setDocUploadProgress] = useState(0);
   const [viewingDocAdmin, setViewingDocAdmin] = useState<any | null>(null);
 
   // Student Consent Form State
@@ -314,6 +317,7 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     }
 
     setIsUploadingDoc(true);
+    setDocUploadProgress(0);
     const formData = new FormData();
     formData.append('name', docForm.name);
     formData.append('category', docForm.category);
@@ -324,13 +328,15 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
     formData.append('file', docFile);
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/compliance/documents', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const res = await uploadWithProgress(
+        'http://localhost:5000/api/admin/compliance/documents',
+        'POST',
+        formData,
+        token,
+        (percent) => setDocUploadProgress(percent)
+      );
+      const data = res.data;
+      if (res.ok && data.success) {
         triggerSuccess("Document uploaded successfully.");
         setActiveModal(null);
         setDocForm({ name: '', category: 'Legal Document', description: '', visibility: 'public', status: 'published', expiryDate: '' });
@@ -1480,6 +1486,26 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
                 <p className="text-[10px] text-text-light mt-1 font-medium">Only official PDF files (.pdf) are supported.</p>
               </div>
 
+              {isUploadingDoc && (
+                <div className="w-full bg-slate-50 border border-primary/20 rounded-xl p-3 my-2 shadow-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-primary">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      Uploading document...
+                    </span>
+                    <span className="text-accent font-black text-sm">{docUploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-primary h-full transition-all duration-150 ease-out rounded-full relative overflow-hidden"
+                      style={{ width: `${docUploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2 pt-4 border-t border-border-gray/50">
                 <button
                   type="button"
@@ -1491,9 +1517,9 @@ export const AdminCompliance: React.FC<AdminComplianceProps> = ({ token, trigger
                 <button
                   type="submit"
                   disabled={isUploadingDoc}
-                  className="px-5 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl cursor-pointer border-none flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold rounded-xl cursor-pointer border-none flex items-center gap-1.5 disabled:opacity-60"
                 >
-                  {isUploadingDoc ? 'Uploading...' : 'Upload'}
+                  {isUploadingDoc ? `Uploading... ${docUploadProgress}%` : 'Upload Document'}
                 </button>
               </div>
             </form>

@@ -71,7 +71,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
           if (activeTag === 'media') {
             const items: any[] = [];
             data.items.forEach((event: any) => {
-              if (event.mediaType === 'video') {
+              if (event.mediaType === 'video' || event.mediaType === 'local-video') {
                 items.push({
                   id: `video-${event._id}`,
                   type: 'video',
@@ -312,7 +312,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                 </div>
               )}
               <div className="flex items-center gap-1.5 text-xs text-text-light font-bold">
-                {selectedEvent.mediaType === 'video' ? (
+                {selectedEvent.mediaType === 'video' || selectedEvent.mediaType === 'local-video' ? (
                   <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[9px] uppercase tracking-wider font-extrabold">
                     Video Event
                   </span>
@@ -482,7 +482,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                           }}
                         />
                         
-                        {event.mediaType === 'video' && (
+                        {(event.mediaType === 'video' || event.mediaType === 'local-video') && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                             <div className="w-12 h-12 rounded-full bg-accent/90 text-primary flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
                               <svg className="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
@@ -515,7 +515,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                             <Calendar size={13} /> {formatDate(event.date)}
                           </span>
                           <span className="flex items-center gap-1">
-                            {event.mediaType === 'video' ? (
+                            {event.mediaType === 'video' || event.mediaType === 'local-video' ? (
                               <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[8px] uppercase tracking-wider font-extrabold flex items-center gap-1">
                                 🎥 Video
                               </span>
@@ -559,34 +559,43 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
         )
       ) : (
         /* Render Detailed Event Gallery Content */
-        selectedEvent.mediaType === 'video' ? (
+        (selectedEvent.mediaType === 'video' || selectedEvent.mediaType === 'local-video') ? (
           <div className="max-w-4xl mx-auto bg-black rounded-xl overflow-hidden shadow-2xl border border-border-gray/30 aspect-video animate-scale-up">
-            {(() => {
-              const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-              const match = selectedEvent.videoUrl ? selectedEvent.videoUrl.match(regExp) : null;
-              const youtubeId = (match && match[2].length === 11) ? match[2] : '';
-              
-              if (!youtubeId) {
+            {selectedEvent.mediaType === 'local-video' || (selectedEvent.videoUrl && selectedEvent.videoUrl.startsWith('/uploads')) ? (
+              <video
+                src={formatMediaUrl(selectedEvent.videoUrl)}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              (() => {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                const match = selectedEvent.videoUrl ? selectedEvent.videoUrl.match(regExp) : null;
+                const youtubeId = (match && match[2].length === 11) ? match[2] : '';
+                
+                if (!youtubeId) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full text-white p-5">
+                      <p className="text-sm font-semibold">Invalid YouTube link.</p>
+                    </div>
+                  );
+                }
+                
                 return (
-                  <div className="flex flex-col items-center justify-center h-full text-white p-5">
-                    <p className="text-sm font-semibold">Invalid YouTube link.</p>
-                  </div>
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                    title={selectedEvent.name}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
                 );
-              }
-              
-              return (
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-                  title={selectedEvent.name}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="w-full h-full"
-                ></iframe>
-              );
-            })()}
+              })()
+            )}
           </div>
         ) : !selectedEvent.photos || selectedEvent.photos.length === 0 ? (
           <div className="text-center py-20 text-text-light text-sm border border-dashed border-border-gray rounded-xl">

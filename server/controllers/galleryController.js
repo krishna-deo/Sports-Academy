@@ -77,16 +77,44 @@ class GalleryController {
         return res.status(400).json({ error: "Event name, category, and date are required." });
       }
 
-      const isVideo = mediaType === 'video';
+      const isLocalVideo = (files && files.video && files.video.length > 0) || mediaType === 'local-video';
+      const isVideo = mediaType === 'video' || isLocalVideo;
       let photoItems = [];
       let coverImageUrl = '';
+      let finalVideoUrl = videoUrl || '';
 
-      if (isVideo) {
+      if (isLocalVideo && files && files.video && files.video.length > 0) {
+        // Direct Local Video Upload (.mp4, .mov)
+        const videoFile = files.video[0];
+        const customCoverFile = files && files.coverImage ? files.coverImage[0] : null;
+        
+        try {
+          const optVideo = await galleryService.optimizeVideo(
+            videoFile.path, 
+            videoFile.originalname, 
+            customCoverFile
+          );
+          finalVideoUrl = optVideo.path;
+          coverImageUrl = optVideo.thumbnail || optVideo.path;
+
+          if (customCoverFile) {
+            try {
+              const optCover = await galleryService.optimizeEventPhoto(customCoverFile.path, customCoverFile.originalname);
+              coverImageUrl = optCover.path;
+            } catch (err) {
+              console.error("Failed to optimize custom cover image for video:", err);
+            }
+          }
+        } catch (vErr) {
+          console.error("Failed to process local video upload:", vErr);
+          return res.status(500).json({ error: "Failed to compress or process video file: " + vErr.message });
+        }
+      } else if (isVideo) {
         if (!videoUrl) {
           if (files && files.coverImage) {
             files.coverImage.forEach(f => { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); });
           }
-          return res.status(400).json({ error: "YouTube URL is required for video uploads." });
+          return res.status(400).json({ error: "Video URL or local video file (.mp4, .mov) is required." });
         }
 
         // Optimize custom cover image if uploaded
@@ -156,8 +184,8 @@ class GalleryController {
         location: location || '',
         coverImage: coverImageUrl,
         photos: photoItems,
-        mediaType: mediaType || 'image',
-        videoUrl: isVideo ? videoUrl : '',
+        mediaType: isLocalVideo ? 'local-video' : (mediaType || 'image'),
+        videoUrl: finalVideoUrl,
         status: status || 'draft',
         uploadedBy: username,
         logs: [{ action: 'upload', timestamp: new Date(), operator: username }]
@@ -223,8 +251,27 @@ class GalleryController {
       }
 
       // 3. Update cover image
-      const activeMediaType = mediaType || existing.mediaType;
-      const activeVideoUrl = videoUrl !== undefined ? videoUrl : existing.videoUrl;
+      let activeMediaType = mediaType || existing.mediaType;
+      let activeVideoUrl = videoUrl !== undefined ? videoUrl : existing.videoUrl;
+      
+      // Check if a new local video file is uploaded during update
+      const newVideoFile = files && files.video ? files.video[0] : null;
+      if (newVideoFile) {
+        try {
+          const optVideo = await galleryService.optimizeVideo(
+            newVideoFile.path, 
+            newVideoFile.originalname, 
+            files && files.coverImage ? files.coverImage[0] : null
+          );
+          activeVideoUrl = optVideo.path;
+          activeMediaType = 'local-video';
+          if (!coverImage && !files?.coverImage) {
+            coverImage = optVideo.thumbnail || optVideo.path;
+          }
+        } catch (vErr) {
+          console.error("Failed to process new video file on update:", vErr);
+        }
+      }
       
       let coverImageUrl = coverImage || existing.coverImage;
       const newCoverFile = files && files.coverImage ? files.coverImage[0] : null;
@@ -261,8 +308,8 @@ class GalleryController {
       if (description !== undefined) updateData.description = description;
       if (location !== undefined) updateData.location = location;
       if (status) updateData.status = status;
-      if (mediaType) updateData.mediaType = mediaType;
-      if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
+      updateData.mediaType = activeMediaType;
+      updateData.videoUrl = activeVideoUrl;
 
       const logs = [...existing.logs, { action: 'edit', timestamp: new Date(), operator: username }];
       const item = await galleryRepository.update(id, { ...updateData, logs });

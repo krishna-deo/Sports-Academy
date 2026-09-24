@@ -296,10 +296,25 @@ if (!fs.existsSync(protectedDir)) {
   fs.mkdirSync(protectedDir, { recursive: true });
 }
 
-const studentUpload = upload.fields([
-  { name: 'avatar', maxCount: 1 },
-  { name: 'documents', maxCount: 10 }
-]);
+const studentUpload = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      console.error("Multer student upload error:", err);
+      return res.status(400).json({ error: err.message || "File upload failed" });
+    }
+    if (Array.isArray(req.files)) {
+      const filesObj = {};
+      req.files.forEach(file => {
+        if (!filesObj[file.fieldname]) {
+          filesObj[file.fieldname] = [];
+        }
+        filesObj[file.fieldname].push(file);
+      });
+      req.files = filesObj;
+    }
+    next();
+  });
+};
 
 // Students CRUD
 router.get('/students', async (req, res) => {
@@ -1329,10 +1344,25 @@ router.delete('/coaches/:name', async (req, res) => {
 // Gallery CRUD with multer file uploading & advanced optimization
 const galleryController = require('../controllers/galleryController');
 
-const galleryUpload = upload.fields([
-  { name: 'photos', maxCount: 100 },
-  { name: 'coverImage', maxCount: 1 }
-]);
+const galleryUpload = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      console.error("Multer file upload error:", err);
+      return res.status(400).json({ error: err.message || "File upload failed" });
+    }
+    if (Array.isArray(req.files)) {
+      const filesObj = {};
+      req.files.forEach(file => {
+        if (!filesObj[file.fieldname]) {
+          filesObj[file.fieldname] = [];
+        }
+        filesObj[file.fieldname].push(file);
+      });
+      req.files = filesObj;
+    }
+    next();
+  });
+};
 
 router.get('/gallery', (req, res) => galleryController.getItems(req, res));
 router.get('/gallery/stats', (req, res) => galleryController.getStats(req, res));

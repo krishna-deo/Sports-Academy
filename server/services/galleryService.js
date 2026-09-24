@@ -182,20 +182,32 @@ class GalleryService {
     if (hasFFmpeg) {
       try {
         // Compress and downscale
-        // If file size is > 300MB, compress aggressively to 720p with crf 32. Otherwise, standard 1080p crf 28.
-        let scaleFilter = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease";
+        // If file size is > 100MB, compress to 720p with crf 30 to guarantee target under 100MB
+        let scaleFilter = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
         let crfVal = 28;
         let audioBitrate = "128k";
         
-        if (originalSize > 300 * 1024 * 1024) {
-          scaleFilter = "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease";
-          crfVal = 32;
+        if (originalSize > 100 * 1024 * 1024) {
+          scaleFilter = "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
+          crfVal = 31;
           audioBitrate = "96k";
         }
 
         const cmd = `ffmpeg -i "${fullOriginalPath}" -vf "${scaleFilter}" -vcodec libx264 -crf ${crfVal} -preset fast -acodec aac -b:a ${audioBitrate} -y "${fullOptimizedPath}"`;
         await execPromise(cmd);
         optimizedSize = fs.statSync(fullOptimizedPath).size;
+
+        // If still exceeds 100MB limit after first pass, perform second pass compression
+        if (optimizedSize > 100 * 1024 * 1024) {
+          const pass2Path = `${fullOptimizedPath}_pass2.mp4`;
+          const pass2Cmd = `ffmpeg -i "${fullOptimizedPath}" -vf "scale='min(960,iw)':'min(540,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2" -vcodec libx264 -crf 34 -preset fast -acodec aac -b:a 64k -y "${pass2Path}"`;
+          await execPromise(pass2Cmd);
+          if (fs.existsSync(pass2Path)) {
+            fs.renameSync(pass2Path, fullOptimizedPath);
+            optimizedSize = fs.statSync(fullOptimizedPath).size;
+          }
+        }
+
         compressionRatio = Number(((originalSize - optimizedSize) / originalSize * 100).toFixed(2));
       } catch (err) {
         console.error("FFmpeg compression failed. Storing copy of original file instead:", err);
