@@ -930,12 +930,9 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             {team.length > 0 && (
               <RevealRow id={team[0].id} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col sm:flex-row w-full min-h-[240px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col sm:flex-row w-full min-h-[220px] sm:min-h-[240px]`}>
                     {/* Hero Left: Image */}
-                    <div 
-                      className="w-full sm:w-[240px] md:w-[280px] aspect-[3/4] sm:h-auto flex-shrink-0 relative bg-primary overflow-hidden"
-                      style={{ aspectRatio: '3 / 4' }}
-                    >
+                    <div className="w-full sm:w-[220px] md:w-[260px] h-[180px] sm:h-auto flex-shrink-0 relative bg-primary">
                       <img 
                         src={team[0].image} 
                         alt={team[0].name} 
@@ -977,12 +974,9 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               return (
                 <RevealRow key={member.id} id={member.id} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col sm:flex-row w-full min-h-[190px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col sm:flex-row w-full min-h-[170px] sm:min-h-[190px]`}>
                       {/* Image container */}
-                      <div 
-                        className="w-full sm:w-[190px] md:w-[220px] aspect-[3/4] sm:h-auto flex-shrink-0 relative bg-primary overflow-hidden"
-                        style={{ aspectRatio: '3 / 4' }}
-                      >
+                      <div className="w-full sm:w-[150px] md:w-[180px] h-[150px] sm:h-auto flex-shrink-0 relative bg-primary">
                         <img 
                           src={member.image} 
                           alt={member.name} 
