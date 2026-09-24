@@ -1,17 +1,70 @@
 import React from 'react';
-import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar, ArrowRight } from '@phosphor-icons/react';
+import { Trophy, BookOpen, ForkKnife, House, CaretLeft, CaretRight, Bus, Calendar, ArrowRight, Buildings } from '@phosphor-icons/react';
 import { HeroSlider } from '../components/HeroSlider';
 import { teamMembers } from '../data/teamData';
 import { successStories as initialSuccessStories } from '../data/sportsData';
 import { getBioParagraphs } from '../utils/textUtils';
+
+const defaultHomeWhatWeDo = [
+  {
+    id: 'sports',
+    title: 'Sports Training',
+    tag: 'Athletic Development',
+    description: 'Free professional coaching, kits, and tournament sponsorships.',
+    image: '/images/sports_training_card.jpg',
+    icon: Trophy,
+  },
+  {
+    id: 'education',
+    title: 'Education & Academic Support',
+    tag: 'Academic Excellence',
+    description: '100% sponsored schooling, tuition fees, and books.',
+    image: '/images/education_card.jpg',
+    icon: BookOpen,
+  },
+  {
+    id: 'nutrition',
+    title: 'Food & Nutrition',
+    tag: 'Dietary Health',
+    description: 'Calorie-mapped healthy diets and high-protein sports meals.',
+    image: '/images/nutrition_card.jpg',
+    icon: ForkKnife,
+  },
+  {
+    id: 'hostel',
+    title: 'Hostel & Accommodation',
+    tag: 'Residential Boarding',
+    description: 'Secure gated campus, studying rooms, and clean laundry.',
+    image: '/images/hostel_card.png',
+    icon: House,
+  },
+  {
+    id: 'transportation',
+    title: 'Transportation',
+    tag: 'Safe Transit',
+    description: 'Daily safe pickup and drop facilities for local and remote student-athletes.',
+    image: '/images/transportation_card.png',
+    icon: Bus,
+  },
+];
 
 export const Home: React.FC = () => {
   const [successPlayers, setSuccessPlayers] = React.useState<any[]>(initialSuccessStories);
   const [team, setTeam] = React.useState<any[]>(teamMembers);
   const [homeEvents, setHomeEvents] = React.useState<any[]>([]);
   const [edgeCards, setEdgeCards] = React.useState<any[]>([]);
+  const [whatWeDoCards, setWhatWeDoCards] = React.useState<any[]>(defaultHomeWhatWeDo);
 
   React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/what-we-do')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setWhatWeDoCards(data);
+        }
+      })
+      .catch(err => console.error("Error loading what-we-do database values:", err));
+
     fetch('http://localhost:5000/api/public/team')
       .then(res => res.json())
       .then(data => {
@@ -230,48 +283,26 @@ export const Home: React.FC = () => {
   }, [team.length]);
 
 
-  const cards = [
-    {
-      id: 'sports',
-      title: 'Sports Training',
-      tag: 'Empowerment',
-      description: 'Free professional coaching, kits, and tournament sponsorships.',
-      image: '/images/sports_training_card.jpg',
-      icon: Trophy,
-    },
-    {
-      id: 'education',
-      title: 'Education & Academic Support',
-      tag: 'Academic Support',
-      description: '100% sponsored schooling, tuition fees, and books.',
-      image: '/images/education_card.jpg',
-      icon: BookOpen,
-    },
-    {
-      id: 'nutrition',
-      title: 'Food & Nutrition',
-      tag: 'Athletic Diet',
-      description: 'Calorie-mapped healthy diets and high-protein sports meals.',
-      image: '/images/nutrition_card.jpg',
-      icon: ForkKnife,
-    },
-    {
-      id: 'hostel',
-      title: 'Hostel & Accommodation',
-      tag: 'Residential',
-      description: 'Secure gated campus, studying rooms, and clean laundry.',
-      image: '/images/hostel_card.png',
-      icon: House,
-    },
-    {
-      id: 'transportation',
-      title: 'Transportation',
-      tag: 'Safe Transit',
-      description: 'Daily safe pickup and drop facilities for local and remote student-athletes.',
-      image: '/images/transportation_card.png',
-      icon: Bus,
-    },
-  ];
+  const getCardIcon = (title: string) => {
+    const lower = (title || '').toLowerCase();
+    if (lower.includes('sport') || lower.includes('train')) return Trophy;
+    if (lower.includes('educat') || lower.includes('school') || lower.includes('academic')) return BookOpen;
+    if (lower.includes('food') || lower.includes('nutrit') || lower.includes('diet')) return ForkKnife;
+    if (lower.includes('hostel') || lower.includes('accommodat') || lower.includes('house')) return House;
+    if (lower.includes('transp') || lower.includes('bus')) return Bus;
+    return Buildings;
+  };
+
+  const cards = whatWeDoCards.map((item, idx) => ({
+    id: item.id || `wwd-${idx}`,
+    title: item.title,
+    tag: item.tag || 'OUR OPERATION',
+    description: item.description,
+    image: item.image
+      ? (item.image.startsWith('http') || item.image.startsWith('/images') || item.image.startsWith('/uploads') ? item.image : `http://localhost:5000${item.image}`)
+      : '/images/sports_training_card.jpg',
+    icon: item.icon || getCardIcon(item.title)
+  }));
 
   return (
     <div className="animate-fade-in">
@@ -529,7 +560,7 @@ export const Home: React.FC = () => {
             <div 
               ref={foundersScrollRef}
               onScroll={handleFoundersScroll}
-              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[420px] md:min-h-[350px] sm:px-0 sm:mx-0"
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[270px] md:min-h-[240px] sm:px-0 sm:mx-0"
             >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
@@ -537,7 +568,7 @@ export const Home: React.FC = () => {
                   <a
                     href={`#/about/founders?member=${member.id}`}
                     key={idx}
-                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[440px] sm:min-h-[380px] md:min-h-[330px] shadow-sm hover:shadow-md cursor-pointer block group ${
+                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[270px] sm:min-h-[250px] md:min-h-[230px] shadow-sm hover:shadow-md cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -546,7 +577,7 @@ export const Home: React.FC = () => {
                     }`}
                   >
                     {/* Left Column: Photo */}
-                    <div className="w-full sm:w-[310px] md:w-[360px] h-[240px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
+                    <div className="w-full sm:w-[220px] md:w-[250px] h-[170px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
                       <img 
                         src={member.image} 
                         alt={member.name} 
@@ -558,14 +589,14 @@ export const Home: React.FC = () => {
                     </div>
 
                     {/* Right Column: Member Details */}
-                    <div className="flex-grow p-6 sm:p-9 md:p-12 flex flex-col justify-center text-left">
-                      <h3 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2 leading-tight">
+                    <div className="flex-grow p-4 sm:p-5 md:p-6 flex flex-col justify-center text-left">
+                      <h3 className="text-xl sm:text-2xl font-extrabold text-primary mb-1 leading-tight">
                         {member.name}
                       </h3>
-                      <span className="text-[11px] md:text-[12px] font-extrabold text-accent tracking-[0.15em] uppercase mb-3.5 block leading-none">
+                      <span className="text-[10.5px] md:text-[11.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-2 block leading-none">
                         {member.role}
                       </span>
-                      <div className="text-text-light text-sm sm:text-base leading-relaxed max-w-[560px] space-y-3 text-justify font-normal">
+                      <div className="text-text-light text-xs sm:text-sm leading-relaxed max-w-[560px] space-y-1.5 text-justify font-normal">
                         {getBioParagraphs(member.bio).map((paragraph, idx) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}

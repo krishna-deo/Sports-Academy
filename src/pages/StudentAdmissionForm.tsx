@@ -14,6 +14,7 @@ import {
   X,
   Camera
 } from '@phosphor-icons/react';
+import { COUNTRY_CODES } from '../data/countryCodes';
 
 export const StudentAdmissionForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ export const StudentAdmissionForm: React.FC = () => {
     secondarySports: [] as string[],
     residency: 'resident',
     contact: {
+      countryCode: '+91',
       phone: '',
       email: '',
       address: ''
@@ -34,7 +36,9 @@ export const StudentAdmissionForm: React.FC = () => {
     guardian: {
       name: '',
       relationship: 'Parent',
+      countryCode: '+91',
       phone: '',
+      emergencyCountryCode: '+91',
       emergencyContact: '',
       address: ''
     },
@@ -180,9 +184,51 @@ export const StudentAdmissionForm: React.FC = () => {
       setErrorMessage('Please enter student/parent contact phone number.');
       return;
     }
+
+    // Phone validation (10 digits numeric only)
+    const phoneClean = formData.contact.phone.replace(/\D/g, '');
+    if (phoneClean.length !== 10) {
+      setErrorMessage('Student contact phone number must be exactly 10 numeric digits.');
+      return;
+    }
+
     if (!formData.guardian.name.trim() || !formData.guardian.phone.trim()) {
       setErrorMessage('Please enter parent/guardian name and phone number.');
       return;
+    }
+
+    // Guardian phone validation (10 digits numeric only)
+    const guardianPhoneClean = formData.guardian.phone.replace(/\D/g, '');
+    if (guardianPhoneClean.length !== 10) {
+      setErrorMessage('Parent/Guardian phone number must be exactly 10 numeric digits.');
+      return;
+    }
+
+    // Emergency contact validation if entered
+    if (formData.guardian.emergencyContact.trim()) {
+      const emergencyClean = formData.guardian.emergencyContact.replace(/\D/g, '');
+      if (emergencyClean.length !== 10) {
+        setErrorMessage('Emergency contact number must be exactly 10 numeric digits.');
+        return;
+      }
+    }
+
+    // Email validation if entered
+    if (formData.contact.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.contact.email.trim())) {
+        setErrorMessage('Please enter a valid email address (e.g. student@gmail.com).');
+        return;
+      }
+    }
+
+    // Aadhaar number validation if entered
+    if (formData.aadhaarNumber.trim()) {
+      const aadhaarClean = formData.aadhaarNumber.replace(/\D/g, '');
+      if (aadhaarClean.length !== 12) {
+        setErrorMessage('Aadhaar card number must be exactly 12 numeric digits.');
+        return;
+      }
     }
 
     try {
@@ -394,10 +440,10 @@ export const StudentAdmissionForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    maxLength={14}
-                    placeholder="e.g. 1234 5678 9012"
+                    maxLength={12}
+                    placeholder="12-digit numeric Aadhaar number"
                     value={formData.aadhaarNumber}
-                    onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
+                    onChange={(e) => handleInputChange('aadhaarNumber', e.target.value.replace(/\D/g, '').slice(0, 12))}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none font-mono"
                   />
                   <span className="text-[10px] text-slate-400 mt-1 block">
@@ -553,16 +599,31 @@ export const StudentAdmissionForm: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Mobile Phone Number <span className="text-rose-500">*</span>
+                    Mobile Phone Number (10 Digits) <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="e.g. +91 9876543210"
-                    value={formData.contact.phone}
-                    onChange={(e) => handleNestedInputChange('contact', 'phone', e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.contact.countryCode || '+91'}
+                      onChange={(e) => handleNestedInputChange('contact', 'countryCode', e.target.value)}
+                      className="px-3 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-xs font-bold outline-none bg-slate-50 text-slate-800 cursor-pointer shrink-0 max-w-[115px]"
+                      title="Country Code"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      placeholder="10-digit mobile number"
+                      value={formData.contact.phone}
+                      onChange={(e) => handleNestedInputChange('contact', 'phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="flex-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none font-mono"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -573,7 +634,7 @@ export const StudentAdmissionForm: React.FC = () => {
                     type="email"
                     placeholder="e.g. student@gmail.com"
                     value={formData.contact.email}
-                    onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
+                    onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value.trim())}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none"
                   />
                 </div>
@@ -638,29 +699,59 @@ export const StudentAdmissionForm: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Guardian Phone Number <span className="text-rose-500">*</span>
+                    Guardian Phone Number (10 Digits) <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="e.g. +91 9876543210"
-                    value={formData.guardian.phone}
-                    onChange={(e) => handleNestedInputChange('guardian', 'phone', e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.guardian.countryCode || '+91'}
+                      onChange={(e) => handleNestedInputChange('guardian', 'countryCode', e.target.value)}
+                      className="px-3 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-xs font-bold outline-none bg-slate-50 text-slate-800 cursor-pointer shrink-0 max-w-[115px]"
+                      title="Country Code"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      placeholder="10-digit mobile number"
+                      value={formData.guardian.phone}
+                      onChange={(e) => handleNestedInputChange('guardian', 'phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="flex-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none font-mono"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Emergency Contact Number
+                    Emergency Contact Number (10 Digits)
                   </label>
-                  <input
-                    type="tel"
-                    placeholder="Alternative Phone"
-                    value={formData.guardian.emergencyContact}
-                    onChange={(e) => handleNestedInputChange('guardian', 'emergencyContact', e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.guardian.emergencyCountryCode || '+91'}
+                      onChange={(e) => handleNestedInputChange('guardian', 'emergencyCountryCode', e.target.value)}
+                      className="px-3 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-xs font-bold outline-none bg-slate-50 text-slate-800 cursor-pointer shrink-0 max-w-[115px]"
+                      title="Country Code"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      placeholder="10-digit alternative number"
+                      value={formData.guardian.emergencyContact}
+                      onChange={(e) => handleNestedInputChange('guardian', 'emergencyContact', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="flex-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-sm outline-none font-mono"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -16,6 +16,7 @@ const AdmissionApplicationSchema = new mongoose.Schema({
   
   // Contact Info
   contact: {
+    countryCode: { type: String, default: '+91' },
     phone: { type: String, required: true },
     email: { type: String, default: '' },
     address: { type: String, default: '' }
@@ -25,7 +26,9 @@ const AdmissionApplicationSchema = new mongoose.Schema({
   guardian: {
     name: { type: String, required: true },
     relationship: { type: String, default: 'Parent' },
+    countryCode: { type: String, default: '+91' },
     phone: { type: String, required: true },
+    emergencyCountryCode: { type: String, default: '+91' },
     emergencyContact: { type: String, default: '' },
     address: { type: String, default: '' }
   },

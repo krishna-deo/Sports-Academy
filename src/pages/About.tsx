@@ -174,14 +174,69 @@ const defaultFacilities = [
   }
 ];
 
+const defaultWhatWeDoCards = [
+  {
+    id: 'sports',
+    tag: 'Athletic Development',
+    title: 'Sports Training',
+    description: 'Providing top-tier professional coaching in multiple fields including Football, Handball, Rugby, and Athletics. The academy offers structured training regimes, regular physical fitness audits, and full sponsorship for representing the state and nation in high-profile competitions.',
+    image: '/images/sports_training_card.jpg',
+    features: ['🏅 Elite Certified Coaches', '⚽ Free Professional Gear', '🏃 Daily Conditioning Drills', '🏆 Tournament Sponsorship']
+  },
+  {
+    id: 'education',
+    tag: 'Academic Excellence',
+    title: 'Education & Academic Support',
+    description: 'Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.',
+    image: '/images/education_card.jpg',
+    features: ['📚 100% Tuition Coverage', '💬 English Speaking Classes', '💻 Computer Literacy Labs', '🌱 Life Skills & Guidance']
+  },
+  {
+    id: 'nutrition',
+    tag: 'Dietary Health',
+    title: 'Food & Nutrition',
+    description: 'Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.',
+    image: '/images/nutrition_card.jpg',
+    features: ['🥗 Expert Calorie-Mapped', '🥩 High-Protein Diets', '🩺 Regular Health Audits', '🥛 Daily Supplements & Milk']
+  },
+  {
+    id: 'hostel',
+    tag: 'Residential Boarding',
+    title: 'Hostel & Accommodation',
+    description: 'Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.',
+    image: '/images/hostel_card.png',
+    features: ['🏠 Hygienic Dormitory', '🔒 Secure Gated Watch', '📖 Study Halls & Library', '🧺 Laundry & Hygiene Care']
+  },
+  {
+    id: 'transportation',
+    tag: 'Safe Transit',
+    title: 'Transportation',
+    description: 'Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.',
+    image: '/images/transportation_card.png',
+    features: ['🚌 Free Pick & Drop', '📍 GPS Fleet Tracking', '🛡️ Safe & Trained Drivers', '🕒 Daily Timely Commutes']
+  }
+];
+
 export const About: React.FC<AboutProps> = ({ sub }) => {
   const [team, setTeam] = React.useState<any[]>(teamMembers);
   const [staffTeam, setStaffTeam] = React.useState<any[]>(defaultStaffMembers);
   const [milestones, setMilestones] = React.useState<any[]>(defaultMilestones);
   const [facilities, setFacilities] = React.useState<any[]>(defaultFacilities);
+  const [whatWeDoList, setWhatWeDoList] = React.useState<any[]>(defaultWhatWeDoCards);
   const [outreachData, setOutreachData] = React.useState<any>(null);
   const [visionMission, setVisionMission] = React.useState<any>(null);
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch('http://localhost:5000/api/public/what-we-do')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setWhatWeDoList(data);
+        }
+      })
+      .catch(err => console.error("Error loading what-we-do database values:", err));
+  }, []);
 
   React.useEffect(() => {
     fetch('http://localhost:5000/api/public/vision-mission')
@@ -705,9 +760,6 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
         <>
           {/* Centered Heading */}
           <div className="text-center max-w-[700px] mx-auto mb-20">
-            <span className="text-accent text-xs font-extrabold uppercase tracking-widest bg-accent/10 px-3.5 py-1.5 rounded-full mb-3.5 inline-block animate-fade-in">
-              Our Core Operations
-            </span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4 relative inline-block pb-3.5 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-[60px] after:h-[3px] after:bg-accent animate-fade-in">
               What We Do
             </h2>
@@ -718,208 +770,59 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
 
           {/* Staggered Alternating Rows (Flat Typography Theme) */}
           <div className="flex flex-col gap-28 max-w-[1140px] mx-auto overflow-hidden pb-12">
-            {/* 1. Sports Training (Image Left, Text Right) */}
-            <RevealRow id="sports" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/sports_training_card.jpg" alt="Sports Training" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
+            {whatWeDoList.map((item, index) => {
+              const isEven = index % 2 === 0;
+              const imgUrl = item.image
+                ? (item.image.startsWith('http') || item.image.startsWith('/images') || item.image.startsWith('/uploads') ? item.image : `http://localhost:5000${item.image}`)
+                : '/images/sports_training_card.jpg';
 
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Athletic Development</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Sports Training</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
-                      Providing top-tier professional coaching in multiple fields including Football, Handball, Rugby, and Athletics. The academy offers structured training regimes, regular physical fitness audits, and full sponsorship for representing the state and nation in high-profile competitions.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🏅 Elite Certified Coaches</li>
-                      <li className="flex items-center gap-2">⚽ Free Professional Gear</li>
-                      <li className="flex items-center gap-2">🏃 Daily Conditioning Drills</li>
-                      <li className="flex items-center gap-2">🏆 Tournament Sponsorship</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+              const featuresList = Array.isArray(item.features)
+                ? item.features
+                : (typeof item.features === 'string' ? item.features.split('\n').filter(Boolean) : []);
 
-            {/* 2. Education & Academic Support (Text Left, Image Right) */}
-            <RevealRow id="education" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Details */}
-                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Academic Excellence</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Education & Academic Support</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
-                      Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">📚 100% Tuition Coverage</li>
-                      <li className="flex items-center gap-2">💬 English Speaking Classes</li>
-                      <li className="flex items-center gap-2">💻 Computer Literacy Labs</li>
-                      <li className="flex items-center gap-2">🌱 Life Skills & Guidance</li>
-                    </ul>
-                  </div>
+              const sectionId = item.id || `section-${index}`;
 
-                  {/* Right Column: Image */}
-                  <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/education_card.jpg" alt="Education & Academic Support" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+              return (
+                <RevealRow key={item.id || item._id || index} id={sectionId} className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+                  {(isVisible) => (
+                    <>
+                      {/* Image Column */}
+                      <div className={`transition-all duration-[1000ms] ease-out transform ${
+                        isEven 
+                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16') 
+                          : `order-1 md:order-2 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`
+                      }`}>
+                        <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
+                          <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                        </div>
+                      </div>
 
-            {/* 3. Food & Nutrition (Image Left, Text Right) */}
-            <RevealRow id="nutrition" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/nutrition_card.jpg" alt="Food & Nutrition" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Dietary Health</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Food & Nutrition</h3>
-                    <p className="text-text-light text-xs md:text-sm leading-relaxed mb-6 text-justify">
-                      Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🥗 Expert Calorie-Mapped</li>
-                      <li className="flex items-center gap-2">🥩 High-Protein Diets</li>
-                      <li className="flex items-center gap-2">🩺 Regular Health Audits</li>
-                      <li className="flex items-center gap-2">🥛 Daily Supplements & Milk</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 4. Hostel & Accommodation (Text Left, Image Right) */}
-            <RevealRow id="hostel" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Details */}
-                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Residential Boarding</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Hostel & Accommodation</h3>
-                    <p className="text-text-light text-xs md:text-sm leading-relaxed mb-6 text-justify">
-                      Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🏠 Hygienic Dormitory</li>
-                      <li className="flex items-center gap-2">🔒 Secure Gated Watch</li>
-                      <li className="flex items-center gap-2">📖 Study Halls & Library</li>
-                      <li className="flex items-center gap-2">🧺 Laundry & Hygiene Care</li>
-                    </ul>
-                  </div>
-
-                  {/* Right Column: Image */}
-                  <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/hostel_card.png" alt="Hostel & Accommodation" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 5. Transportation (Image Left, Text Right) */}
-            <RevealRow id="transportation" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/transportation_card.png" alt="Transportation" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Safe Transit</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Transportation</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
-                      Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🚌 Free Pick & Drop</li>
-                      <li className="flex items-center gap-2">📍 GPS Fleet Tracking</li>
-                      <li className="flex items-center gap-2">🛡️ Safe & Trained Drivers</li>
-                      <li className="flex items-center gap-2">🕒 Daily Timely Commutes</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 6. Career & Athlete Development (Text Left, Image Right) */}
-            <RevealRow id="career" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Details */}
-                  <div className={`flex flex-col justify-center text-left order-2 md:order-1 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Future Planning</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Career & Athlete Development</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
-                      Guiding our student-athletes towards bright future careers inside and outside of professional sports. We organize regular career counseling workshops, university admission assistance, vocational training programs, and job placement support.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">🎯 Career Counseling</li>
-                      <li className="flex items-center gap-2">🎓 College Admissions</li>
-                      <li className="flex items-center gap-2">💼 Vocational Training</li>
-                      <li className="flex items-center gap-2">🚀 Placement Assistance</li>
-                    </ul>
-                  </div>
-
-                  {/* Right Column: Image */}
-                  <div className={`order-1 md:order-2 transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/career_development.png" alt="Career & Athlete Development" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </>
-              )}
-            </RevealRow>
-
-            {/* 7. Tournament & Competition Preparation (Image Left, Text Right) */}
-            <RevealRow id="tournament" className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-              {(isVisible) => (
-                <>
-                  {/* Left Column: Image */}
-                  <div className={`transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`}>
-                    <div className="relative rounded-md overflow-hidden shadow-lg aspect-[4/3] max-h-[380px] border border-border-gray/30">
-                      <img src="/images/tournament_prep.png" alt="Tournament & Competition Preparation" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-
-                  {/* Right Column: Details */}
-                  <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-                    <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">Championship Bound</span>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">Tournament & Competition Preparation</h3>
-                    <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
-                      Getting our trainees physically, tactically, and mentally prepared for high-stakes tournaments. We conduct simulated match plays, video analysis of opponents, sports psychology counseling, and special game-strategy briefings.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
-                      <li className="flex items-center gap-2">📈 Match Simulations</li>
-                      <li className="flex items-center gap-2">🎥 Tactical Video Analysis</li>
-                      <li className="flex items-center gap-2">🧠 Sports Psychology</li>
-                      <li className="flex items-center gap-2">🛡️ Opponent Scouting</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </RevealRow>
+                      {/* Details Column */}
+                      <div className={`flex flex-col justify-center text-left transition-all duration-[1000ms] ease-out transform ${
+                        isEven 
+                          ? (isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16') 
+                          : `order-2 md:order-1 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-16'}`
+                      }`}>
+                        {item.tag && <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-2 block leading-none">{item.tag}</span>}
+                        <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-4 leading-tight">{item.title}</h3>
+                        <p className="text-text-light text-sm md:text-base leading-relaxed mb-6 text-justify">
+                          {item.description}
+                        </p>
+                        {featuresList.length > 0 && (
+                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-text-light font-bold">
+                            {featuresList.map((feature: string, fIdx: number) => (
+                              <li key={fIdx} className="flex items-center gap-2">
+                                {feature.match(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u) ? feature : `• ${feature}`}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </RevealRow>
+              );
+            })}
           </div>
         </>
       )}
@@ -1027,31 +930,31 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             {team.length > 0 && (
               <RevealRow id={team[0].id} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[240px] md:min-h-[260px]`}>
                     {/* Hero Left: Image */}
-                    <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
+                    <div className="lg:w-[35%] relative h-[200px] lg:h-auto min-h-[180px] bg-primary">
                       <img 
                         src={team[0].image} 
                         alt={team[0].name} 
                         className="w-full h-full object-cover"
                         style={{ objectPosition: team[0].objectPosition || 'center' }}
                       />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-accent text-primary text-xs font-black px-3 py-1.5 rounded shadow uppercase tracking-wider">
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded shadow uppercase tracking-wider">
                           FOUNDER &amp; LEADER
                         </span>
                       </div>
                     </div>
 
                     {/* Hero Right: Details */}
-                    <div className="lg:w-1/2 p-8 md:p-12 flex flex-col justify-center text-left">
-                      <span className="text-accent text-[11.5px] font-black tracking-[0.2em] uppercase mb-2 block">
+                    <div className="lg:w-[65%] p-5 md:p-7 flex flex-col justify-center text-left">
+                      <span className="text-accent text-[11px] font-black tracking-[0.2em] uppercase mb-1 block">
                         {team[0].role}
                       </span>
-                      <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-2.5 leading-tight">
                         {team[0].name}
                       </h3>
-                      <div className="text-text-light text-sm md:text-base leading-relaxed space-y-3.5 text-justify font-normal">
+                      <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2 text-justify font-normal">
                         {getBioParagraphs(team[0].bio).map((paragraph, idx) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
@@ -1072,31 +975,31 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               return (
                 <RevealRow key={member.id} id={member.id} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[180px] md:min-h-[200px]`}>
                       {/* Image container */}
-                      <div className="lg:w-[38%] relative h-[220px] lg:h-auto min-h-[220px] bg-primary">
+                      <div className="lg:w-[30%] relative h-[160px] lg:h-auto min-h-[150px] bg-primary">
                         <img 
                           src={member.image} 
                           alt={member.name} 
                           className="w-full h-full object-cover"
                           style={{ objectPosition: member.objectPosition || 'center' }}
                         />
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded tracking-wider uppercase">
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
                             DIRECTOR
                           </span>
                         </div>
                       </div>
 
                       {/* Content container */}
-                      <div className="lg:w-[62%] p-6 md:p-8 flex flex-col justify-center text-left">
-                        <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-1.5 block">
+                      <div className="lg:w-[70%] p-4 md:p-5 flex flex-col justify-center text-left">
+                        <span className="text-accent text-[10.5px] font-black tracking-[0.15em] uppercase mb-1 block">
                           {member.role}
                         </span>
-                        <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-3 leading-tight">
+                        <h3 className="text-lg md:text-xl font-extrabold text-primary mb-2 leading-tight">
                           {member.name}
                         </h3>
-                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2.5 text-justify font-normal">
+                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-1.5 text-justify font-normal">
                           {getBioParagraphs(member.bio).map((paragraph, idx) => (
                             <p key={idx} className="text-justify">{paragraph}</p>
                           ))}
@@ -1139,31 +1042,31 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             {staffTeam.length > 0 && (
               <RevealRow id={staffTeam[0].id || 'staff-0'} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[400px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[240px] md:min-h-[260px]`}>
                     {/* Hero Left: Image */}
-                    <div className="lg:w-1/2 relative h-[300px] lg:h-auto min-h-[300px] bg-primary">
+                    <div className="lg:w-[35%] relative h-[200px] lg:h-auto min-h-[180px] bg-primary">
                       <img 
                         src={staffTeam[0].image ? (staffTeam[0].image.startsWith('http') || staffTeam[0].image.startsWith('/images') || staffTeam[0].image.startsWith('/uploads') || staffTeam[0].image.startsWith('data:') ? staffTeam[0].image : `http://localhost:5000${staffTeam[0].image}`) : '/images/hero1.jpeg'} 
                         alt={staffTeam[0].name} 
                         className="w-full h-full object-cover"
                         style={{ objectPosition: staffTeam[0].objectPosition || 'center' }}
                       />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-accent text-primary text-xs font-black px-3 py-1.5 rounded shadow uppercase tracking-wider">
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded shadow uppercase tracking-wider">
                           LEAD MEMBER
                         </span>
                       </div>
                     </div>
 
                     {/* Hero Right: Details */}
-                    <div className="lg:w-1/2 p-8 md:p-12 flex flex-col justify-center text-left">
-                      <span className="text-accent text-[11.5px] font-black tracking-[0.2em] uppercase mb-2 block">
+                    <div className="lg:w-[65%] p-5 md:p-7 flex flex-col justify-center text-left">
+                      <span className="text-accent text-[11px] font-black tracking-[0.2em] uppercase mb-1 block">
                         {staffTeam[0].role}
                       </span>
-                      <h3 className="text-3xl font-extrabold text-primary mb-4 leading-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-2.5 leading-tight">
                         {staffTeam[0].name}
                       </h3>
-                      <div className="text-text-light text-sm md:text-base leading-relaxed space-y-3.5 text-justify font-normal">
+                      <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2 text-justify font-normal">
                         {getBioParagraphs(staffTeam[0].bio).map((paragraph: string, idx: number) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
@@ -1184,31 +1087,31 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               return (
                 <RevealRow key={member.id || idx + 1} id={member.id || `staff-${idx + 1}`} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[280px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[180px] md:min-h-[200px]`}>
                       {/* Image container */}
-                      <div className="lg:w-[38%] relative h-[220px] lg:h-auto min-h-[220px] bg-primary">
+                      <div className="lg:w-[30%] relative h-[160px] lg:h-auto min-h-[150px] bg-primary">
                         <img 
                           src={member.image ? (member.image.startsWith('http') || member.image.startsWith('/images') || member.image.startsWith('/uploads') || member.image.startsWith('data:') ? member.image : `http://localhost:5000${member.image}`) : '/images/hero1.jpeg'} 
                           alt={member.name} 
                           className="w-full h-full object-cover"
                           style={{ objectPosition: member.objectPosition || 'center' }}
                         />
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded tracking-wider uppercase">
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
                             MEMBER
                           </span>
                         </div>
                       </div>
 
                       {/* Content container */}
-                      <div className="lg:w-[62%] p-6 md:p-8 flex flex-col justify-center text-left">
-                        <span className="text-accent text-[11px] font-black tracking-[0.15em] uppercase mb-1.5 block">
+                      <div className="lg:w-[70%] p-4 md:p-5 flex flex-col justify-center text-left">
+                        <span className="text-accent text-[10.5px] font-black tracking-[0.15em] uppercase mb-1 block">
                           {member.role}
                         </span>
-                        <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-3 leading-tight">
+                        <h3 className="text-lg md:text-xl font-extrabold text-primary mb-2 leading-tight">
                           {member.name}
                         </h3>
-                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2.5 text-justify font-normal">
+                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-1.5 text-justify font-normal">
                           {getBioParagraphs(member.bio).map((paragraph: string, pIdx: number) => (
                             <p key={pIdx} className="text-justify">{paragraph}</p>
                           ))}

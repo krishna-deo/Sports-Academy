@@ -748,15 +748,26 @@ export const Academy: React.FC<AcademyProps> = ({ sub }) => {
                 </div>
 
                 {/* Bio / Speech Bubble */}
-                <div className="pt-2">
-                  <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Athlete Profile & Achievements</span>
-                  <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl relative overflow-hidden">
-                    <span className="absolute -right-2 -bottom-4 text-primary/[0.04] text-8xl font-black italic select-none">RLS</span>
-                    <p className="text-xs text-text-body leading-relaxed font-semibold italic relative z-10">
-                      "{selectedStudent.name} is a highly dedicated student athlete specializing in {selectedStudent.sport || 'sports'}. They have shown exceptional performance, winning {selectedStudent.medalNumber || 0} medals and contributing significantly to the academy's successes."
-                    </p>
+                {selectedStudent.bio && selectedStudent.bio.trim() ? (
+                  <div className="pt-2">
+                    <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Athlete Profile & Achievements</span>
+                    <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl relative overflow-hidden">
+                      <span className="absolute -right-2 -bottom-4 text-primary/[0.04] text-8xl font-black italic select-none">RLS</span>
+                      <p className="text-xs text-text-body leading-relaxed font-semibold italic relative z-10">
+                        "{selectedStudent.bio.trim()}"
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="pt-2">
+                    <span className="block text-[10px] font-black text-primary uppercase tracking-wider mb-1.5">Athlete Profile & Achievements</span>
+                    <div className="bg-slate-50/50 border border-dashed border-slate-200 p-3.5 rounded-xl text-center">
+                      <p className="text-xs text-text-light font-medium italic">
+                        No custom athlete bio recorded yet.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Footer */}

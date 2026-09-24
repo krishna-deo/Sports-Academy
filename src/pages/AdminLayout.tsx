@@ -496,6 +496,7 @@ export const AdminLayout: React.FC = () => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <House size={20} /> },
     { id: 'story', label: 'Our Story', icon: <Notebook size={20} /> },
+    { id: 'what-we-do', label: 'What We Do', icon: <Buildings size={20} /> },
     { id: 'success-stories', label: 'Success Stories', icon: <ChatText size={20} /> },
     { id: 'founders', label: 'Founders & Directors', icon: <UserIcon size={20} /> },
     { id: 'team-members', label: 'Our Team', icon: <Users size={20} /> },

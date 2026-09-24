@@ -59,6 +59,7 @@ const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
 const AdmissionApplication = require('../models/AdmissionApplication');
+const WhatWeDo = require('../models/WhatWeDo');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 
@@ -454,13 +455,18 @@ router.post('/students', studentUpload, async (req, res) => {
       dateOfBirth,
       gender,
       bloodGroup,
+      aadhaarNumber,
+      aadharNumber,
       phone,
+      studentCountryCode,
       email,
       address,
       guardianName,
       guardianRelationship,
       guardianPhone,
+      guardianCountryCode,
       guardianEmergency,
+      emergencyCountryCode,
       guardianAddress,
       admissionDate,
       primarySport,
@@ -473,6 +479,7 @@ router.post('/students', studentUpload, async (req, res) => {
       className,
       academicInfo,
       achievements,
+      bio,
       status,
       showOnPublicWebsite
     } = req.body;
@@ -573,7 +580,9 @@ router.post('/students', studentUpload, async (req, res) => {
       dateOfBirth: new Date(dateOfBirth),
       gender: gender.toLowerCase(),
       bloodGroup: sanitizeOrDefault(bloodGroup),
+      aadhaarNumber: sanitizeInput(aadhaarNumber || aadharNumber || '').trim(),
       contact: {
+        countryCode: studentCountryCode ? String(studentCountryCode).trim() : '+91',
         phone: sanitizeOrDefault(phone),
         email: email ? sanitizeInput(email).trim().toLowerCase() : 'NA',
         address: sanitizeOrDefault(address)
@@ -581,7 +590,9 @@ router.post('/students', studentUpload, async (req, res) => {
       guardian: {
         name: sanitizeOrDefault(guardianName),
         relationship: sanitizeOrDefault(guardianRelationship),
+        countryCode: guardianCountryCode ? String(guardianCountryCode).trim() : '+91',
         phone: sanitizeOrDefault(guardianPhone),
+        emergencyCountryCode: emergencyCountryCode ? String(emergencyCountryCode).trim() : '+91',
         emergencyContact: sanitizeOrDefault(guardianEmergency),
         address: sanitizeOrDefault(guardianAddress)
       },
@@ -601,6 +612,7 @@ router.post('/students', studentUpload, async (req, res) => {
       documents: documentItems,
       admissionDate: new Date(admissionDate),
       joined: new Date(admissionDate).toISOString().split('T')[0],
+      bio: bio ? sanitizeInput(bio).trim() : '',
       status: status || 'Active',
       avatar: photoPath,
       showOnPublicWebsite: showOnPublicWebsite !== undefined ? (showOnPublicWebsite === 'true' || showOnPublicWebsite === true) : true
@@ -627,13 +639,18 @@ router.put('/students/:id', studentUpload, async (req, res) => {
       dateOfBirth,
       gender,
       bloodGroup,
+      aadhaarNumber,
+      aadharNumber,
       phone,
+      studentCountryCode,
       email,
       address,
       guardianName,
       guardianRelationship,
       guardianPhone,
+      guardianCountryCode,
       guardianEmergency,
+      emergencyCountryCode,
       guardianAddress,
       admissionDate,
       primarySport,
@@ -646,6 +663,7 @@ router.put('/students/:id', studentUpload, async (req, res) => {
       className,
       academicInfo,
       achievements,
+      bio,
       status,
       showOnPublicWebsite,
       deletedDocPaths
@@ -759,6 +777,7 @@ router.put('/students/:id', studentUpload, async (req, res) => {
     }
     
     if (!student.contact) student.contact = {};
+    if (studentCountryCode !== undefined) student.contact.countryCode = String(studentCountryCode).trim();
     if (phone !== undefined) student.contact.phone = sanitizeOrDefault(phone);
     if (email !== undefined) student.contact.email = email && email.trim() ? sanitizeInput(email).trim().toLowerCase() : 'NA';
     if (address !== undefined) student.contact.address = sanitizeOrDefault(address);
@@ -766,7 +785,9 @@ router.put('/students/:id', studentUpload, async (req, res) => {
     if (!student.guardian) student.guardian = {};
     if (guardianName !== undefined) student.guardian.name = sanitizeOrDefault(guardianName);
     if (guardianRelationship !== undefined) student.guardian.relationship = sanitizeOrDefault(guardianRelationship);
+    if (guardianCountryCode !== undefined) student.guardian.countryCode = String(guardianCountryCode).trim();
     if (guardianPhone !== undefined) student.guardian.phone = sanitizeOrDefault(guardianPhone);
+    if (emergencyCountryCode !== undefined) student.guardian.emergencyCountryCode = String(emergencyCountryCode).trim();
     if (guardianEmergency !== undefined) student.guardian.emergencyContact = sanitizeOrDefault(guardianEmergency);
     if (guardianAddress !== undefined) student.guardian.address = sanitizeOrDefault(guardianAddress);
 
@@ -788,6 +809,9 @@ router.put('/students/:id', studentUpload, async (req, res) => {
       student.admissionDate = new Date(admissionDate);
       student.joined = new Date(admissionDate).toISOString().split('T')[0];
     }
+    if (bio !== undefined) {
+      student.bio = bio ? sanitizeInput(bio).trim() : '';
+    }
     if (status) student.status = status;
     if (showOnPublicWebsite !== undefined) {
       student.showOnPublicWebsite = showOnPublicWebsite === 'true' || showOnPublicWebsite === true;
@@ -804,21 +828,41 @@ router.put('/students/:id', studentUpload, async (req, res) => {
 
 router.delete('/students/:id', async (req, res) => {
   try {
-    const student = await Student.findOne({ id: req.params.id });
+    const isPermanent = req.query.permanent === 'true';
+    const filter = {
+      $or: [
+        { id: req.params.id },
+        { studentId: req.params.id },
+        ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+      ]
+    };
+    const student = await Student.findOne(filter);
     if (!student) return res.status(404).json({ error: "Student record not found." });
     
-    student.isDeleted = true;
-    await student.save();
-    res.json({ success: true, message: "Student record soft-deleted successfully." });
+    if (isPermanent) {
+      await Student.deleteOne({ _id: student._id });
+      return res.json({ success: true, message: "Student record permanently deleted." });
+    } else {
+      student.isDeleted = true;
+      await student.save();
+      return res.json({ success: true, message: "Student record soft-deleted successfully." });
+    }
   } catch (err) {
-    console.error("Error soft-deleting student:", err);
-    res.status(500).json({ error: "Failed to deactivate student record." });
+    console.error("Error deleting student:", err);
+    res.status(500).json({ error: "Failed to delete student record: " + err.message });
   }
 });
 
 router.post('/students/:id/restore', async (req, res) => {
   try {
-    const student = await Student.findOne({ id: req.params.id });
+    const filter = {
+      $or: [
+        { id: req.params.id },
+        { studentId: req.params.id },
+        ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+      ]
+    };
+    const student = await Student.findOne(filter);
     if (!student) return res.status(404).json({ error: "Student record not found." });
     
     student.isDeleted = false;
@@ -826,7 +870,7 @@ router.post('/students/:id/restore', async (req, res) => {
     res.json({ success: true, message: "Student record restored successfully." });
   } catch (err) {
     console.error("Error restoring student:", err);
-    res.status(500).json({ error: "Failed to restore student record." });
+    res.status(500).json({ error: "Failed to restore student record: " + err.message });
   }
 });
 
@@ -836,7 +880,14 @@ router.post('/students/bulk-status', async (req, res) => {
     return res.status(400).json({ error: "Missing ids or status value." });
   }
   try {
-    await Student.updateMany({ id: { $in: ids } }, { $set: { status } });
+    const filter = {
+      $or: [
+        { id: { $in: ids } },
+        { studentId: { $in: ids } },
+        { _id: { $in: ids.filter(id => mongoose.Types.ObjectId.isValid(id)) } }
+      ]
+    };
+    await Student.updateMany(filter, { $set: { status } });
     res.json({ success: true, message: "Status updated in bulk." });
   } catch (err) {
     res.status(500).json({ error: "Failed to update status in bulk." });
@@ -844,15 +895,50 @@ router.post('/students/bulk-status', async (req, res) => {
 });
 
 router.post('/students/bulk-delete', async (req, res) => {
-  const { ids } = req.body;
-  if (!ids || !Array.isArray(ids)) {
+  const { ids, permanent } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ error: "Missing ids." });
   }
   try {
-    await Student.updateMany({ id: { $in: ids } }, { $set: { isDeleted: true } });
-    res.json({ success: true, message: "Deactivated selected students in bulk." });
+    const isPerm = permanent === true || permanent === 'true';
+    const filter = {
+      $or: [
+        { id: { $in: ids } },
+        { studentId: { $in: ids } },
+        { _id: { $in: ids.filter(id => mongoose.Types.ObjectId.isValid(id)) } }
+      ]
+    };
+    if (isPerm) {
+      await Student.deleteMany(filter);
+      res.json({ success: true, message: "Permanently deleted selected students in bulk." });
+    } else {
+      await Student.updateMany(filter, { $set: { isDeleted: true } });
+      res.json({ success: true, message: "Deactivated selected students in bulk." });
+    }
   } catch (err) {
-    res.status(500).json({ error: "Failed to deactivate students in bulk." });
+    console.error("Error bulk deleting students:", err);
+    res.status(500).json({ error: "Failed to delete students in bulk: " + err.message });
+  }
+});
+
+router.post('/students/bulk-restore', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: "Missing ids." });
+  }
+  try {
+    const filter = {
+      $or: [
+        { id: { $in: ids } },
+        { studentId: { $in: ids } },
+        { _id: { $in: ids.filter(id => mongoose.Types.ObjectId.isValid(id)) } }
+      ]
+    };
+    await Student.updateMany(filter, { $set: { isDeleted: false } });
+    res.json({ success: true, message: "Restored selected students in bulk." });
+  } catch (err) {
+    console.error("Error bulk restoring students:", err);
+    res.status(500).json({ error: "Failed to restore students in bulk: " + err.message });
   }
 });
 
@@ -865,12 +951,20 @@ router.post('/students/bulk-assign', async (req, res) => {
     const update = {};
     if (batch !== undefined) update.batch = batch;
     if (coach !== undefined) update.coach = coach;
-    await Student.updateMany({ id: { $in: ids } }, { $set: update });
+    const filter = {
+      $or: [
+        { id: { $in: ids } },
+        { studentId: { $in: ids } },
+        { _id: { $in: ids.filter(id => mongoose.Types.ObjectId.isValid(id)) } }
+      ]
+    };
+    await Student.updateMany(filter, { $set: update });
     res.json({ success: true, message: "Batch/Coach assigned in bulk." });
   } catch (err) {
     res.status(500).json({ error: "Failed to perform bulk assignment." });
   }
 });
+
 
 router.get('/students/documents/:filename', async (req, res) => {
   const { filename } = req.params;
@@ -1035,6 +1129,7 @@ router.post('/admission-applications/:id/approve', async (req, res) => {
       coach: coach || '',
       hostelRoom: hostelRoom || '',
       contact: {
+        countryCode: app.contact?.countryCode || '+91',
         phone: app.contact?.phone || '',
         email: app.contact?.email || '',
         address: app.contact?.address || ''
@@ -1042,7 +1137,9 @@ router.post('/admission-applications/:id/approve', async (req, res) => {
       guardian: {
         name: app.guardian?.name || '',
         relationship: app.guardian?.relationship || 'Parent',
+        countryCode: app.guardian?.countryCode || '+91',
         phone: app.guardian?.phone || '',
+        emergencyCountryCode: app.guardian?.emergencyCountryCode || '+91',
         emergencyContact: app.guardian?.emergencyContact || '',
         address: app.guardian?.address || ''
       },
@@ -3232,6 +3329,203 @@ router.put('/facilities/:id/restore', async (req, res) => {
   } catch (err) {
     console.error("Restore facility error:", err);
     res.status(500).json({ error: "Failed to restore facility." });
+  }
+});
+
+// WHAT WE DO CARDS MANAGEMENT ENDPOINTS
+const defaultWhatWeDoSeed = [
+  {
+    id: 'wwd-1',
+    tag: 'Athletic Development',
+    title: 'Sports Training',
+    description: 'Providing top-tier professional coaching in multiple fields including Football, Handball, Rugby, and Athletics. The academy offers structured training regimes, regular physical fitness audits, and full sponsorship for representing the state and nation in high-profile competitions.',
+    image: '/images/sports_training_card.jpg',
+    features: ['🏅 Elite Certified Coaches', '⚽ Free Professional Gear', '🏃 Daily Conditioning Drills', '🏆 Tournament Sponsorship'],
+    order: 1,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-2',
+    tag: 'Academic Excellence',
+    title: 'Education & Academic Support',
+    description: 'Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.',
+    image: '/images/education_card.jpg',
+    features: ['📚 100% Tuition Coverage', '💬 English Speaking Classes', '💻 Computer Literacy Labs', '🌱 Life Skills & Guidance'],
+    order: 2,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-3',
+    tag: 'Dietary Health',
+    title: 'Food & Nutrition',
+    description: 'Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.',
+    image: '/images/nutrition_card.jpg',
+    features: ['🥗 Expert Calorie-Mapped', '🥩 High-Protein Diets', '🩺 Regular Health Audits', '🥛 Daily Supplements & Milk'],
+    order: 3,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-4',
+    tag: 'Residential Boarding',
+    title: 'Hostel & Accommodation',
+    description: 'Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.',
+    image: '/images/hostel_card.png',
+    features: ['🏠 Hygienic Dormitory', '🔒 Secure Gated Watch', '📖 Study Halls & Library', '🧺 Laundry & Hygiene Care'],
+    order: 4,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-5',
+    tag: 'Safe Transit',
+    title: 'Transportation',
+    description: 'Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.',
+    image: '/images/transportation_card.png',
+    features: ['🚌 Free Pick & Drop', '📍 GPS Fleet Tracking', '🛡️ Safe & Trained Drivers', '🕒 Daily Timely Commutes'],
+    order: 5,
+    status: 'Active'
+  }
+];
+
+router.get('/what-we-do', async (req, res) => {
+  try {
+    let items = await WhatWeDo.find({}).sort({ order: 1 });
+    if (items.length === 0) {
+      await WhatWeDo.insertMany(defaultWhatWeDoSeed);
+      items = await WhatWeDo.find({}).sort({ order: 1 });
+    }
+    res.json({ success: true, items });
+  } catch (err) {
+    console.error("Fetch what-we-do admin error:", err);
+    res.status(500).json({ error: "Failed to fetch What We Do items." });
+  }
+});
+
+router.post('/what-we-do', async (req, res) => {
+  let { title, tag, description, image, features, order, status } = req.body;
+  if (!title || !tag || !description) {
+    return res.status(400).json({ error: "Title, tag badge, and description are required." });
+  }
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'what-we-do');
+    } catch (err) {
+      console.error("Base64 upload failed for what-we-do:", err);
+    }
+  }
+  
+  try {
+    let parsedFeatures = [];
+    if (features) {
+      if (Array.isArray(features)) parsedFeatures = features;
+      else if (typeof features === 'string') {
+        parsedFeatures = features.split('\n').map(f => f.trim()).filter(Boolean);
+      }
+    }
+
+    const newItem = new WhatWeDo({
+      id: `wwd-${Date.now()}`,
+      title: sanitizeInput(title).trim(),
+      tag: sanitizeInput(tag).trim(),
+      description: sanitizeInput(description).trim(),
+      image: image || '/images/sports_training_card.jpg',
+      features: parsedFeatures,
+      order: Number(order) || 0,
+      status: status === 'Hidden' ? 'Hidden' : 'Active'
+    });
+    await newItem.save();
+    await logAdminAction(req.admin.username, 'what-we-do-create', newItem.id, `Created What We Do card: ${newItem.title}`);
+    res.status(201).json({ success: true, item: newItem });
+  } catch (err) {
+    console.error("Create what-we-do error:", err);
+    res.status(500).json({ error: "Failed to create What We Do card." });
+  }
+});
+
+router.put('/what-we-do/:id', async (req, res) => {
+  let { title, tag, description, image, features, order, status } = req.body;
+  
+  if (image && image.startsWith('data:image/')) {
+    try {
+      image = await storageService.uploadBase64(image, 'what-we-do');
+    } catch (err) {
+      console.error("Base64 upload failed for what-we-do:", err);
+    }
+  }
+
+  try {
+    const item = await findDoc(WhatWeDo, req.params.id);
+    if (!item) return res.status(404).json({ error: "What We Do card not found." });
+
+    if (title) item.title = sanitizeInput(title).trim();
+    if (tag) item.tag = sanitizeInput(tag).trim();
+    if (description) item.description = sanitizeInput(description).trim();
+    if (image) item.image = image;
+    if (features !== undefined) {
+      if (Array.isArray(features)) item.features = features;
+      else if (typeof features === 'string') {
+        item.features = features.split('\n').map(f => f.trim()).filter(Boolean);
+      }
+    }
+    if (order !== undefined) item.order = Number(order) || 0;
+    if (status) item.status = status;
+
+    await item.save();
+    await logAdminAction(req.admin.username, 'what-we-do-update', item.id, `Updated What We Do card: ${item.title}`);
+    res.json({ success: true, item });
+  } catch (err) {
+    console.error("Update what-we-do error:", err);
+    res.status(500).json({ error: "Failed to update What We Do card." });
+  }
+});
+
+router.delete('/what-we-do/:id', async (req, res) => {
+  const { permanent } = req.query;
+  try {
+    const item = await findDoc(WhatWeDo, req.params.id);
+    if (!item) return res.status(404).json({ error: "What We Do card not found." });
+
+    if (permanent === 'true') {
+      await WhatWeDo.deleteOne({ _id: item._id });
+      await logAdminAction(req.admin.username, 'what-we-do-permanent-delete', req.params.id, `Permanently deleted card: ${item.title}`);
+      return res.json({ success: true, message: "What We Do card permanently deleted." });
+    } else {
+      item.isDeleted = true;
+      await item.save();
+      await logAdminAction(req.admin.username, 'what-we-do-soft-delete', req.params.id, `Moved card to trash: ${item.title}`);
+      return res.json({ success: true, message: "What We Do card moved to trash." });
+    }
+  } catch (err) {
+    console.error("Delete what-we-do error:", err);
+    res.status(500).json({ error: "Failed to delete What We Do card." });
+  }
+});
+
+router.post('/what-we-do/:id/restore', async (req, res) => {
+  try {
+    const item = await findDoc(WhatWeDo, req.params.id);
+    if (!item) return res.status(404).json({ error: "What We Do card not found." });
+
+    item.isDeleted = false;
+    await item.save();
+    await logAdminAction(req.admin.username, 'what-we-do-restore', req.params.id, `Restored card: ${item.title}`);
+    res.json({ success: true, item });
+  } catch (err) {
+    console.error("Restore what-we-do error:", err);
+    res.status(500).json({ error: "Failed to restore What We Do card." });
+  }
+});
+
+router.post('/what-we-do/reset-defaults', async (req, res) => {
+  try {
+    await WhatWeDo.deleteMany({});
+    await WhatWeDo.insertMany(defaultWhatWeDoSeed);
+    const items = await WhatWeDo.find({}).sort({ order: 1 });
+    await logAdminAction(req.admin.username, 'what-we-do-reset', 'all', 'Reset What We Do cards to defaults');
+    res.json({ success: true, message: "Reset to default What We Do cards.", items });
+  } catch (err) {
+    console.error("Reset what-we-do error:", err);
+    res.status(500).json({ error: "Failed to reset What We Do cards." });
   }
 });
 

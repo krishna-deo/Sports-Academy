@@ -18,6 +18,7 @@ const StudentSchema = new mongoose.Schema({
   bloodGroup: { type: String, default: '' },
   aadhaarNumber: { type: String, default: '' },
   contact: {
+    countryCode: { type: String, default: '+91' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     address: { type: String, default: '' }
@@ -25,7 +26,9 @@ const StudentSchema = new mongoose.Schema({
   guardian: {
     name: { type: String, default: '' },
     relationship: { type: String, default: '' },
+    countryCode: { type: String, default: '+91' },
     phone: { type: String, default: '' },
+    emergencyCountryCode: { type: String, default: '+91' },
     emergencyContact: { type: String, default: '' },
     address: { type: String, default: '' }
   },
@@ -57,6 +60,7 @@ const StudentSchema = new mongoose.Schema({
     }
   ],
   admissionDate: { type: Date, required: true },
+  bio: { type: String, default: '' },
   status: { type: String, enum: ['Active', 'On Leave', 'Inactive', 'Graduated'], default: 'Active' },
   isDeleted: { type: Boolean, default: false },
   showOnPublicWebsite: { type: Boolean, default: true }

@@ -33,6 +33,7 @@ import {
 import { AdminCompliance } from '../components/AdminCompliance';
 import { getBioParagraphs } from '../utils/textUtils';
 import { defaultStaffMembers } from '../data/teamMembersData';
+import { COUNTRY_CODES } from '../data/countryCodes';
 
 interface AdminViewsProps {
   activeTab: string;
@@ -227,6 +228,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     bloodGroup: '',
     phone: '',
     studentPhone: '',
+    studentCountryCode: '+91',
     email: '',
     studentEmail: '',
     address: '',
@@ -235,8 +237,10 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     motherName: '',
     guardianRelationship: '',
     guardianPhone: '',
+    guardianCountryCode: '+91',
     guardianEmergency: '',
     emergencyContact: '',
+    emergencyCountryCode: '+91',
     guardianOccupation: '',
     guardianEmail: '',
     guardianAddress: '',
@@ -464,7 +468,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   const [dragStartPoint, setDragStartPoint] = useState({ x: 0, y: 0 });
   const [dragInitialOffset, setDragInitialOffset] = useState({ x: 0, y: 0 });
   const [cropperTab, setCropperTab] = useState<'upload' | 'gallery'>('upload');
-  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach' | 'facility' | 'edge' | 'staff-team'>('story');
+  const [croppingTarget, setCroppingTarget] = useState<'student' | 'team' | 'story' | 'coach' | 'facility' | 'edge' | 'staff-team' | 'what-we-do'>('story');
   const cropperBoxRef = React.useRef<HTMLDivElement>(null);
 
   // Facilities CMS States
@@ -563,6 +567,20 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     status: 'Active'
   });
 
+  // What We Do Management State
+  const [whatWeDoList, setWhatWeDoList] = useState<any[]>([]);
+  const [showDeletedWhatWeDo, setShowDeletedWhatWeDo] = useState<boolean>(false);
+  const [editingWhatWeDo, setEditingWhatWeDo] = useState<any | null>(null);
+  const [whatWeDoForm, setWhatWeDoForm] = useState({
+    tag: '',
+    title: '',
+    description: '',
+    image: '',
+    features: '',
+    order: 1,
+    status: 'Active'
+  });
+
   const token = localStorage.getItem('rlbsa_admin_token') || '';
 
   const fetchFacilities = async () => {
@@ -578,6 +596,22 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       }
     } catch (err) {
       console.error("Error fetching facilities:", err);
+    }
+  };
+
+  const fetchWhatWeDo = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/what-we-do', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items) {
+          setWhatWeDoList(data.items);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching What We Do items:", err);
     }
   };
 
@@ -600,6 +634,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   useEffect(() => {
     if (activeTab === 'facilities') {
       fetchFacilities();
+    } else if (activeTab === 'what-we-do') {
+      fetchWhatWeDo();
     } else if (activeTab === 'team-members') {
       fetchStaffTeam();
     } else if (activeTab === 'founders') {
@@ -779,6 +815,119 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       console.error(err);
       alert("Network error.");
     }
+  };
+
+  // WHAT WE DO HANDLERS
+  const handleSaveWhatWeDo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!whatWeDoForm.title || !whatWeDoForm.tag || !whatWeDoForm.description) {
+      alert("Please fill in title, tag badge, and description.");
+      return;
+    }
+
+    try {
+      const url = editingWhatWeDo
+        ? `http://localhost:5000/api/admin/what-we-do/${editingWhatWeDo.id || editingWhatWeDo._id}`
+        : 'http://localhost:5000/api/admin/what-we-do';
+      const method = editingWhatWeDo ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(whatWeDoForm)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(editingWhatWeDo ? 'What We Do card updated successfully.' : 'New What We Do card created successfully.');
+        setEditingWhatWeDo(null);
+        setActiveModal(null);
+        fetchWhatWeDo();
+      } else {
+        alert(data.error || "Failed to save card.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    }
+  };
+
+  const handleDeleteWhatWeDo = async (id: string, title: string, isPermanent = false) => {
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete card "${title}"? This action cannot be undone.`
+      : `Move card "${title}" to Trash Bin?`;
+
+    setConfirmationModal({
+      show: true,
+      title: isPermanent ? "Permanently Delete Card?" : "Move to Trash Bin?",
+      message: confirmMsg,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/admin/what-we-do/${id}${isPermanent ? '?permanent=true' : ''}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            triggerSuccess(isPermanent ? 'Card permanently deleted.' : 'Card moved to Trash Bin.');
+            fetchWhatWeDo();
+          } else {
+            alert(data.error || "Failed to delete card.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Network error.");
+        }
+      }
+    });
+  };
+
+  const handleRestoreWhatWeDo = async (id: string, title: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/what-we-do/${id}/restore`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`Card "${title}" restored successfully.`);
+        fetchWhatWeDo();
+      } else {
+        alert(data.error || "Failed to restore card.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    }
+  };
+
+  const handleResetWhatWeDoDefaults = async () => {
+    setConfirmationModal({
+      show: true,
+      title: "Reset What We Do Cards?",
+      message: "This will reset all What We Do cards back to the default 5 core operations. Are you sure?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch('http://localhost:5000/api/admin/what-we-do/reset-defaults', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            triggerSuccess('Reset to default What We Do cards.');
+            fetchWhatWeDo();
+          } else {
+            alert(data.error || "Failed to reset cards.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Network error.");
+        }
+      }
+    });
   };
 
   // RLBSA Edge CMS States & Handlers
@@ -1979,6 +2128,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
           setFacilityForm(prev => ({ ...prev, image: croppedBase64 }));
         } else if (croppingTarget === 'edge') {
           setEdgeCardForm(prev => ({ ...prev, image: croppedBase64 }));
+        } else if (croppingTarget === 'what-we-do') {
+          setWhatWeDoForm(prev => ({ ...prev, image: croppedBase64 }));
         } else {
           setStoryForm(prev => ({ ...prev, image: croppedBase64 }));
         }
@@ -2009,6 +2160,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       fullName: '',
       dateOfBirth: '',
       dob: '',
+      bio: '',
       gender: 'girl',
       bloodGroup: '',
       phone: '',
@@ -2058,14 +2210,21 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       fullName: student.fullName || student.name || '',
       dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
       gender: student.gender || 'girl',
+      bio: student.bio || '',
       bloodGroup: student.bloodGroup || '',
+      aadhaarNumber: student.aadhaarNumber || student.aadhaarNo || '',
       phone: student.contact?.phone || '',
+      studentPhone: student.contact?.phone || '',
+      studentCountryCode: student.contact?.countryCode || '+91',
       email: student.contact?.email || '',
       address: student.contact?.address || '',
       guardianName: student.guardian?.name || '',
       guardianRelationship: student.guardian?.relationship || '',
       guardianPhone: student.guardian?.phone || '',
+      guardianCountryCode: student.guardian?.countryCode || '+91',
       guardianEmergency: student.guardian?.emergencyContact || '',
+      emergencyContact: student.guardian?.emergencyContact || '',
+      emergencyCountryCode: student.guardian?.emergencyCountryCode || '+91',
       guardianAddress: student.guardian?.address || '',
       admissionDate: student.admissionDate ? student.admissionDate.split('T')[0] : (student.joined || ''),
       primarySport: student.primarySport || student.sport || 'Football',
@@ -2095,9 +2254,79 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     const primarySport = (studentForm.primarySport || '').trim();
     const admissionDate = studentForm.admissionDate;
 
-    if (!fullName || !dob || !primarySport || !admissionDate) {
-      alert("Please fill in all required fields (Full Name, Date of Birth, Primary Sport, Admission Date).");
+    if (!fullName || !dob) {
+      setActiveStudentFormTab('personal');
+      alert("Please fill in all required fields on the Personal tab (Full Name & Date of Birth).");
       return;
+    }
+
+    if (!primarySport || !admissionDate) {
+      setActiveStudentFormTab('academy');
+      alert("Please fill in all required fields on the Academy tab (Primary Sport & Admission Date).");
+      return;
+    }
+
+    // Phone numbers validation (must be 10 digits if provided)
+    const stPhone = (studentForm.studentPhone || studentForm.phone || '').trim();
+    if (stPhone && stPhone !== 'NA') {
+      const cleanPhone = stPhone.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) {
+        setActiveStudentFormTab('personal');
+        alert("Student contact phone number must be exactly 10 numeric digits.");
+        return;
+      }
+    }
+
+    const gPhone = (studentForm.guardianPhone || '').trim();
+    if (gPhone && gPhone !== 'NA') {
+      const cleanGPhone = gPhone.replace(/\D/g, '');
+      if (cleanGPhone.length !== 10) {
+        setActiveStudentFormTab('guardian');
+        alert("Primary Guardian contact phone number must be exactly 10 numeric digits.");
+        return;
+      }
+    }
+
+    const emPhone = (studentForm.emergencyContact || studentForm.guardianEmergency || '').trim();
+    if (emPhone && emPhone !== 'NA') {
+      const cleanEmPhone = emPhone.replace(/\D/g, '');
+      if (cleanEmPhone.length !== 10) {
+        setActiveStudentFormTab('guardian');
+        alert("Emergency contact phone number must be exactly 10 numeric digits.");
+        return;
+      }
+    }
+
+    // Email validation if provided
+    const stEmail = (studentForm.studentEmail || studentForm.email || '').trim();
+    if (stEmail && stEmail !== 'NA') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(stEmail)) {
+        setActiveStudentFormTab('personal');
+        alert("Please enter a valid Student email address.");
+        return;
+      }
+    }
+
+    const gEmail = (studentForm.guardianEmail || '').trim();
+    if (gEmail && gEmail !== 'NA') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(gEmail)) {
+        setActiveStudentFormTab('guardian');
+        alert("Please enter a valid Guardian email address.");
+        return;
+      }
+    }
+
+    // Aadhaar validation if provided
+    const aadhaarVal = (studentForm.aadhaarNo || studentForm.aadhaarNumber || '').trim();
+    if (aadhaarVal && aadhaarVal !== 'NA') {
+      const cleanAadhaar = aadhaarVal.replace(/\D/g, '');
+      if (cleanAadhaar.length !== 12) {
+        setActiveStudentFormTab('education');
+        alert("Aadhaar card number must be exactly 12 numeric digits.");
+        return;
+      }
     }
 
     const formatNA = (val: any) => (val && typeof val === 'string' && val.trim() ? val.trim() : 'NA');
@@ -2116,14 +2345,18 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       formData.append('dateOfBirth', dob);
       formData.append('gender', studentForm.gender || 'girl');
       formData.append('bloodGroup', formatNA(studentForm.bloodGroup));
+      formData.append('aadhaarNumber', formatNA(studentForm.aadhaarNumber || studentForm.aadhaarNo));
       formData.append('phone', formatNA(studentForm.phone || studentForm.studentPhone));
+      formData.append('studentCountryCode', studentForm.studentCountryCode || '+91');
       formData.append('email', formatNA(studentForm.email || studentForm.studentEmail));
       formData.append('address', formatNA(studentForm.address));
       
       formData.append('guardianName', formatNA(studentForm.guardianName || studentForm.fatherName));
       formData.append('guardianRelationship', formatNA(studentForm.guardianRelationship));
       formData.append('guardianPhone', formatNA(studentForm.guardianPhone));
+      formData.append('guardianCountryCode', studentForm.guardianCountryCode || '+91');
       formData.append('guardianEmergency', formatNA(studentForm.guardianEmergency || studentForm.emergencyContact));
+      formData.append('emergencyCountryCode', studentForm.emergencyCountryCode || '+91');
       formData.append('guardianAddress', formatNA(studentForm.guardianAddress));
       
       formData.append('admissionDate', admissionDate);
@@ -2136,6 +2369,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
       formData.append('schoolName', formatNA(studentForm.schoolName));
       formData.append('className', formatNA(studentForm.className || studentForm.classStandard));
       formData.append('academicInfo', formatNA(studentForm.academicInfo));
+      formData.append('bio', studentForm.bio || '');
       
       formData.append('status', forceStatus || studentForm.status || 'Active');
       formData.append('showOnPublicWebsite', String(studentForm.showOnPublicWebsite !== false));
@@ -2972,24 +3206,31 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
   };
 
   // Delete Handlers
-  const deleteStudent = async (id: string, name?: string) => {
+  const deleteStudent = async (id: string, name?: string, isPermanent = false) => {
     const displayName = name ? ` "${name}"` : '';
+    const confirmMsg = isPermanent
+      ? `Are you sure you want to PERMANENTLY delete student record${displayName}? This action cannot be undone.`
+      : `Are you sure you want to move student record${displayName} to Trash Bin?`;
     setConfirmationModal({
       show: true,
-      title: "Deactivate/Delete Student",
-      message: `Are you sure you want to deactivate/delete student${displayName}? They will be marked as inactive and soft-deleted.`,
+      title: isPermanent ? "Permanently Delete Student Record?" : "Move Student to Trash Bin?",
+      message: confirmMsg,
       onConfirm: async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/admin/students/${id}`, {
+          const response = await fetch(`http://localhost:5000/api/admin/students/${id}${isPermanent ? '?permanent=true' : ''}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (response.ok) {
-            triggerSuccess('Student record soft-deleted/deactivated.');
+          const data = await response.json();
+          if (response.ok && data.success) {
+            triggerSuccess(isPermanent ? 'Student record permanently deleted.' : 'Student record moved to Trash Bin.');
             fetchStudents();
+          } else {
+            alert(data.error || "Failed to delete student record.");
           }
         } catch (err) {
-          alert("Error soft-deleting student.");
+          console.error("Error deleting student:", err);
+          alert("Error deleting student record.");
         }
       }
     });
@@ -3033,10 +3274,13 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
   const handleBulkDelete = async () => {
     if (selectedStudentIds.length === 0) return;
+    const isPermanent = studentShowDeleted;
     setConfirmationModal({
       show: true,
-      title: "Bulk Deactivate/Soft-Delete",
-      message: `Are you sure you want to deactivate/soft-delete the ${selectedStudentIds.length} selected student records?`,
+      title: isPermanent ? "Bulk Permanent Delete" : "Bulk Move to Trash Bin",
+      message: isPermanent 
+        ? `Are you sure you want to PERMANENTLY delete the ${selectedStudentIds.length} selected student records from Trash Bin? This action cannot be undone.`
+        : `Are you sure you want to move the ${selectedStudentIds.length} selected student records to Trash Bin?`,
       onConfirm: async () => {
         try {
           const response = await fetch('http://localhost:5000/api/admin/students/bulk-delete', {
@@ -3045,18 +3289,47 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ ids: selectedStudentIds })
+            body: JSON.stringify({ ids: selectedStudentIds, permanent: isPermanent })
           });
-          if (response.ok) {
-            triggerSuccess(`Deactivated ${selectedStudentIds.length} student records.`);
+          const data = await response.json();
+          if (response.ok && data.success) {
+            triggerSuccess(isPermanent ? `Permanently deleted ${selectedStudentIds.length} student records.` : `Moved ${selectedStudentIds.length} student records to Trash Bin.`);
             setSelectedStudentIds([]);
             fetchStudents();
+          } else {
+            alert(data.error || "Failed to delete students in bulk.");
           }
         } catch (err) {
-          alert("Error deactivating students in bulk.");
+          console.error("Error bulk deleting students:", err);
+          alert("Error deleting students in bulk.");
         }
       }
     });
+  };
+
+  const handleBulkStudentRestore = async () => {
+    if (selectedStudentIds.length === 0) return;
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/students/bulk-restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids: selectedStudentIds })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        triggerSuccess(`Restored ${selectedStudentIds.length} student records.`);
+        setSelectedStudentIds([]);
+        fetchStudents();
+      } else {
+        alert(data.error || "Failed to restore students in bulk.");
+      }
+    } catch (err) {
+      console.error("Error bulk restoring students:", err);
+      alert("Error restoring students in bulk.");
+    }
   };
 
   const handleBulkAssign = async (batchVal?: string, coachVal?: string) => {
@@ -3787,51 +4060,64 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 <span>⚠️</span> Selected {selectedStudentIds.length} students:
               </span>
               <div className="flex flex-wrap items-center gap-3.5">
-                <select 
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleBulkStatusChange(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none"
-                >
-                  <option value="">Bulk Status...</option>
-                  <option value="Active">Active</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="Graduated">Graduated</option>
-                </select>
+                {!studentShowDeleted && (
+                  <>
+                    <select 
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleBulkStatusChange(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none"
+                    >
+                      <option value="">Bulk Status...</option>
+                      <option value="Active">Active</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Graduated">Graduated</option>
+                    </select>
 
-                <input 
-                  type="text" 
-                  placeholder="Bulk Batch..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleBulkAssign((e.target as HTMLInputElement).value, undefined);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }}
-                  className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none max-w-[100px]"
-                />
+                    <input 
+                      type="text" 
+                      placeholder="Bulk Batch..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleBulkAssign((e.target as HTMLInputElement).value, undefined);
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }}
+                      className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none max-w-[100px]"
+                    />
 
-                <input 
-                  type="text" 
-                  placeholder="Bulk Coach..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleBulkAssign(undefined, (e.target as HTMLInputElement).value);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }}
-                  className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none max-w-[100px]"
-                />
+                    <input 
+                      type="text" 
+                      placeholder="Bulk Coach..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleBulkAssign(undefined, (e.target as HTMLInputElement).value);
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }}
+                      className="px-2 py-1.5 border border-border-gray rounded bg-white text-[11px] font-semibold text-primary outline-none max-w-[100px]"
+                    />
+                  </>
+                )}
+
+                {studentShowDeleted && (
+                  <button 
+                    onClick={handleBulkStudentRestore}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3.5 rounded text-[11px] cursor-pointer transition-all uppercase"
+                  >
+                    Restore Selected
+                  </button>
+                )}
 
                 <button 
                   onClick={handleBulkDelete}
                   className="bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-3.5 rounded text-[11px] cursor-pointer transition-all uppercase"
                 >
-                  Deactivate / Delete
+                  {studentShowDeleted ? 'Delete Permanently' : 'Deactivate / Delete'}
                 </button>
               </div>
             </div>
@@ -3980,21 +4266,30 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                                 <Pencil size={15} />
                               </button>
                               <button 
-                                onClick={() => deleteStudent(student.id, student.fullName || student.name)}
+                                onClick={() => deleteStudent(student.id, student.fullName || student.name, false)}
                                 className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer transition-colors"
-                                title="Deactivate Student"
+                                title="Deactivate Student / Move to Trash"
                               >
                                 <Trash size={15} />
                               </button>
                             </>
                           ) : (
-                            <button 
-                              onClick={() => restoreStudent(student.id)}
-                              className="text-emerald-600 hover:text-emerald-800 bg-transparent border-none p-1 cursor-pointer transition-colors"
-                              title="Restore Student"
-                            >
-                              <ArrowCounterClockwise size={15} />
-                            </button>
+                            <>
+                              <button 
+                                onClick={() => restoreStudent(student.id)}
+                                className="text-emerald-600 hover:text-emerald-800 bg-transparent border-none p-1 cursor-pointer transition-colors"
+                                title="Restore Student"
+                              >
+                                <ArrowCounterClockwise size={15} />
+                              </button>
+                              <button 
+                                onClick={() => deleteStudent(student.id, student.fullName || student.name, true)}
+                                className="text-rose-500 hover:text-rose-700 bg-transparent border-none p-1 cursor-pointer transition-colors"
+                                title="Delete Permanently"
+                              >
+                                <Trash size={15} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -6042,6 +6337,173 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
         );
       })()}
 
+      {/* WHAT WE DO MANAGEMENT VIEW */}
+      {activeTab === 'what-we-do' && (() => {
+        const deletedWhatWeDoCount = whatWeDoList.filter(item => item.isDeleted).length;
+        const displayedWhatWeDo = whatWeDoList.filter(item => showDeletedWhatWeDo ? item.isDeleted : !item.isDeleted);
+
+        return (
+          <div className="bg-white p-6 md:p-8 rounded-xl border border-border-gray shadow-sm text-left space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-border-gray">
+              <div>
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  <Buildings size={22} className="text-accent" /> What We Do Management {showDeletedWhatWeDo && <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">(Trash Bin)</span>}
+                </h2>
+                <p className="text-text-light text-xs mt-1">
+                  Manage, edit, and add key operation cards (Sports Training, Education, Nutrition, Hostel, Transportation, etc.) shown on the "What We Do" page.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetWhatWeDoDefaults}
+                  className="px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 transition-all"
+                  title="Reset to original 5 core operation cards"
+                >
+                  <ArrowClockwise size={14} /> Reset Defaults
+                </button>
+                <button
+                  onClick={() => setShowDeletedWhatWeDo(!showDeletedWhatWeDo)}
+                  className={`px-3 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer border transition-all ${
+                    showDeletedWhatWeDo
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <Trash size={14} className={showDeletedWhatWeDo ? 'text-amber-600' : 'text-slate-500'} />
+                  {showDeletedWhatWeDo ? 'Active Cards' : 'Trash Bin'}
+                  {deletedWhatWeDoCount > 0 && (
+                    <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                      {deletedWhatWeDoCount}
+                    </span>
+                  )}
+                </button>
+                {!showDeletedWhatWeDo && (
+                  <button
+                    onClick={() => {
+                      setWhatWeDoForm({ tag: '', title: '', description: '', image: '', features: '', order: whatWeDoList.length + 1, status: 'Active' });
+                      setEditingWhatWeDo(null);
+                      setActiveModal('what-we-do');
+                    }}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-4 rounded-lg transition-all text-xs border-none cursor-pointer self-start"
+                  >
+                    <Plus size={16} /> Add New Card
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {displayedWhatWeDo.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border-gray rounded-xl text-text-light text-xs">
+                {showDeletedWhatWeDo ? 'Trash bin is empty. No deleted cards found.' : 'No What We Do cards found. Click "+ Add New Card" or "Reset Defaults".'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedWhatWeDo.map((item) => {
+                  const imgUrl = item.image
+                    ? (item.image.startsWith('http') || item.image.startsWith('/images') || item.image.startsWith('/uploads') ? item.image : `http://localhost:5000${item.image}`)
+                    : '/images/sports_training_card.jpg';
+
+                  const featuresList = Array.isArray(item.features)
+                    ? item.features
+                    : (typeof item.features === 'string' ? item.features.split('\n').filter(Boolean) : []);
+
+                  return (
+                    <div key={item.id || item._id} className="border border-border-gray rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all bg-soft-light relative">
+                      <div>
+                        <div className="h-[180px] bg-primary relative overflow-hidden">
+                          <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                          {item.tag && (
+                            <span className="absolute bottom-3 right-3 bg-primary/90 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow">
+                              {item.tag}
+                            </span>
+                          )}
+                          {showDeletedWhatWeDo ? (
+                            <span className="absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-600 text-white shadow">
+                              In Trash Bin
+                            </span>
+                          ) : (
+                            <span className={`absolute top-3 left-3 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                              item.status === 'Hidden' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              {item.status || 'Active'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-5 text-left space-y-3">
+                          <div>
+                            <span className="text-accent text-[10px] font-black uppercase tracking-wider block mb-0.5">{item.tag}</span>
+                            <h3 className="text-sm font-extrabold text-primary">{item.title}</h3>
+                          </div>
+                          <p className="text-text-light text-xs leading-relaxed line-clamp-3">
+                            {item.description}
+                          </p>
+                          {featuresList.length > 0 && (
+                            <div className="pt-2 border-t border-border-gray/40">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Key Highlights:</span>
+                              <ul className="grid grid-cols-2 gap-1 text-[11px] font-semibold text-slate-700">
+                                {featuresList.slice(0, 4).map((f: string, i: number) => (
+                                  <li key={i} className="truncate">• {f}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-3.5 border-t border-border-gray/50 flex gap-2 justify-end bg-white">
+                        {showDeletedWhatWeDo ? (
+                          <>
+                            <button
+                              onClick={() => handleRestoreWhatWeDo(item.id || item._id, item.title)}
+                              className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <ArrowCounterClockwise size={14} /> Restore
+                            </button>
+                            <button
+                              onClick={() => handleDeleteWhatWeDo(item.id || item._id, item.title, true)}
+                              className="bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-bold py-1.5 px-3 rounded text-[11px] border border-rose-200 transition-all cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Trash size={14} /> Delete Forever
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingWhatWeDo(item);
+                                setWhatWeDoForm({
+                                  title: item.title || '',
+                                  tag: item.tag || '',
+                                  description: item.description || '',
+                                  image: item.image || '',
+                                  features: Array.isArray(item.features) ? item.features.join('\n') : (item.features || ''),
+                                  order: item.order || 0,
+                                  status: item.status || 'Active'
+                                });
+                                setActiveModal('what-we-do');
+                              }}
+                              className="bg-primary-light/10 hover:bg-primary-light/20 text-primary-light font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteWhatWeDo(item.id || item._id, item.title, false)}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded text-[11px] border-none cursor-pointer flex items-center gap-1"
+                            >
+                              <Trash size={12} /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* RLBSA EDGE MANAGEMENT VIEW */}
       {activeTab === 'rlbsa-edge' && (() => {
         const deletedEdgeCount = edgeCardsList.filter(e => e.isDeleted).length;
@@ -7505,7 +7967,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     <p className="text-xs font-bold text-primary">Drag image to position & scroll mouse wheel or slider to zoom:</p>
                     <div className="flex items-center gap-1.5 bg-soft-light px-3 py-1.5 rounded-lg border border-border-gray">
                       <span className="text-[10px] font-extrabold px-2.5 py-1 rounded bg-primary text-white shadow-xs tracking-wide">
-                        {(croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') && '4:3 Landscape'}
+                        {(croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge' || croppingTarget === 'what-we-do') && '4:3 Landscape'}
                         {croppingTarget === 'student' && '1:1 Square'}
                         {(croppingTarget === 'coach' || croppingTarget === 'team') && '3:4 Portrait'}
                       </span>
@@ -7517,7 +7979,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     ref={cropperBoxRef}
                     className={`w-full mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none ${
                       croppingTarget === 'student' ? 'max-w-[360px] aspect-[1/1]' :
-                      (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 'max-w-[440px] aspect-[4/3]' :
+                      (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge' || croppingTarget === 'what-we-do') ? 'max-w-[440px] aspect-[4/3]' :
                       'max-w-[340px] aspect-[3/4]'
                     }`}
                     onWheel={(e) => {
@@ -7574,7 +8036,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   {/* Zoom Controls & Quick Fit / Reset Buttons */}
                   <div className={`flex flex-wrap items-center gap-3 mx-auto bg-soft-light p-3 rounded-lg border border-border-gray ${
                     croppingTarget === 'student' ? 'max-w-[360px]' :
-                    (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 'max-w-[440px]' :
+                    (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge' || croppingTarget === 'what-we-do') ? 'max-w-[440px]' :
                     'max-w-[340px]'
                   }`}>
                     <span className="text-xs font-bold text-primary min-w-[45px]">Zoom:</span>
@@ -7765,6 +8227,153 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-5 rounded-lg transition-all cursor-pointer text-xs uppercase tracking-wider border-none shadow-md"
                 >
                   {editingFacility ? 'Update Card' : 'Save Facility Card'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* What We Do Card Modal */}
+      {activeModal === 'what-we-do' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5 animate-fade-in overflow-hidden" onClick={() => setActiveModal(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col my-auto animate-fade-in overflow-hidden border border-slate-100" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-light hover:text-primary cursor-pointer border-none bg-transparent z-10" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 shrink-0 border-b border-border-gray pb-2">
+              <Buildings size={20} className="text-accent" /> {editingWhatWeDo ? 'Edit What We Do Card' : 'Add New What We Do Card'}
+            </h3>
+            <form onSubmit={handleSaveWhatWeDo} className="flex-1 overflow-y-auto space-y-4 pr-1 py-1 hide-scrollbar">
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Card Title *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. Sports Training"
+                  value={whatWeDoForm.title} 
+                  onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, title: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Category / Tag Badge *</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. Athletic Development"
+                    value={whatWeDoForm.tag} 
+                    onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, tag: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary placeholder-slate-400 outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Sort Order</label>
+                  <input 
+                    type="number" 
+                    placeholder="1, 2, 3..."
+                    value={whatWeDoForm.order} 
+                    onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, order: parseInt(e.target.value) || 0 })}
+                    className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Card Image URL / Upload</label>
+                <div className="space-y-2">
+                  <input 
+                    type="text" 
+                    placeholder="/images/sports_training_card.jpg or http://..."
+                    value={whatWeDoForm.image} 
+                    onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, image: e.target.value })}
+                    className="w-full py-2 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                  />
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              setCropperSource(evt.target.result as string);
+                              setCroppingTarget('what-we-do');
+                              setCropZoom(1);
+                              setCropPosition({ x: 0, y: 0 });
+                              setShowCropperModal(true);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer"
+                    />
+                  </div>
+                </div>
+                {whatWeDoForm.image && (
+                  <div className="mt-2.5 h-28 rounded-lg overflow-hidden border border-border-gray relative bg-slate-100">
+                    <img 
+                      src={whatWeDoForm.image.startsWith('http') || whatWeDoForm.image.startsWith('data:') || whatWeDoForm.image.startsWith('/images') || whatWeDoForm.image.startsWith('/uploads') ? whatWeDoForm.image : `http://localhost:5000${whatWeDoForm.image}`} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Description *</label>
+                <textarea 
+                  required
+                  rows={3}
+                  placeholder="Detailed description of what this operation offers..."
+                  value={whatWeDoForm.description} 
+                  onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, description: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none text-justify"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Key Highlights / Features (One per line)</label>
+                <textarea 
+                  rows={4}
+                  placeholder="🏅 Elite Certified Coaches&#10;⚽ Free Professional Gear&#10;🏃 Daily Conditioning Drills&#10;🏆 Tournament Sponsorship"
+                  value={whatWeDoForm.features} 
+                  onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, features: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold resize-none"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Enter each bullet point feature on a new line (emojis supported).</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Visibility Status</label>
+                <select
+                  value={whatWeDoForm.status}
+                  onChange={(e) => setWhatWeDoForm({ ...whatWeDoForm, status: e.target.value })}
+                  className="w-full py-2.5 px-3 border border-border-gray rounded-lg bg-soft-light text-xs text-primary outline-none focus:border-primary focus:bg-white transition-all font-semibold"
+                >
+                  <option value="Active">Active (Visible on Website)</option>
+                  <option value="Hidden">Hidden (Draft / Archived)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="py-2.5 px-4 rounded-lg border border-border-gray text-xs font-bold text-text-light hover:bg-slate-100 cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-accent hover:text-primary text-white font-bold py-2.5 px-5 rounded-lg transition-all cursor-pointer text-xs uppercase tracking-wider border-none shadow-md"
+                >
+                  {editingWhatWeDo ? 'Update Card' : 'Save What We Do Card'}
                 </button>
               </div>
             </form>
@@ -7973,7 +8582,15 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               ))}
             </div>
 
-            <form onSubmit={handleSaveStudent} className="flex-1 flex flex-col min-h-0 overflow-x-hidden">
+            <form 
+              onSubmit={handleSaveStudent} 
+              onKeyDown={(e) => { 
+                if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+                  e.preventDefault(); 
+                }
+              }} 
+              className="flex-1 flex flex-col min-h-0 overflow-x-hidden"
+            >
               <div className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar space-y-3 py-1">
                 
                 {/* Tab 1: Personal Details */}
@@ -8015,23 +8632,41 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Blood Group</label>
-                        <input 
-                          type="text" 
-                          placeholder="E.g. O+ or A+" 
-                          value={studentForm.bloodGroup} 
+                        <select 
+                          value={studentForm.bloodGroup || ''} 
                           onChange={(e) => setStudentForm({...studentForm, bloodGroup: e.target.value})} 
-                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                        />
+                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold"
+                        >
+                          <option value="">Select Blood Group</option>
+                          {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
+                            <option key={bg} value={bg}>{bg}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Contact Phone</label>
-                        <input 
-                          type="tel" 
-                          placeholder="E.g. +91 98765 43210" 
-                          value={studentForm.studentPhone} 
-                          onChange={(e) => setStudentForm({...studentForm, studentPhone: e.target.value})} 
-                          className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                        />
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Contact Phone (10 Digits)</label>
+                        <div className="flex gap-1.5">
+                          <select
+                            value={studentForm.studentCountryCode || '+91'}
+                            onChange={(e) => setStudentForm({...studentForm, studentCountryCode: e.target.value})}
+                            className="py-2.5 px-2 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-bold text-slate-800 cursor-pointer shrink-0 max-w-[105px]"
+                            title="Country Code"
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input 
+                            type="tel" 
+                            maxLength={10}
+                            placeholder="10-digit mobile number" 
+                            value={studentForm.studentPhone} 
+                            onChange={(e) => setStudentForm({...studentForm, studentPhone: e.target.value.replace(/\D/g, '').slice(0, 10)})} 
+                            className="flex-1 w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold font-mono" 
+                          />
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1 sm:col-span-2">
                         <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Student Email</label>
@@ -8039,7 +8674,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           type="email" 
                           placeholder="E.g. puja@gmail.com" 
                           value={studentForm.studentEmail} 
-                          onChange={(e) => setStudentForm({...studentForm, studentEmail: e.target.value})} 
+                          onChange={(e) => setStudentForm({...studentForm, studentEmail: e.target.value.trim()})} 
                           className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
                         />
                       </div>
@@ -8051,6 +8686,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                           value={studentForm.address} 
                           onChange={(e) => setStudentForm({...studentForm, address: e.target.value})} 
                           className="w-full py-2.5 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Athlete Profile & Achievements (Bio)</label>
+                        <textarea 
+                          rows={3}
+                          placeholder="Enter athlete profile description & achievements summary written by admin..." 
+                          value={studentForm.bio || ''} 
+                          onChange={(e) => setStudentForm({...studentForm, bio: e.target.value})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold resize-none" 
                         />
                       </div>
                       <div className="flex flex-col gap-1 sm:col-span-2">
@@ -8117,26 +8762,56 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Primary Guardian Contact *</label>
-                        <input 
-                          required 
-                          type="tel" 
-                          placeholder="E.g. +91 98765 43210" 
-                          value={studentForm.guardianPhone} 
-                          onChange={(e) => setStudentForm({...studentForm, guardianPhone: e.target.value})} 
-                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                        />
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Primary Guardian Contact (10 Digits) *</label>
+                        <div className="flex gap-1.5">
+                          <select
+                            value={studentForm.guardianCountryCode || '+91'}
+                            onChange={(e) => setStudentForm({...studentForm, guardianCountryCode: e.target.value})}
+                            className="py-2 px-2 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-bold text-slate-800 cursor-pointer shrink-0 max-w-[105px]"
+                            title="Country Code"
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input 
+                            required 
+                            type="tel" 
+                            maxLength={10}
+                            placeholder="10-digit mobile number" 
+                            value={studentForm.guardianPhone} 
+                            onChange={(e) => setStudentForm({...studentForm, guardianPhone: e.target.value.replace(/\D/g, '').slice(0, 10)})} 
+                            className="flex-1 w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold font-mono" 
+                          />
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Emergency Contact Phone *</label>
-                        <input 
-                          required 
-                          type="tel" 
-                          placeholder="Secondary emergency number" 
-                          value={studentForm.emergencyContact} 
-                          onChange={(e) => setStudentForm({...studentForm, emergencyContact: e.target.value})} 
-                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
-                        />
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Emergency Contact Phone (10 Digits) *</label>
+                        <div className="flex gap-1.5">
+                          <select
+                            value={studentForm.emergencyCountryCode || '+91'}
+                            onChange={(e) => setStudentForm({...studentForm, emergencyCountryCode: e.target.value})}
+                            className="py-2 px-2 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-bold text-slate-800 cursor-pointer shrink-0 max-w-[105px]"
+                            title="Country Code"
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input 
+                            required 
+                            type="tel" 
+                            maxLength={10}
+                            placeholder="10-digit emergency number" 
+                            value={studentForm.emergencyContact} 
+                            onChange={(e) => setStudentForm({...studentForm, emergencyContact: e.target.value.replace(/\D/g, '').slice(0, 10)})} 
+                            className="flex-1 w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold font-mono" 
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -8303,13 +8978,14 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div className="flex flex-col gap-1 sm:col-span-2">
-                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Aadhaar Card / Govt Identity Number</label>
+                        <label className="text-[10px] font-bold text-primary uppercase tracking-wider">Aadhaar Card / Govt Identity Number (12 Digits)</label>
                         <input 
                           type="text" 
-                          placeholder="12-Digit Aadhaar Card Number" 
+                          maxLength={12}
+                          placeholder="12-digit numeric Aadhaar number" 
                           value={studentForm.aadhaarNo} 
-                          onChange={(e) => setStudentForm({...studentForm, aadhaarNo: e.target.value})} 
-                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold" 
+                          onChange={(e) => setStudentForm({...studentForm, aadhaarNo: e.target.value.replace(/\D/g, '').slice(0, 12)})} 
+                          className="w-full py-2 px-3 border border-border-gray rounded text-xs bg-soft-light outline-none focus:bg-white focus:border-primary transition-all font-semibold font-mono" 
                         />
                       </div>
                     </div>
@@ -8319,9 +8995,29 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 {/* Tab 5: Achievements */}
                 {activeStudentFormTab === 'achievements' && (
                   <div className="space-y-3 animate-fade-in">
+                    {/* Main Athlete Profile & Achievements Summary Bio */}
+                    <div className="p-3.5 bg-slate-50 border border-primary/20 rounded-xl space-y-1.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                          🏆 Athlete Profile & Achievements (Bio Summary)
+                        </label>
+                        <span className="text-[10px] text-text-light font-semibold">Displays on public profile</span>
+                      </div>
+                      <p className="text-[11px] text-text-light font-medium">
+                        Write the student athlete's custom bio, career background, or overall achievements summary here.
+                      </p>
+                      <textarea 
+                        rows={3}
+                        placeholder="Enter custom athlete profile description & achievements summary..." 
+                        value={studentForm.bio || ''} 
+                        onChange={(e) => setStudentForm({...studentForm, bio: e.target.value})} 
+                        className="w-full mt-1 py-2 px-3 border border-border-gray rounded-lg text-xs bg-white outline-none focus:border-primary transition-all font-semibold resize-none" 
+                      />
+                    </div>
+
                     <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded border border-border-gray">
                       <div>
-                        <h4 className="text-xs font-bold text-primary">Sports Achievements & Medals</h4>
+                        <h4 className="text-xs font-bold text-primary">Sports Medals & Tournament Table</h4>
                         <p className="text-[10px] text-text-light">Add medals, tournaments, and representation details</p>
                       </div>
                       <button 
@@ -8751,6 +9447,10 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   <div className="flex flex-col gap-0.5 pt-2 border-t border-dashed border-border-gray">
                     <span className="text-[10px] text-text-light uppercase font-bold">Residential Address</span>
                     <span className="text-xs font-semibold text-primary">{viewingStudentProfile.contact?.address || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 pt-2 border-t border-dashed border-border-gray">
+                    <span className="text-[10px] text-text-light uppercase font-bold">Student Bio / Athlete Statement</span>
+                    <span className="text-xs font-semibold text-primary italic">{viewingStudentProfile.bio || 'N/A'}</span>
                   </div>
                 </div>
               )}
@@ -10311,7 +11011,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   {/* Student Contact */}
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 space-y-1">
                     <span className="text-[10px] font-bold uppercase text-blue-700 tracking-wider block mb-1">Student Contact</span>
-                    <p><strong className="text-slate-900">Mobile:</strong> {approvingApplication.contact?.phone || 'N/A'}</p>
+                    <p><strong className="text-slate-900">Mobile:</strong> {approvingApplication.contact?.phone ? `${approvingApplication.contact?.countryCode || '+91'} ${approvingApplication.contact.phone}` : 'N/A'}</p>
                     <p className="truncate"><strong className="text-slate-900">Email:</strong> {approvingApplication.contact?.email || 'N/A'}</p>
                     <p className="truncate"><strong className="text-slate-900">Address:</strong> {approvingApplication.contact?.address || 'N/A'}</p>
                   </div>
@@ -10322,8 +11022,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     <div className="grid grid-cols-2 gap-2">
                       <p><strong className="text-slate-900">Guardian Name:</strong> {approvingApplication.guardian?.name || 'N/A'}</p>
                       <p><strong className="text-slate-900">Relationship:</strong> {approvingApplication.guardian?.relationship || 'Parent'}</p>
-                      <p><strong className="text-slate-900">Guardian Phone:</strong> {approvingApplication.guardian?.phone || 'N/A'}</p>
-                      <p><strong className="text-slate-900">Emergency Phone:</strong> {approvingApplication.guardian?.emergencyContact || 'N/A'}</p>
+                      <p><strong className="text-slate-900">Guardian Phone:</strong> {approvingApplication.guardian?.phone ? `${approvingApplication.guardian?.countryCode || '+91'} ${approvingApplication.guardian.phone}` : 'N/A'}</p>
+                      <p><strong className="text-slate-900">Emergency Phone:</strong> {approvingApplication.guardian?.emergencyContact ? `${approvingApplication.guardian?.emergencyCountryCode || '+91'} ${approvingApplication.guardian.emergencyContact}` : 'N/A'}</p>
                     </div>
                   </div>
 

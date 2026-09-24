@@ -24,6 +24,7 @@ const EdgeCard = require('../models/EdgeCard');
 const OutreachProgram = require('../models/OutreachProgram');
 const VisionMission = require('../models/VisionMission');
 const AdmissionApplication = require('../models/AdmissionApplication');
+const WhatWeDo = require('../models/WhatWeDo');
 const emailService = require('../services/emailService');
 const storageService = require('../services/storageService');
 const cloudinary = require('cloudinary').v2;
@@ -177,6 +178,76 @@ router.get('/facilities', async (req, res) => {
   }
 });
 
+const defaultWhatWeDo = [
+  {
+    id: 'wwd-1',
+    tag: 'Athletic Development',
+    title: 'Sports Training',
+    description: 'Providing top-tier professional coaching in multiple fields including Football, Handball, Rugby, and Athletics. The academy offers structured training regimes, regular physical fitness audits, and full sponsorship for representing the state and nation in high-profile competitions.',
+    image: '/images/sports_training_card.jpg',
+    features: ['🏅 Elite Certified Coaches', '⚽ Free Professional Gear', '🏃 Daily Conditioning Drills', '🏆 Tournament Sponsorship'],
+    order: 1,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-2',
+    tag: 'Academic Excellence',
+    title: 'Education & Academic Support',
+    description: 'Ensuring formal schooling for every athlete at local schools and colleges with full tuition and textbook coverage. In addition to primary schooling, the foundation runs daily personality development workshops, computer literacy classes, and English speaking courses.',
+    image: '/images/education_card.jpg',
+    features: ['📚 100% Tuition Coverage', '💬 English Speaking Classes', '💻 Computer Literacy Labs', '🌱 Life Skills & Guidance'],
+    order: 2,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-3',
+    tag: 'Dietary Health',
+    title: 'Food & Nutrition',
+    description: 'Providing daily healthy high-protein diets designed specifically to support rigorous sports training. All meals are calorie-mapped under expert supervision to build muscle, increase speed, and promote rapid physical recovery after games.',
+    image: '/images/nutrition_card.jpg',
+    features: ['🥗 Expert Calorie-Mapped', '🥩 High-Protein Diets', '🩺 Regular Health Audits', '🥛 Daily Supplements & Milk'],
+    order: 3,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-4',
+    tag: 'Residential Boarding',
+    title: 'Hostel & Accommodation',
+    description: 'Offering standard, secure, and hygienic boarding hostels accommodating up to 50 resident students. The facility features dynamic studying halls, clean laundry rooms, recreation zones, and gated surveillance for safety.',
+    image: '/images/hostel_card.png',
+    features: ['🏠 Hygienic Dormitory', '🔒 Secure Gated Watch', '📖 Study Halls & Library', '🧺 Laundry & Hygiene Care'],
+    order: 4,
+    status: 'Active'
+  },
+  {
+    id: 'wwd-5',
+    tag: 'Safe Transit',
+    title: 'Transportation',
+    description: 'Ensuring daily secure pickup and drop transit services for non-residential local student-athletes. Our dedicated fleet of buses and vans enables students from remote rural locations to commute safely and punctually for daily practices and academic lectures.',
+    image: '/images/transportation_card.png',
+    features: ['🚌 Free Pick & Drop', '📍 GPS Fleet Tracking', '🛡️ Safe & Trained Drivers', '🕒 Daily Timely Commutes'],
+    order: 5,
+    status: 'Active'
+  }
+];
+
+router.get('/what-we-do', async (req, res) => {
+  try {
+    let items = await WhatWeDo.find({ status: 'Active', isDeleted: { $ne: true } }).sort({ order: 1 });
+    if (!items || items.length === 0) {
+      const count = await WhatWeDo.countDocuments({});
+      if (count === 0) {
+        await WhatWeDo.insertMany(defaultWhatWeDo);
+        items = await WhatWeDo.find({ status: 'Active', isDeleted: { $ne: true } }).sort({ order: 1 });
+      }
+    }
+    res.json(items);
+  } catch (err) {
+    console.error("Error fetching what-we-do:", err);
+    res.status(500).json({ error: "Failed to fetch What We Do items." });
+  }
+});
+
 router.get('/edge-cards', async (req, res) => {
   try {
     const cards = await EdgeCard.find({ status: 'Active', isDeleted: { $ne: true } }).sort({ order: 1 });
@@ -228,7 +299,8 @@ router.get('/students', async (req, res) => {
         medalNumber: student.medalNumber || 0,
         avatar: student.avatar || '🎓',
         gender: student.gender || 'girl',
-        residency: student.residency || 'resident'
+        residency: student.residency || 'resident',
+        bio: student.bio || ''
       };
     });
     res.json(mapped);
@@ -727,6 +799,41 @@ router.post('/admission-applications', async (req, res) => {
       });
     }
 
+    // Phone validation
+    const cleanPhone = String(contact.phone).replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      return res.status(400).json({ error: "Student contact phone number must be exactly 10 numeric digits." });
+    }
+
+    const cleanGuardianPhone = String(guardian.phone).replace(/\D/g, '');
+    if (cleanGuardianPhone.length !== 10) {
+      return res.status(400).json({ error: "Parent/Guardian phone number must be exactly 10 numeric digits." });
+    }
+
+    if (guardian.emergencyContact && String(guardian.emergencyContact).trim()) {
+      const cleanEmergency = String(guardian.emergencyContact).replace(/\D/g, '');
+      if (cleanEmergency.length !== 10) {
+        return res.status(400).json({ error: "Emergency contact number must be exactly 10 numeric digits." });
+      }
+    }
+
+    // Email validation
+    if (contact.email && String(contact.email).trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(String(contact.email).trim())) {
+        return res.status(400).json({ error: "Please enter a valid email address." });
+      }
+    }
+
+    // Aadhaar validation
+    const rawAadhaar = aadhaarNumber || aadharNumber;
+    if (rawAadhaar && String(rawAadhaar).trim()) {
+      const cleanAadhaar = String(rawAadhaar).replace(/\D/g, '');
+      if (cleanAadhaar.length !== 12) {
+        return res.status(400).json({ error: "Aadhaar card number must be exactly 12 numeric digits." });
+      }
+    }
+
     const count = await AdmissionApplication.countDocuments({});
     const randomCode = Math.floor(1000 + Math.random() * 9000);
     const applicationId = `ADM-${new Date().getFullYear()}-${count + 1}${randomCode}`;
@@ -743,6 +850,7 @@ router.post('/admission-applications', async (req, res) => {
       secondarySports: Array.isArray(secondarySports) ? secondarySports : (secondarySports ? [secondarySports] : []),
       residency: residency || 'resident',
       contact: {
+        countryCode: contact.countryCode ? String(contact.countryCode).trim() : '+91',
         phone: contact.phone ? String(contact.phone).trim() : '',
         email: contact.email ? String(contact.email).trim() : '',
         address: contact.address ? String(contact.address).trim() : ''
@@ -750,7 +858,9 @@ router.post('/admission-applications', async (req, res) => {
       guardian: {
         name: guardian.name ? String(guardian.name).trim() : '',
         relationship: guardian.relationship ? String(guardian.relationship).trim() : 'Parent',
+        countryCode: guardian.countryCode ? String(guardian.countryCode).trim() : '+91',
         phone: guardian.phone ? String(guardian.phone).trim() : '',
+        emergencyCountryCode: guardian.emergencyCountryCode ? String(guardian.emergencyCountryCode).trim() : '+91',
         emergencyContact: guardian.emergencyContact ? String(guardian.emergencyContact).trim() : '',
         address: guardian.address ? String(guardian.address).trim() : ''
       },
