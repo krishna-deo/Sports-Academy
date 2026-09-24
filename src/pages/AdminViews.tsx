@@ -2067,19 +2067,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     img.onload = () => {
       // Target resolution per entity
       let cw = 800;
-      let ch = 600; // (4:3 aspect ratio default for team, founder, member, stories, facilities, edge, etc.)
+      let ch = 600; // (4:3 aspect ratio default for member, staff, coach, team, founder, story, facility, edge, etc.)
       if (croppingTarget === 'student') {
         cw = 600;
         ch = 600; // (1:1 square)
-      } else if (croppingTarget === 'coach') {
-        cw = 600;
-        ch = 800; // (3:4 portrait)
       }
 
       // Measure actual viewport container box size in UI
       const boxEl = cropperBoxRef.current;
-      const boxW = boxEl ? boxEl.clientWidth : (croppingTarget === 'student' ? 360 : croppingTarget === 'coach' ? 340 : 440);
-      const boxH = boxEl ? boxEl.clientHeight : (croppingTarget === 'student' ? 360 : croppingTarget === 'coach' ? 453 : 330);
+      const boxW = boxEl ? boxEl.clientWidth : (croppingTarget === 'student' ? 360 : 440);
+      const boxH = boxEl ? boxEl.clientHeight : (croppingTarget === 'student' ? 360 : 330);
 
       const nw = img.naturalWidth;
       const nh = img.naturalHeight;
@@ -8004,7 +8001,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     ref={cropperBoxRef}
                     className={`w-full mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none ${
                       croppingTarget === 'student' ? 'max-w-[360px] aspect-[1/1]' :
-                      croppingTarget === 'coach' ? 'max-w-[340px] aspect-[3/4]' :
                       'max-w-[440px] aspect-[4/3]'
                     }`}
                     onWheel={(e) => {
@@ -8061,7 +8057,6 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   {/* Zoom Controls & Quick Fit / Reset Buttons */}
                   <div className={`flex flex-wrap items-center gap-3 mx-auto bg-soft-light p-3 rounded-lg border border-border-gray ${
                     croppingTarget === 'student' ? 'max-w-[360px]' :
-                    croppingTarget === 'coach' ? 'max-w-[340px]' :
                     'max-w-[440px]'
                   }`}>
                     <span className="text-xs font-bold text-primary min-w-[45px]">Zoom:</span>
@@ -9715,16 +9710,16 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 3:4) *</label>
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 4:3) *</label>
                 {coachForm.avatar && (coachForm.avatar.startsWith('http') || coachForm.avatar.startsWith('/') || coachForm.avatar.startsWith('data:')) ? (
                   <div className="flex items-center gap-4 p-3 bg-soft-light border border-border-gray rounded-xl">
                     <img 
                       src={coachForm.avatar} 
                       alt="Cropped Coach" 
-                      className="w-16 aspect-[3/4] object-cover rounded-lg border border-border-gray shadow-xs" 
+                      className="w-20 aspect-[4/3] object-cover rounded-lg border border-border-gray shadow-xs" 
                     />
                     <div className="text-left">
-                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready (3:4)</span>
+                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded uppercase">Image Ready (4:3)</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -9753,7 +9748,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     className="w-full py-5 px-4 border-2 border-dashed border-border-gray hover:border-primary rounded-xl flex flex-col items-center justify-center gap-2 bg-soft-light hover:bg-white transition-all cursor-pointer group outline-none"
                   >
                     <Plus size={20} className="text-text-light group-hover:text-primary transition-colors" />
-                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (3:4)</span>
+                    <span className="text-xs font-bold text-text-light group-hover:text-primary transition-colors">Choose & Crop Photo (4:3)</span>
                   </button>
                 )}
               </div>
@@ -10962,17 +10957,17 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 3:4) *</label>
+                <label className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-2">Profile Photo (Aspect Ratio 4:3) *</label>
                 <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
                   {staffTeamForm.image && (staffTeamForm.image.startsWith('http') || staffTeamForm.image.startsWith('/') || staffTeamForm.image.startsWith('data:')) ? (
                     <img 
                       src={staffTeamForm.image.startsWith('http') || staffTeamForm.image.startsWith('/') || staffTeamForm.image.startsWith('data:') ? staffTeamForm.image : `http://localhost:5000${staffTeamForm.image}`} 
                       alt="Member" 
-                      className="w-12 h-16 object-cover rounded border border-primary shrink-0 shadow-xs" 
+                      className="w-16 h-12 object-cover rounded border border-primary shrink-0 shadow-xs" 
                       style={{ objectPosition: staffTeamForm.objectPosition || 'center' }}
                     />
                   ) : (
-                    <div className="w-12 h-16 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
+                    <div className="w-16 h-12 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
                   )}
                   <div className="flex-1">
                     <input 
@@ -10997,7 +10992,7 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                       className="text-xs text-text-light file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-accent cursor-pointer w-full" 
                     />
                     {staffTeamForm.image && (
-                      <span className="block mt-1 text-[10px] text-emerald-600 font-bold">Photo Ready &amp; Cropped (3:4)</span>
+                      <span className="block mt-1 text-[10px] text-emerald-600 font-bold">Photo Ready &amp; Cropped (4:3)</span>
                     )}
                   </div>
                 </div>
