@@ -2066,20 +2066,20 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       // Target resolution per entity
-      let cw = 600;
-      let ch = 800; // default for team & coach (3:4 portrait)
-      if (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') {
-        cw = 800;
-        ch = 600; // (4:3 landscape)
-      } else if (croppingTarget === 'student') {
+      let cw = 800;
+      let ch = 600; // (4:3 aspect ratio default for team, founder, member, stories, facilities, edge, etc.)
+      if (croppingTarget === 'student') {
         cw = 600;
         ch = 600; // (1:1 square)
+      } else if (croppingTarget === 'coach') {
+        cw = 600;
+        ch = 800; // (3:4 portrait)
       }
 
       // Measure actual viewport container box size in UI
       const boxEl = cropperBoxRef.current;
-      const boxW = boxEl ? boxEl.clientWidth : ((croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 440 : croppingTarget === 'student' ? 360 : 340);
-      const boxH = boxEl ? boxEl.clientHeight : ((croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge') ? 330 : croppingTarget === 'student' ? 360 : 453);
+      const boxW = boxEl ? boxEl.clientWidth : (croppingTarget === 'student' ? 360 : croppingTarget === 'coach' ? 340 : 440);
+      const boxH = boxEl ? boxEl.clientHeight : (croppingTarget === 'student' ? 360 : croppingTarget === 'coach' ? 453 : 330);
 
       const nw = img.naturalWidth;
       const nh = img.naturalHeight;
@@ -7680,12 +7680,12 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Member Photo (3:4 Portrait Ratio)</label>
+                <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Member Photo (4:3 Ratio)</label>
                 <div className="p-3 border border-border-gray rounded-xl bg-soft-light flex items-center gap-3">
                   {teamForm.image ? (
-                    <img src={teamForm.image} alt="Member" className="w-12 h-16 object-cover rounded border border-primary shrink-0 shadow-xs" />
+                    <img src={teamForm.image} alt="Member" className="w-16 h-12 object-cover rounded border border-primary shrink-0 shadow-xs" />
                   ) : (
-                    <div className="w-12 h-16 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
+                    <div className="w-16 h-12 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shrink-0 border border-slate-300">👨‍💼</div>
                   )}
                   <div className="flex-1">
                     <input 
@@ -8004,8 +8004,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                     ref={cropperBoxRef}
                     className={`w-full mx-auto bg-slate-950 rounded-xl overflow-hidden relative cursor-grab active:cursor-grabbing border-2 border-primary shadow-inner select-none ${
                       croppingTarget === 'student' ? 'max-w-[360px] aspect-[1/1]' :
-                      (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge' || croppingTarget === 'what-we-do') ? 'max-w-[440px] aspect-[4/3]' :
-                      'max-w-[340px] aspect-[3/4]'
+                      croppingTarget === 'coach' ? 'max-w-[340px] aspect-[3/4]' :
+                      'max-w-[440px] aspect-[4/3]'
                     }`}
                     onWheel={(e) => {
                       e.preventDefault();
@@ -8061,8 +8061,8 @@ export const AdminViews: React.FC<AdminViewsProps> = ({ activeTab, setActiveTab 
                   {/* Zoom Controls & Quick Fit / Reset Buttons */}
                   <div className={`flex flex-wrap items-center gap-3 mx-auto bg-soft-light p-3 rounded-lg border border-border-gray ${
                     croppingTarget === 'student' ? 'max-w-[360px]' :
-                    (croppingTarget === 'story' || croppingTarget === 'facility' || croppingTarget === 'edge' || croppingTarget === 'what-we-do') ? 'max-w-[440px]' :
-                    'max-w-[340px]'
+                    croppingTarget === 'coach' ? 'max-w-[340px]' :
+                    'max-w-[440px]'
                   }`}>
                     <span className="text-xs font-bold text-primary min-w-[45px]">Zoom:</span>
                     <input 
