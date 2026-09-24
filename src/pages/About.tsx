@@ -930,31 +930,31 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             {team.length > 0 && (
               <RevealRow id={team[0].id} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[240px] md:min-h-[260px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col sm:flex-row w-full min-h-[180px] sm:h-[200px]`}>
                     {/* Hero Left: Image */}
-                    <div className="lg:w-[35%] relative h-[200px] lg:h-auto min-h-[180px] bg-primary">
+                    <div className="w-full sm:w-[180px] md:w-[220px] h-[160px] sm:h-full flex-shrink-0 relative bg-primary">
                       <img 
                         src={team[0].image} 
                         alt={team[0].name} 
                         className="w-full h-full object-cover"
                         style={{ objectPosition: team[0].objectPosition || 'center' }}
                       />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded shadow uppercase tracking-wider">
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded shadow uppercase tracking-wider">
                           FOUNDER &amp; LEADER
                         </span>
                       </div>
                     </div>
 
                     {/* Hero Right: Details */}
-                    <div className="lg:w-[65%] p-5 md:p-7 flex flex-col justify-center text-left">
-                      <span className="text-accent text-[11px] font-black tracking-[0.2em] uppercase mb-1 block">
+                    <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center text-left overflow-hidden">
+                      <span className="text-accent text-[10.5px] sm:text-[11.5px] font-black tracking-[0.15em] uppercase mb-0.5 block">
                         {team[0].role}
                       </span>
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-2.5 leading-tight">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary mb-1.5 leading-tight">
                         {team[0].name}
                       </h3>
-                      <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2 text-justify font-normal">
+                      <div className="text-text-light text-xs sm:text-sm leading-relaxed space-y-1 text-justify font-normal line-clamp-3 sm:line-clamp-4">
                         {getBioParagraphs(team[0].bio).map((paragraph, idx) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
@@ -965,41 +965,40 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               </RevealRow>
             )}
 
-            {/* DIRECTORS STACK: Alternating smaller horizontal profile cards */}
+            {/* DIRECTORS STACK: Compact horizontal profile cards */}
             {team.slice(1).map((member, idx) => {
               const isEven = idx % 2 === 0;
               const isImgLeft = !isEven;
               const slideInClass = isImgLeft ? '-translate-x-24' : 'translate-x-24';
-              const directionClass = isImgLeft ? 'lg:flex-row' : 'lg:flex-row-reverse';
 
               return (
                 <RevealRow key={member.id} id={member.id} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[180px] md:min-h-[200px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-row w-full h-[140px] sm:h-[150px]`}>
                       {/* Image container */}
-                      <div className="lg:w-[30%] relative h-[160px] lg:h-auto min-h-[150px] bg-primary">
+                      <div className="w-[110px] sm:w-[130px] md:w-[150px] h-full flex-shrink-0 relative bg-primary">
                         <img 
                           src={member.image} 
                           alt={member.name} 
                           className="w-full h-full object-cover"
                           style={{ objectPosition: member.objectPosition || 'center' }}
                         />
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-accent text-primary text-[8px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">
                             DIRECTOR
                           </span>
                         </div>
                       </div>
 
                       {/* Content container */}
-                      <div className="lg:w-[70%] p-4 md:p-5 flex flex-col justify-center text-left">
-                        <span className="text-accent text-[10.5px] font-black tracking-[0.15em] uppercase mb-1 block">
+                      <div className="flex-1 p-3 sm:p-4 flex flex-col justify-center text-left overflow-hidden">
+                        <span className="text-accent text-[10px] sm:text-[10.5px] font-black tracking-[0.15em] uppercase mb-0.5 block line-clamp-1">
                           {member.role}
                         </span>
-                        <h3 className="text-lg md:text-xl font-extrabold text-primary mb-2 leading-tight">
+                        <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-primary mb-1 leading-tight line-clamp-1">
                           {member.name}
                         </h3>
-                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-1.5 text-justify font-normal">
+                        <div className="text-text-light text-[11px] sm:text-xs leading-snug line-clamp-2 sm:line-clamp-3 text-justify font-normal">
                           {getBioParagraphs(member.bio).map((paragraph, idx) => (
                             <p key={idx} className="text-justify">{paragraph}</p>
                           ))}
@@ -1037,36 +1036,36 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-10 max-w-[1140px] mx-auto overflow-hidden pb-12">
-            {/* HERO CARD: Lead Team Member (matching Mr. Sanjay Pathak Hero Card layout) */}
+          <div className="flex flex-col gap-6 max-w-[1140px] mx-auto overflow-hidden pb-12">
+            {/* HERO CARD: Lead Team Member */}
             {staffTeam.length > 0 && (
               <RevealRow id={staffTeam[0].id || 'staff-0'} className="w-full">
                 {(isVisible) => (
-                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col lg:flex-row w-full min-h-[240px] md:min-h-[260px]`}>
+                  <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-24'} flex flex-col sm:flex-row w-full min-h-[180px] sm:h-[200px]`}>
                     {/* Hero Left: Image */}
-                    <div className="lg:w-[35%] relative h-[200px] lg:h-auto min-h-[180px] bg-primary">
+                    <div className="w-full sm:w-[180px] md:w-[220px] h-[160px] sm:h-full flex-shrink-0 relative bg-primary">
                       <img 
                         src={staffTeam[0].image ? (staffTeam[0].image.startsWith('http') || staffTeam[0].image.startsWith('/images') || staffTeam[0].image.startsWith('/uploads') || staffTeam[0].image.startsWith('data:') ? staffTeam[0].image : `http://localhost:5000${staffTeam[0].image}`) : '/images/hero1.jpeg'} 
                         alt={staffTeam[0].name} 
                         className="w-full h-full object-cover"
                         style={{ objectPosition: staffTeam[0].objectPosition || 'center' }}
                       />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded shadow uppercase tracking-wider">
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded shadow uppercase tracking-wider">
                           LEAD MEMBER
                         </span>
                       </div>
                     </div>
 
                     {/* Hero Right: Details */}
-                    <div className="lg:w-[65%] p-5 md:p-7 flex flex-col justify-center text-left">
-                      <span className="text-accent text-[11px] font-black tracking-[0.2em] uppercase mb-1 block">
+                    <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center text-left overflow-hidden">
+                      <span className="text-accent text-[10.5px] sm:text-[11.5px] font-black tracking-[0.15em] uppercase mb-0.5 block">
                         {staffTeam[0].role}
                       </span>
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-2.5 leading-tight">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary mb-1.5 leading-tight">
                         {staffTeam[0].name}
                       </h3>
-                      <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-2 text-justify font-normal">
+                      <div className="text-text-light text-xs sm:text-sm leading-relaxed space-y-1 text-justify font-normal line-clamp-3 sm:line-clamp-4">
                         {getBioParagraphs(staffTeam[0].bio).map((paragraph: string, idx: number) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
@@ -1077,41 +1076,40 @@ export const About: React.FC<AboutProps> = ({ sub }) => {
               </RevealRow>
             )}
 
-            {/* TEAM MEMBERS STACK: Alternating smaller horizontal profile cards matching Directors */}
+            {/* TEAM MEMBERS STACK: Compact horizontal profile cards */}
             {staffTeam.slice(1).map((member, idx) => {
               const isEven = idx % 2 === 0;
-              const isImgLeft = !isEven; // Exactly matching Directors slice(1) flow
+              const isImgLeft = !isEven;
               const slideInClass = isImgLeft ? '-translate-x-24' : 'translate-x-24';
-              const directionClass = isImgLeft ? 'lg:flex-row' : 'lg:flex-row-reverse';
 
               return (
                 <RevealRow key={member.id || idx + 1} id={member.id || `staff-${idx + 1}`} className="w-full">
                   {(isVisible) => (
-                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-col ${directionClass} w-full min-h-[180px] md:min-h-[200px]`}>
+                    <div className={`bg-white border border-border-gray/70 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-[1000ms] ease-out transform ${isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${slideInClass}`} flex flex-row w-full h-[140px] sm:h-[150px]`}>
                       {/* Image container */}
-                      <div className="lg:w-[30%] relative h-[160px] lg:h-auto min-h-[150px] bg-primary">
+                      <div className="w-[110px] sm:w-[130px] md:w-[150px] h-full flex-shrink-0 relative bg-primary">
                         <img 
                           src={member.image ? (member.image.startsWith('http') || member.image.startsWith('/images') || member.image.startsWith('/uploads') || member.image.startsWith('data:') ? member.image : `http://localhost:5000${member.image}`) : '/images/hero1.jpeg'} 
                           alt={member.name} 
                           className="w-full h-full object-cover"
                           style={{ objectPosition: member.objectPosition || 'center' }}
                         />
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-accent text-primary text-[9px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-accent text-primary text-[8px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">
                             MEMBER
                           </span>
                         </div>
                       </div>
 
                       {/* Content container */}
-                      <div className="lg:w-[70%] p-4 md:p-5 flex flex-col justify-center text-left">
-                        <span className="text-accent text-[10.5px] font-black tracking-[0.15em] uppercase mb-1 block">
+                      <div className="flex-1 p-3 sm:p-4 flex flex-col justify-center text-left overflow-hidden">
+                        <span className="text-accent text-[10px] sm:text-[10.5px] font-black tracking-[0.15em] uppercase mb-0.5 block line-clamp-1">
                           {member.role}
                         </span>
-                        <h3 className="text-lg md:text-xl font-extrabold text-primary mb-2 leading-tight">
+                        <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-primary mb-1 leading-tight line-clamp-1">
                           {member.name}
                         </h3>
-                        <div className="text-text-light text-xs md:text-sm leading-relaxed space-y-1.5 text-justify font-normal">
+                        <div className="text-text-light text-[11px] sm:text-xs leading-snug line-clamp-2 sm:line-clamp-3 text-justify font-normal">
                           {getBioParagraphs(member.bio).map((paragraph: string, pIdx: number) => (
                             <p key={pIdx} className="text-justify">{paragraph}</p>
                           ))}

@@ -560,7 +560,7 @@ export const Home: React.FC = () => {
             <div 
               ref={foundersScrollRef}
               onScroll={handleFoundersScroll}
-              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[270px] md:min-h-[240px] sm:px-0 sm:mx-0"
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[170px] md:min-h-[160px] sm:px-0 sm:mx-0"
             >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
@@ -568,7 +568,7 @@ export const Home: React.FC = () => {
                   <a
                     href={`#/about/founders?member=${member.id}`}
                     key={idx}
-                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[270px] sm:min-h-[250px] md:min-h-[230px] shadow-sm hover:shadow-md cursor-pointer block group ${
+                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[150px] sm:h-[150px] md:h-[160px] shadow-sm hover:shadow-md cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -577,26 +577,25 @@ export const Home: React.FC = () => {
                     }`}
                   >
                     {/* Left Column: Photo */}
-                    <div className="w-full sm:w-[220px] md:w-[250px] h-[170px] sm:h-auto relative flex-shrink-0 bg-soft-light overflow-hidden">
+                    <div className="w-[110px] sm:w-[140px] md:w-[160px] h-full relative flex-shrink-0 bg-soft-light overflow-hidden">
                       <img 
                         src={member.image} 
                         alt={member.name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         style={{ objectPosition: member.objectPosition || 'center' }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-l from-black/15 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
                     </div>
 
                     {/* Right Column: Member Details */}
-                    <div className="flex-grow p-4 sm:p-5 md:p-6 flex flex-col justify-center text-left">
-                      <h3 className="text-xl sm:text-2xl font-extrabold text-primary mb-1 leading-tight">
-                        {member.name}
-                      </h3>
-                      <span className="text-[10.5px] md:text-[11.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-2 block leading-none">
+                    <div className="flex-grow p-3 sm:p-4 md:p-5 flex flex-col justify-center text-left overflow-hidden">
+                      <span className="text-[10px] md:text-[10.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-0.5 block leading-none line-clamp-1">
                         {member.role}
                       </span>
-                      <div className="text-text-light text-xs sm:text-sm leading-relaxed max-w-[560px] space-y-1.5 text-justify font-normal">
+                      <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-primary mb-1 leading-tight line-clamp-1">
+                        {member.name}
+                      </h3>
+                      <div className="text-text-light text-[11px] sm:text-xs leading-relaxed space-y-1 text-justify font-normal line-clamp-2 sm:line-clamp-3">
                         {getBioParagraphs(member.bio).map((paragraph, idx) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
