@@ -434,12 +434,9 @@ export const Home: React.FC = () => {
                     <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">{card.tag}</span>
                     <h3 className="text-xl font-extrabold tracking-tight mb-1 group-hover:text-accent transition-colors">{card.title}</h3>
 
-                    <div className={`overflow-hidden transition-all duration-700 ease-in-out ${isActive ? 'max-h-[120px] opacity-100 mt-2' : 'max-h-0 opacity-0 pointer-events-none'
+                    <div className={`overflow-hidden transition-all duration-700 ease-in-out ${isActive ? 'max-h-[40px] opacity-100 mt-2' : 'max-h-0 opacity-0 pointer-events-none'
                       }`}>
-                      <p className="text-white/80 text-xs leading-relaxed font-semibold text-justify">
-                        {card.description}
-                      </p>
-                      <span className="text-[10px] font-bold text-accent mt-3 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      <span className="text-[10px] font-bold text-accent flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                         LEARN MORE &rarr;
                       </span>
                     </div>
@@ -477,9 +474,6 @@ export const Home: React.FC = () => {
                       </div>
                       <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">{card.tag}</span>
                       <h3 className="text-xl font-extrabold tracking-tight mb-2">{card.title}</h3>
-                      <p className="text-white/80 text-xs leading-relaxed font-semibold mb-2 text-justify">
-                        {card.description}
-                      </p>
                       <span className="text-[10px] font-bold text-accent flex items-center gap-1">
                         LEARN MORE &rarr;
                       </span>
@@ -560,7 +554,7 @@ export const Home: React.FC = () => {
             <div 
               ref={foundersScrollRef}
               onScroll={handleFoundersScroll}
-              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[170px] md:min-h-[160px] sm:px-0 sm:mx-0"
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth pb-4 px-1 -mx-1 hide-scrollbar sm:block sm:relative sm:overflow-hidden w-full sm:min-h-[310px] md:min-h-[330px] sm:px-0 sm:mx-0"
             >
               {team.map((member, idx) => {
                 const isActive = idx === currentMember;
@@ -568,7 +562,7 @@ export const Home: React.FC = () => {
                   <a
                     href={`#/about/founders?member=${member.id}`}
                     key={idx}
-                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[150px] sm:h-[150px] md:h-[160px] shadow-sm hover:shadow-md cursor-pointer block group ${
+                    className={`w-[calc(100vw-2.5rem)] max-w-[480px] sm:w-auto sm:max-w-none flex-shrink-0 snap-center first:ml-1 last:mr-1 sm:first:ml-0 sm:last:mr-0 relative sm:absolute inset-x-0 top-0 transition-opacity sm:transition-all duration-0 sm:duration-500 sm:ease-in-out sm:transform flex flex-row bg-white rounded-xl overflow-hidden border-l-[5px] border-l-accent border-r border-y border-border-gray/70 min-h-[240px] sm:h-[300px] md:h-[320px] shadow-sm hover:shadow-md cursor-pointer block group ${
                       isActive 
                         ? 'opacity-100 translate-x-0 sm:scale-100 pointer-events-auto z-10' 
                         : idx < currentMember
@@ -577,7 +571,7 @@ export const Home: React.FC = () => {
                     }`}
                   >
                     {/* Left Column: Photo */}
-                    <div className="w-[110px] sm:w-[140px] md:w-[160px] h-full relative flex-shrink-0 bg-soft-light overflow-hidden">
+                    <div className="w-[165px] sm:w-[250px] md:w-[290px] h-full relative flex-shrink-0 bg-soft-light overflow-hidden">
                       <img 
                         src={member.image} 
                         alt={member.name} 
@@ -588,14 +582,14 @@ export const Home: React.FC = () => {
                     </div>
 
                     {/* Right Column: Member Details */}
-                    <div className="flex-grow p-3 sm:p-4 md:p-5 flex flex-col justify-center text-left overflow-hidden">
-                      <span className="text-[10px] md:text-[10.5px] font-extrabold text-accent tracking-[0.15em] uppercase mb-0.5 block leading-none line-clamp-1">
+                    <div className="flex-grow p-4 sm:p-6 md:p-7 flex flex-col justify-center text-left overflow-hidden">
+                      <span className="text-[10px] md:text-[12px] font-extrabold text-accent tracking-[0.15em] uppercase mb-1 block leading-none line-clamp-1">
                         {member.role}
                       </span>
-                      <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-primary mb-1 leading-tight line-clamp-1">
+                      <h3 className="text-base sm:text-xl md:text-2xl font-extrabold text-primary mb-2 leading-tight line-clamp-1">
                         {member.name}
                       </h3>
-                      <div className="text-text-light text-[11px] sm:text-xs leading-relaxed space-y-1 text-justify font-normal line-clamp-2 sm:line-clamp-3">
+                      <div className="text-text-light text-xs sm:text-sm md:text-base leading-relaxed space-y-1.5 text-justify font-normal line-clamp-5 sm:line-clamp-6 md:line-clamp-7">
                         {getBioParagraphs(member.bio).map((paragraph, idx) => (
                           <p key={idx} className="text-justify">{paragraph}</p>
                         ))}
@@ -702,9 +696,11 @@ export const Home: React.FC = () => {
                           <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
                             {featured.title}
                           </h3>
-                          <p className="text-text-light text-sm leading-relaxed mb-6 text-justify">
-                            {featured.description}
-                          </p>
+                          <div className="max-h-[140px] overflow-y-auto hide-scrollbar mb-6">
+                            <p className="text-text-light text-sm leading-relaxed text-justify">
+                              {featured.description}
+                            </p>
+                          </div>
                         </div>
                         <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto uppercase">
                           {featured.linkText || 'LEARN MORE'} &rarr;
@@ -740,9 +736,11 @@ export const Home: React.FC = () => {
                           <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                             {card.title}
                           </h3>
-                          <p className="text-text-light text-xs leading-relaxed text-justify">
-                            {card.description}
-                          </p>
+                          <div className="max-h-[100px] overflow-y-auto hide-scrollbar">
+                            <p className="text-text-light text-xs leading-relaxed text-justify">
+                              {card.description}
+                            </p>
+                          </div>
                         </div>
                         <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
                           {card.linkText || 'LEARN MORE'} &rarr;
@@ -777,9 +775,11 @@ export const Home: React.FC = () => {
                       <h3 className="text-xl md:text-2xl font-extrabold text-primary mb-4 leading-tight group-hover:text-accent transition-colors">
                         “Our athletes inspire future generations of rural sports champions.”
                       </h3>
-                      <p className="text-text-light text-sm leading-relaxed mb-6 text-justify">
-                        RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
-                      </p>
+                      <div className="max-h-[140px] overflow-y-auto hide-scrollbar mb-6">
+                        <p className="text-text-light text-sm leading-relaxed text-justify">
+                          RLBSA champions act as pathfinders for communities in Siwan, Bihar, showing young girls and boys that they too can compete at the highest national levels and break all barriers.
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto">
                       MEET CHAMPIONS &rarr;
@@ -810,9 +810,11 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Structured Multi-Sport Development Pathways
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed text-justify">
-                        Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
-                      </p>
+                      <div className="max-h-[100px] overflow-y-auto hide-scrollbar">
+                        <p className="text-text-light text-xs leading-relaxed text-justify">
+                          Structured progression pathways for multi-sport learners, beginner development, and competitive youth performance modules.
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
                       LEARN MORE &rarr;
@@ -841,9 +843,11 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Vast Olympic-Level Sports Facilities & Arenas
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed text-justify">
-                        Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
-                      </p>
+                      <div className="max-h-[100px] overflow-y-auto hide-scrollbar">
+                        <p className="text-text-light text-xs leading-relaxed text-justify">
+                          Access temperature-controlled pools, synthetic athletics tracks, indoor wooden courts, and bowling simulations.
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
                       EXPLORE FACILITIES &rarr;
@@ -872,9 +876,11 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Calorie-Mapped Nutrition & Rehab Metrics
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed text-justify">
-                        Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
-                      </p>
+                      <div className="max-h-[100px] overflow-y-auto hide-scrollbar">
+                        <p className="text-text-light text-xs leading-relaxed text-justify">
+                          Integrated biomechanical assessment, nutritional counsel, sports psychologists, and muscle rehab tracking.
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
                       LEARN MORE &rarr;
@@ -903,9 +909,11 @@ export const Home: React.FC = () => {
                       <h3 className="text-base font-extrabold text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
                         Grassroots Potential to National Champions
                       </h3>
-                      <p className="text-text-light text-xs leading-relaxed text-justify">
-                        Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
-                      </p>
+                      <div className="max-h-[100px] overflow-y-auto hide-scrollbar">
+                        <p className="text-text-light text-xs leading-relaxed text-justify">
+                          Free professional coaching, fully sponsored boarding, sports diet, and educational support for selected rural kids.
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs font-bold text-primary group-hover:text-accent flex items-center gap-1 mt-auto pt-4 uppercase">
                       SCHOLARSHIP PROGRAM &rarr;
