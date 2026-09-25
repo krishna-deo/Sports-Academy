@@ -30,9 +30,7 @@ function App() {
   const isAdminRoute = 
     normalizedHash.startsWith('#/HVEPP') || 
     normalizedHash.startsWith('#HVEPP') || 
-    normalizedHash.toLowerCase().includes('hvepp') || 
-    normalizedHash.startsWith('#/admin') || 
-    normalizedHash.startsWith('#admin');
+    normalizedHash.toLowerCase().includes('hvepp');
 
   // Routing Controller
   const renderRoute = () => {

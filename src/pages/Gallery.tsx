@@ -39,6 +39,14 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
     return `http://localhost:5000${cleanPath}`;
   };
 
+  const isDirectVideoUrl = (url?: string, mediaType?: string) => {
+    if (mediaType === 'local-video') return true;
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return false;
+    return true;
+  };
+
   useEffect(() => {
     setLoading(true);
     let category = '';
@@ -561,7 +569,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
         /* Render Detailed Event Gallery Content */
         (selectedEvent.mediaType === 'video' || selectedEvent.mediaType === 'local-video') ? (
           <div className="max-w-4xl mx-auto bg-black rounded-xl overflow-hidden shadow-2xl border border-border-gray/30 aspect-video animate-scale-up">
-            {selectedEvent.mediaType === 'local-video' || (selectedEvent.videoUrl && selectedEvent.videoUrl.startsWith('/uploads')) ? (
+            {isDirectVideoUrl(selectedEvent.videoUrl, selectedEvent.mediaType) ? (
               <video
                 src={formatMediaUrl(selectedEvent.videoUrl)}
                 controls
@@ -577,7 +585,7 @@ export const Gallery: React.FC<GalleryProps> = ({ activeTag }) => {
                 if (!youtubeId) {
                   return (
                     <div className="flex flex-col items-center justify-center h-full text-white p-5">
-                      <p className="text-sm font-semibold">Invalid YouTube link.</p>
+                      <p className="text-sm font-semibold">Video link unavailable or invalid.</p>
                     </div>
                   );
                 }

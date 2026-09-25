@@ -25,7 +25,13 @@ class GalleryRepository {
     const query = { isDeleted };
 
     if (mediaType) {
-      query.mediaType = mediaType;
+      if (mediaType === 'video') {
+        query.mediaType = { $in: ['video', 'local-video'] };
+      } else if (mediaType === 'photo' || mediaType === 'photos' || mediaType === 'image') {
+        query.mediaType = { $in: ['image', 'photo'] };
+      } else {
+        query.mediaType = mediaType;
+      }
     }
     if (category) {
       query.category = { $regex: new RegExp(`^${category}$`, 'i') };
